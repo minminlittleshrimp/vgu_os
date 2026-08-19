@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Traps and System Calls - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Traps and System Calls</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">User/kernel transition . trampoline . trapframe . syscall dispatch</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:820px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How does the CPU transition from user mode to kernel mode, what is the trampoline page, how does the trapframe save user state, and how does the kernel dispatch system calls?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>What Is a Trap?</h2>
+<p>System calls . exceptions . interrupts - all use the same mechanism</p>
+</div>
+
+<!-- SLIDE 3: WHAT IS A TRAP -->
+<div class="slide">
+<h2 class="st">What is a Trap?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"You're working in your office (user mode) and need something from the vault (kernel). You can't just walk in - you ring the bell (<code>ecall</code>), the manager opens the door, does the work, and sends you back."</p>
+</div>
+<div class="block ok">
+<h4>Definition</h4>
+<p>A <strong>trap</strong> is a <em>controlled transfer</em> of execution from user mode to kernel mode. It is triggered by three kinds of events:</p>
+<ul>
+<li><strong>System call</strong> - user program requests a kernel service (<code>ecall</code>)</li>
+<li><strong>Exception</strong> - CPU detects an error (page fault, divide by zero, illegal instruction)</li>
+<li><strong>Interrupt</strong> - hardware signals an event (timer, I/O completion)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>All three use the same mechanism</h4>
+<p>Whether it's a syscall, a page fault, or a timer tick - the CPU follows the <strong>same trap path</strong>. The kernel distinguishes them by reading the <code>scause</code> register.</p>
+</div>
+<div class="block warn">
+<h4>Why "controlled"?</h4>
+<p>The user program <strong>cannot</strong> choose where to jump in the kernel. The CPU always jumps to <code>stvec</code> - a fixed address the kernel set up. The user has no say in the entry point.</p>
+</div>
+<div class="eq-box">
+trap = ecall / fault / IRQ<br/>
+-> CPU jumps to stvec (kernel-controlled)<br/>
+-> kernel reads scause to dispatch
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: WHY TRAPS ARE NECESSARY -->
+<div class="slide">
+<h2 class="st">Why Traps Are Necessary</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Two privilege worlds</h4>
+<p><strong>User mode (U-mode):</strong> user programs run here. No direct access to hardware, physical memory, or privileged CPU registers. If a program tries, the CPU traps.</p>
+<p><strong>Supervisor mode (S-mode):</strong> the kernel runs here. Full access to memory, devices, and CSRs. Can set up page tables, handle interrupts, manage processes.</p>
+</div>
+<div class="block warn">
+<h4>The boundary is hardware-enforced</h4>
+<p>The CPU itself checks privilege on every memory access and CSR instruction. A user program <strong>cannot</strong> bypass this - it's wired into the silicon.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Traps are the only door</h4>
+<p>There is no "side entrance." The <em>only</em> way for user code to execute kernel code is through a trap. This is what makes protection possible:</p>
+<ul>
+<li>The kernel decides <strong>what</strong> services to expose (syscalls)</li>
+<li>The kernel decides <strong>who</strong> gets service (permission checks)</li>
+<li>The kernel decides <strong>when</strong> to return (it controls <code>sret</code>)</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Without traps, no protection</h4>
+<p>If user programs could call kernel functions directly, any process could read any file, access any device, or crash the system. Traps are the foundation of process isolation.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 5: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>What Happens During a Trap</h2>
+<p>The challenge of user->kernel transition . ecall . key CSRs</p>
+</div>
+
+<!-- SLIDE 6: THE CHALLENGE -->
+<div class="slide">
+<h2 class="st">The Challenge of User->Kernel Transition</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"When you ring the bell, a lot has to happen before the kernel can run C code: switch mode, save registers, switch page tables, switch stack."</p>
+</div>
+<div class="block warn">
+<h4>CPU is set up for USER</h4>
+<p>Before the trap, the CPU is running user code. Its state is:</p>
+<ul>
+<li>32 general registers (<code>x0</code>-<code>x31</code>) hold user values</li>
+<li><code>PC</code> points at the user instruction</li>
+<li>Mode = <strong>U-mode</strong></li>
+<li><code>satp</code> = <strong>user page table</strong></li>
+<li><code>sp</code> = <strong>user stack</strong></li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>Kernel needs a completely different setup</h4>
+<p>To run kernel C code, the CPU must be in:</p>
+<ul>
+<li>Mode = <strong>S-mode</strong> (supervisor)</li>
+<li>All 32 user registers <strong>saved</strong> (so they can be restored later)</li>
+<li><code>satp</code> = <strong>kernel page table</strong></li>
+<li><code>sp</code> = <strong>kernel stack</strong></li>
+<li><code>PC</code> = <strong>kernel C function</strong> (<code>usertrap</code>)</li>
+</ul>
+</div>
+<div class="block">
+<h4>The gap</h4>
+<p><code>ecall</code> only does <strong>part</strong> of this. The rest must be done in <strong>assembly</strong> - because C code needs a valid stack and page table, which don't exist yet.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 7: WHAT ECALL DOES -->
+<div class="slide">
+<h2 class="st">What ecall Does (and Doesn't Do)</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block ok">
+<h4>ecall DOES</h4>
+<ul>
+<li><strong>Switch to S-mode</strong> - privilege level changes from U to S</li>
+<li><strong>Save user PC</strong> in <code>sepc</code> - so the kernel knows where to return</li>
+<li><strong>Jump to <code>stvec</code></strong> - the trap vector address (set by kernel)</li>
+<li><strong>Disable interrupts</strong> - <code>SIE -> SPIE</code>, then <code>SIE = 0</code></li>
+</ul>
+</div>
+<div class="eq-box" style="font-size:clamp(11px,1vw,14px)">
+ecall: U->S mode<br/>
+sepc = user PC<br/>
+PC = stvec<br/>
+SIE=0 (interrupts off)
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>ecall does NOT</h4>
+<ul>
+<li><strong>Save the 32 user registers</strong> - they're still in the CPU, will be overwritten</li>
+<li><strong>Switch page tables</strong> - <code>satp</code> is still the user page table</li>
+<li><strong>Set up a kernel stack</strong> - <code>sp</code> is still the user stack</li>
+<li><strong>Save <code>sp</code>, <code>ra</code>, <code>gp</code>, <code>tp</code></strong> - nothing is saved except PC</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Why this matters</h4>
+<p>After <code>ecall</code>, the CPU is in S-mode but still using the <strong>user's page table and stack</strong>. The kernel must do the rest in assembly - the <strong>trampoline</strong> - before it can safely run C code.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: KEY RISC-V CSRs -->
+<div class="slide">
+<h2 class="st">Key RISC-V CSRs for Traps</h2>
+<table class="tbl">
+<tr><th>CSR</th><th>Purpose</th><th>On trap (hardware)</th><th>On sret (hardware)</th></tr>
+<tr><td><code>sstatus</code></td><td>Supervisor status: <code>SPP</code> = previous mode, <code>SIE</code> = interrupt enable</td><td><code>SPP</code> = current mode (U), <code>SIE->SPIE</code>, <code>SIE=0</code></td><td>mode = <code>SPP</code>, <code>SIE=SPIE</code></td></tr>
+<tr><td><code>sepc</code></td><td>Exception PC - the instruction that caused (or preceded) the trap</td><td><code>sepc</code> = PC of <code>ecall</code> / faulting instruction</td><td><code>PC</code> = <code>sepc</code></td></tr>
+<tr><td><code>scause</code></td><td>Trap cause code: 8 = syscall, 13 = load page fault, 15 = store page fault</td><td><code>scause</code> = cause number</td><td>-</td></tr>
+<tr><td><code>stval</code></td><td>Trap value - faulting address (for page faults) or instruction encoding</td><td><code>stval</code> = fault addr / instruction</td><td>-</td></tr>
+<tr><td><code>stvec</code></td><td>Trap vector address - where CPU jumps on trap (DIRECT mode = <code>stvec</code> itself)</td><td><code>PC</code> = <code>stvec</code></td><td>-</td></tr>
+<tr><td><code>satp</code></td><td>Page table base register - controls virtual->physical mapping</td><td>unchanged (still user PT)</td><td>-</td></tr>
+<tr><td><code>sscratch</code></td><td>Scratch register - holds TRAPFRAME address (set by kernel before returning to user)</td><td>unchanged</td><td>-</td></tr>
+</table>
+<div class="cols cols-2" style="margin-top:8px">
+<div class="block ok">
+<h4>On trap (hardware does this)</h4>
+<p><code>sepc</code> = PC . <code>scause</code> = cause . <code>sstatus.SPP</code> = current mode . <code>PC</code> = <code>stvec</code> . interrupts disabled</p>
+</div>
+<div class="block note">
+<h4>On sret (hardware does this)</h4>
+<p><code>PC</code> = <code>sepc</code> . mode = <code>sstatus.SPP</code> . interrupts restored from <code>SPIE</code></p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 9: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Trap Flow</h2>
+<p>Trampoline page . uservec . sscratch trick</p>
+</div>
+
+<!-- SLIDE 10: TRAP FLOW DIAGRAM -->
+<div class="slide">
+<h2 class="st">Trap Flow: User to Kernel and Back</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 980 420" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ard" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- Lane background -->
+<rect class="cl-lane" height="380" rx="16" width="940" x="20" y="20"></rect>
+<!-- Step 1: User program -->
+<g data-step="1">
+<rect class="cl-box" height="60" rx="10" width="160" x="40" y="50"></rect>
+<text class="cl-title" x="120" y="75">User program</text>
+<text class="cl-small" x="120" y="92">U-mode</text>
+</g>
+<!-- Arrow 1->2 -->
+<g data-step="2">
+<path class="cl-arr" d="M200 80 H260" marker-end="url(#ard)"></path>
+<text class="cl-small" style="text-anchor:middle" x="230" y="72">ecall</text>
+<text class="cl-small" style="text-anchor:middle;fill:#ef4444" x="230" y="96">hardware</text>
+</g>
+<!-- Step 2: uservec -->
+<g data-step="2">
+<rect class="cl-data" height="60" rx="10" width="160" x="260" y="50"></rect>
+<text class="cl-title" x="340" y="75">uservec</text>
+<text class="cl-small" x="340" y="92">trampoline.S</text>
+</g>
+<!-- Arrow 2->3 -->
+<g data-step="3">
+<path class="cl-arr" d="M420 80 H480" marker-end="url(#ard)"></path>
+<text class="cl-small" style="text-anchor:middle" x="450" y="72">save regs</text>
+<text class="cl-small" style="text-anchor:middle;fill:#3b82f6" x="450" y="96">assembly</text>
+</g>
+<!-- Step 3: usertrap -->
+<g data-step="3">
+<rect class="cl-aad" height="60" rx="10" width="160" x="480" y="50"></rect>
+<text class="cl-title" x="560" y="75">usertrap()</text>
+<text class="cl-small" x="560" y="92">trap.c</text>
+</g>
+<!-- Arrow 3->4 -->
+<g data-step="4">
+<path class="cl-arr" d="M640 80 H700" marker-end="url(#ard)"></path>
+<text class="cl-small" style="text-anchor:middle" x="670" y="72">dispatch</text>
+<text class="cl-small" style="text-anchor:middle;fill:#10b981" x="670" y="96">scause</text>
+</g>
+<!-- Step 4: syscall -->
+<g data-step="4">
+<rect class="cl-tag" height="60" rx="10" width="160" x="700" y="50"></rect>
+<text class="cl-title" x="780" y="75">syscall()</text>
+<text class="cl-small" x="780" y="92">syscall.c</text>
+</g>
+<!-- Return path -->
+<g data-step="5">
+<path class="cl-arr" d="M780 110 V160 H560 V200" marker-end="url(#ard)"></path>
+<text class="cl-small" style="text-anchor:middle;fill:#f59e0b" x="670" y="155">usertrapret()</text>
+</g>
+<!-- Step 5: userret -->
+<g data-step="5">
+<rect class="cl-key" height="60" rx="10" width="160" x="480" y="200"></rect>
+<text class="cl-title" x="560" y="225">userret</text>
+<text class="cl-small" x="560" y="242">trampoline.S</text>
+</g>
+<!-- Arrow 5->6 -->
+<g data-step="6">
+<path class="cl-arr" d="M480 230 H420" marker-end="url(#ard)"></path>
+<text class="cl-small" style="text-anchor:middle" x="450" y="222">restore regs</text>
+<text class="cl-small" style="text-anchor:middle;fill:#3b82f6" x="450" y="246">sret</text>
+</g>
+<!-- Step 6: Back to user -->
+<g data-step="6">
+<rect class="cl-final" height="60" rx="10" width="160" x="260" y="200"></rect>
+<text class="cl-title" style="fill:#fff" x="340" y="225">Back to user</text>
+<text class="cl-small" style="fill:#99c0ff" x="340" y="242">U-mode</text>
+</g>
+<!-- Legend -->
+<g data-step="6">
+<rect fill="#fffbeb" height="36" rx="8" stroke="#f59e0b" width="860" x="50" y="320"></rect>
+<text class="cl-title" style="font-size:11.5px;fill:#92400e" x="480" y="338">Full round-trip: ecall -> save -> dispatch -> handle -> prepare -> restore -> sret</text>
+</g>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 11: THE TRAMPOLINE PAGE -->
+<div class="slide">
+<h2 class="st">The Trampoline Page</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Key idea</h4>
+<p>The trampoline is a single page mapped at the <strong>same virtual address</strong> in <em>both</em> the user page table and the kernel page table.</p>
+</div>
+<div class="block">
+<h4>Why same address?</h4>
+<p>When a trap occurs, <code>satp</code> still points to the <strong>user</strong> page table. The CPU jumps to <code>stvec</code>, which is the trampoline's virtual address. The trampoline must be accessible <strong>before</strong> the page table switch - so it must exist in the user page table.</p>
+</div>
+<div class="block warn">
+<h4>Location</h4>
+<p>The trampoline lives at the very top of virtual address space:</p>
+<p><code>TRAMPOLINE = MAXVA - PGSIZE</code> (VA <code>0x3fffff000</code>)</p>
+<p>The trapframe sits just below it: <code>TRAPFRAME = TRAMPOLINE - PGSIZE</code> (VA <code>0x3ffffe000</code>)</p>
+<p>Both are the same address in kernel and user page tables, so after switching <code>satp</code>, the code keeps running without a fault.</p>
+</div>
+</div>
+<div>
+<div class="block note">
+<p>"The trampoline is like an <strong>airlock</strong> between two rooms. It exists in both rooms at the same position. You enter from one side, the atmosphere changes, and you exit into the other room."</p>
+</div>
+<div class="block warn">
+<h4>No PTE_U flag</h4>
+<p>The trampoline page is mapped in the user page table <strong>without</strong> the <code>PTE_U</code> (user-accessible) bit. This means user code <strong>cannot</strong> execute it directly - only the kernel can enter it via a trap.</p>
+</div>
+<div class="block ok">
+<h4>What's in the trampoline?</h4>
+<ul>
+<li><code>uservec</code> - trap entry: saves user registers, switches to kernel stack, jumps to <code>usertrap()</code></li>
+<li><code>userret</code> - trap exit: restores user registers, switches to user page table, executes <code>sret</code></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: USERVEC -->
+<div class="slide">
+<h2 class="st">uservec: Saving User Registers</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>From trampoline.S (simplified)</h4>
+</div>
+<pre><code class="language-asm">uservec:
+    csrw sscratch, a0      # save user a0
+    li   a0, TRAPFRAME      # a0 = TRAPFRAME addr
+    sd   ra, 40(a0)         # save all 32 user regs
+    sd   sp, 48(a0)
+    # ... save gp, tp, t0-t6,
+    #     s0-s11, a1-a7 ...
+    csrr t0, sscratch       # get user's a0 back
+    sd   t0, 112(a0)        # save it in trapframe
+    ld   sp, 8(a0)          # kernel stack
+    ld   tp, 32(a0)         # CPU ID
+    ld   t0, 24(a0)         # usertrap() address
+    jr   t0                 # jump to C code</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Step by step</h4>
+<ol>
+<li><strong><code>csrw sscratch, a0</code></strong> - stash user's <code>a0</code> into <code>sscratch</code> (which held TRAPFRAME addr)</li>
+<li><strong><code>li a0, TRAPFRAME</code></strong> - load TRAPFRAME address into <code>a0</code> (now usable as base)</li>
+<li><strong><code>sd ra, 40(a0)</code> ...</strong> - save all 32 user registers into the trapframe, using <code>a0</code> as base pointer</li>
+<li><strong><code>csrr t0, sscratch</code></strong> - retrieve the user's original <code>a0</code> from <code>sscratch</code></li>
+<li><strong><code>sd t0, 112(a0)</code></strong> - store user's <code>a0</code> at trapframe offset 112</li>
+<li><strong><code>ld sp, 8(a0)</code></strong> - load kernel stack from trapframe</li>
+<li><strong><code>ld tp, 32(a0)</code></strong> - load CPU ID (hartid)</li>
+<li><strong><code>ld t0, 24(a0)</code></strong> - load <code>usertrap()</code> address</li>
+<li><strong><code>jr t0</code></strong> - jump to C code - now we have a valid stack!</li>
+</ol>
+</div>
+<div class="block note">
+<h4>Why assembly?</h4>
+<p>At this point there is <strong>no valid stack</strong> and <strong>no C runtime</strong>. Every instruction must be hand-written assembly that doesn't rely on <code>sp</code> or callee-saved registers.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: THE SSCRATCH TRICK -->
+<div class="slide">
+<h2 class="st">The sscratch Trick</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"You have one free hand (<code>a0</code>) but need to carry two things: the user's <code>a0</code> and the TRAPFRAME address. So you stash user's <code>a0</code> in your pocket (<code>sscratch</code>), grab TRAPFRAME, then pull user's <code>a0</code> out and store it properly."</p>
+</div>
+<div class="block ok">
+<h4>The problem</h4>
+<p>When <code>uservec</code> starts, <code>a0</code> holds a <strong>user value</strong> that must be saved. But to save anything, we need the TRAPFRAME address as a base pointer - and the only register we can freely clobber is <code>a0</code>.</p>
+</div>
+<div class="block warn">
+<h4>The solution: sscratch</h4>
+<p>Before returning to user mode, the kernel sets <code>sscratch = TRAPFRAME address</code>. On the next trap, <code>csrw sscratch, a0</code> <strong>swaps</strong> <code>a0</code> and <code>sscratch</code> in one atomic step.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="min-height:300px">
+<svg class="clean-svg" viewBox="0 0 480 360" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar2" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<text class="cl-label" x="20" y="30">Before trap (kernel set up sscratch)</text>
+<rect class="cl-aad" height="40" rx="8" width="180" x="30" y="40"/>
+<text class="cl-title" x="120" y="60">sscratch = TRAPFRAME</text>
+<rect class="cl-data" height="40" rx="8" width="180" x="270" y="40"/>
+<text class="cl-title" x="360" y="60">a0 = user value</text>
+<text class="cl-small" style="text-anchor:middle;fill:#ef4444" x="240" y="100">csrw sscratch, a0  <- swap!</text>
+<path class="cl-arr" d="M270 80 H210" marker-end="url(#ar2)"/>
+<path class="cl-arr" d="M210 80 H270" marker-end="url(#ar2)"/>
+<text class="cl-label" x="20" y="140">After swap</text>
+<rect class="cl-data" height="40" rx="8" width="180" x="30" y="150"/>
+<text class="cl-title" x="120" y="170">sscratch = user value</text>
+<rect class="cl-aad" height="40" rx="8" width="180" x="270" y="150"/>
+<text class="cl-title" x="360" y="170">a0 = TRAPFRAME</text>
+<text class="cl-small" style="text-anchor:middle;fill:#10b981" x="240" y="210">Now a0 is the base pointer for saving</text>
+<rect fill="#f0fff8" height="36" rx="8" stroke="#10b981" width="420" x="30" y="240"/>
+<text class="cl-title" style="font-size:11px;fill:#065f46" x="240" y="258">csrr t0, sscratch -> retrieve user's a0 -> sd t0, 112(a0)</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>The Trapframe</h2>
+<p>struct trapframe . field layout . what gets saved</p>
+</div>
+
+<!-- SLIDE 15: STRUCT TRAPFRAME -->
+<div class="slide">
+<h2 class="st">struct trapframe (from proc.h)</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct trapframe {
+  /*   0 */ uint64 kernel_satp;   // kernel page table
+  /*   8 */ uint64 kernel_sp;     // kernel stack top
+  /*  16 */ uint64 kernel_trap;  // usertrap() address
+  /*  24 */ uint64 epc;           // user PC
+  /*  32 */ uint64 kernel_hartid; // CPU ID
+  /*  40 */ uint64 ra;
+  /*  48 */ uint64 sp;
+  /*  56 */ uint64 gp;
+  /*  64 */ uint64 tp;
+  /*  72 */ uint64 t0;
+  /*  80 */ uint64 t1;
+  /*  88 */ uint64 t2;
+  /*  96 */ uint64 s0;
+  /* 104 */ uint64 s1;
+  /* 112 */ uint64 a0;
+  /* 120 */ uint64 a1;
+  /* 128 */ uint64 a2;
+  /* 136 */ uint64 a3;
+  /* 144 */ uint64 a4;
+  /* 152 */ uint64 a5;
+  /* 160 */ uint64 a6;
+  /* 168 */ uint64 a7;
+  /* 176 */ uint64 s2;
+  /* 184 */ uint64 s3;
+  /* 192 */ uint64 s4;
+  /* 200 */ uint64 s5;
+  /* 208 */ uint64 s6;
+  /* 216 */ uint64 s7;
+  /* 224 */ uint64 s8;
+  /* 232 */ uint64 s9;
+  /* 240 */ uint64 s10;
+  /* 248 */ uint64 s11;
+  /* 256 */ uint64 t3;
+  /* 264 */ uint64 t4;
+  /* 272 */ uint64 t5;
+  /* 280 */ uint64 t6;
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Two kinds of fields</h4>
+<p><strong>Kernel fields</strong> (offsets 0-32): filled by <code>usertrapret()</code> before returning to user. Used by <code>uservec</code> on the <em>next</em> trap to set up the kernel environment.</p>
+<p><strong>User fields</strong> (offsets 40-280): saved by <code>uservec</code> on trap entry, restored by <code>userret</code> on trap exit. These are the 32 user registers.</p>
+</div>
+<div class="block note">
+<h4>One trapframe per process</h4>
+<p>Each process has a <code>struct trapframe</code> allocated in its <code>proc</code> struct. The address is stored in <code>sscratch</code> when the process is running, so <code>uservec</code> can find it instantly.</p>
+</div>
+<div class="block warn">
+<h4>Offset 112 = a0</h4>
+<p>This is why <code>uservec</code> does <code>sd t0, 112(a0)</code> - offset 112 is where <code>a0</code> lives in the trapframe. The user's <code>a0</code> was temporarily in <code>sscratch</code> and is now stored properly.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: TRAPFRAME FIELDS -->
+<div class="slide">
+<h2 class="st">Trapframe Fields</h2>
+<table class="tbl">
+<tr><th>Field</th><th>Offset</th><th>Purpose</th><th>Set by</th></tr>
+<tr><td><code>kernel_satp</code></td><td>0</td><td>Kernel page table - <code>uservec</code> switches to this on trap</td><td><code>usertrapret()</code></td></tr>
+<tr><td><code>kernel_sp</code></td><td>8</td><td>Kernel stack top - <code>uservec</code> loads this into <code>sp</code></td><td><code>usertrapret()</code></td></tr>
+<tr><td><code>kernel_trap</code></td><td>16</td><td>Address of <code>usertrap()</code> - <code>uservec</code> jumps here</td><td><code>usertrapret()</code></td></tr>
+<tr><td><code>epc</code></td><td>24</td><td>User PC - saved from <code>sepc</code>, restored on <code>sret</code></td><td><code>usertrap()</code></td></tr>
+<tr><td><code>kernel_hartid</code></td><td>32</td><td>CPU ID - <code>uservec</code> loads into <code>tp</code></td><td><code>usertrapret()</code></td></tr>
+<tr><td><code>ra</code></td><td>40</td><td>User register <code>ra</code> (x1)</td><td><code>uservec</code></td></tr>
+<tr><td><code>sp</code></td><td>48</td><td>User register <code>sp</code> (x2)</td><td><code>uservec</code></td></tr>
+<tr><td><code>gp</code>-<code>t6</code></td><td>56-280</td><td>All remaining user registers (x3-x31)</td><td><code>uservec</code></td></tr>
+</table>
+<div class="block note" style="margin-top:8px">
+<h4>usertrapret() fills kernel fields</h4>
+<p>Before returning to user mode, <code>usertrapret()</code> writes <code>kernel_satp</code>, <code>kernel_sp</code>, <code>kernel_trap</code>, and <code>kernel_hartid</code> into the trapframe. This ensures the <em>next</em> trap can immediately find the kernel environment without any C code.</p>
+</div>
+</div>
+
+<!-- SLIDE 17: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>usertrap() - The C Handler</h2>
+<p>Dispatch by scause . usertrapret</p>
+</div>
+
+<!-- SLIDE 18: USERTRAP CODE -->
+<div class="slide">
+<h2 class="st">usertrap() Code</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>From trap.c (simplified)</h4>
+</div>
+<pre><code class="language-c">uint64 usertrap(void) {
+  if ((r_sstatus() & SSTATUS_SPP) != 0)
+    panic("not from user mode");
+  w_stvec((uint64)kernelvec);
+  struct proc *p = myproc();
+  p->trapframe->epc = r_sepc();
+  if (r_scause() == 8) {        // syscall
+    if (killed(p)) kexit(-1);
+    p->trapframe->epc += 4;     // skip ecall
+    intr_on();
+    syscall();
+  } else if ((which_dev = devintr()) != 0) {
+    // device interrupt
+  } else if ((r_scause()==15 ||
+             r_scause()==13) &&
+             vmfault(...) != 0) {
+    // page fault (lazy alloc)
+  } else {
+    setkilled(p);  // unexpected: kill
+  }
+  if (killed(p)) kexit(-1);
+  if (which_dev == 2) yield();  // timer
+  usertrapret();
+  return MAKE_SATP(p->pagetable);
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What usertrap does</h4>
+<ol>
+<li><strong>Verify</strong> we came from user mode (check <code>SPP</code>)</li>
+<li><strong>Redirect</strong> kernel traps to <code>kernelvec</code></li>
+<li><strong>Save</strong> user PC from <code>sepc</code> into trapframe</li>
+<li><strong>Dispatch</strong> by <code>scause</code>:
+  <ul>
+    <li><code>8</code> -> system call</li>
+    <li>device -> <code>devintr()</code></li>
+    <li><code>13/15</code> -> page fault</li>
+    <li>else -> kill process</li>
+  </ul>
+</li>
+<li><strong>Yield</strong> on timer interrupt</li>
+<li><strong>usertrapret()</strong> - set up for return</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Engineering note: epc += 4</h4>
+<p><code>sepc</code> points at the <code>ecall</code> instruction itself. We want to return to the <strong>next</strong> instruction, so we add 4 (size of one instruction). Without this, the process would re-execute <code>ecall</code> forever.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 19: USERTRAP KEY STEPS -->
+<div class="slide">
+<h2 class="st">usertrap Key Steps</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>1. Verify from user mode</h4>
+<p>Check <code>sstatus.SPP</code>. If the trap came from S-mode (kernel), something is very wrong - <code>panic()</code>. <code>usertrap</code> only handles user traps.</p>
+</div>
+<div class="block">
+<h4>2. Redirect traps to kernelvec</h4>
+<p>Set <code>stvec = kernelvec</code>. Now if a trap happens <em>while in the kernel</em>, it goes to <code>kerneltrap</code> instead of <code>uservec</code>. This prevents infinite recursion.</p>
+</div>
+<div class="block">
+<h4>3. Save user PC</h4>
+<p><code>p->trapframe->epc = r_sepc()</code> - the hardware saved the user PC in <code>sepc</code>; we copy it into the trapframe so it survives across C function calls.</p>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>4. Dispatch by scause</h4>
+<table class="tbl" style="margin-top:4px">
+<tr><th>scause</th><th>Action</th></tr>
+<tr><td>8</td><td>System call -> <code>syscall()</code></td></tr>
+<tr><td>device</td><td><code>devintr()</code> handles it</td></tr>
+<tr><td>13 / 15</td><td>Page fault -> <code>vmfault()</code></td></tr>
+<tr><td>other</td><td><code>setkilled(p)</code> - kill process</td></tr>
+</table>
+</div>
+<div class="block warn">
+<h4>5. Yield on timer</h4>
+<p>If <code>which_dev == 2</code> (timer interrupt), call <code>yield()</code> to give another process a turn. This is the heart of preemptive scheduling.</p>
+</div>
+<div class="block ok">
+<h4>6. usertrapret()</h4>
+<p>Fill kernel fields in trapframe, set <code>sstatus</code> and <code>sepc</code> for the return to user. Then return the user page table address so <code>userret</code> can switch <code>satp</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: USERTRAPRET -->
+<div class="slide">
+<h2 class="st">usertrapret()</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>What it does</h4>
+<p>Sets up the trapframe for the <strong>next</strong> trap and configures CPU state for return to user mode.</p>
+</div>
+<div class="mono-box">
+<span class="hl">// Fill kernel fields in trapframe</span><br/>
+tf->kernel_satp = r_satp();<br/>
+tf->kernel_sp = p->kstack + PGSIZE;<br/>
+tf->kernel_trap = (uint64)usertrap;<br/>
+tf->kernel_hartid = r_tp();<br/>
+<br/>
+<span class="hl">// Set sstatus for user return</span><br/>
+<span class="g">// clear SPP -> return to U-mode</span><br/>
+w_sstatus(r_sstatus() & ~SSTATUS_SPP);<br/>
+<span class="g">// set SPIE -> enable interrupts</span><br/>
+w_sstatus(r_sstatus() | SSTATUS_SPIE);<br/>
+<br/>
+<span class="hl">// Set return PC</span><br/>
+w_sepc(tf->epc);
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>Kernel fields</h4>
+<ul>
+<li><code>kernel_satp</code> - current kernel page table</li>
+<li><code>kernel_sp</code> - top of this process's kernel stack</li>
+<li><code>kernel_trap</code> - address of <code>usertrap()</code></li>
+<li><code>kernel_hartid</code> - current CPU ID</li>
+</ul>
+<p>These are read by <code>uservec</code> on the <em>next</em> trap to set up the kernel environment instantly.</p>
+</div>
+<div class="block warn">
+<h4>sstatus manipulation</h4>
+<p><strong>Clear SPP</strong> -> <code>sret</code> will return to U-mode. <strong>Set SPIE</strong> -> interrupts will be enabled after <code>sret</code>.</p>
+</div>
+<div class="block note">
+<h4>sepc = trapframe->epc</h4>
+<p>The user PC (possibly advanced by +4 for syscalls) is written back to <code>sepc</code>. When <code>userret</code> executes <code>sret</code>, the CPU loads <code>PC = sepc</code> and the user resumes.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: SECTION 6 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 6</p>
+<h2>System Call Dispatch</h2>
+<p>User stubs . kernel dispatch table . argument passing</p>
+</div>
+
+<!-- SLIDE 22: USER-SIDE STUBS -->
+<div class="slide">
+<h2 class="st">User-Side Stubs (usys.pl)</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Generated by usys.pl</h4>
+<p>The file <code>usys.pl</code> is a Perl script that generates assembly stubs for every system call. Each stub follows the same pattern:</p>
+</div>
+<pre><code class="language-asm">.global fork
+fork:
+    li a7, SYS_fork    # syscall number
+    ecall               # trap to kernel
+    ret                 # return to caller</code></pre>
+<pre><code class="language-asm">.global write
+write:
+    li a7, SYS_write   # syscall number
+    ecall               # trap to kernel
+    ret                 # return to caller</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What the stub does</h4>
+<ol>
+<li><strong><code>li a7, SYS_xxx</code></strong> - load the syscall number into <code>a7</code>. The kernel reads this to know which syscall is requested.</li>
+<li><strong><code>ecall</code></strong> - trap into the kernel. The CPU switches to S-mode and jumps to <code>uservec</code>.</li>
+<li><strong><code>ret</code></strong> - after the kernel returns (via <code>userret</code> + <code>sret</code>), <code>a0</code> holds the return value. <code>ret</code> jumps back to the C caller.</li>
+</ol>
+</div>
+<div class="block note">
+<h4>Arguments already in place</h4>
+<p>The C calling convention already put arguments in <code>a0</code>-<code>a5</code>. The stub doesn't need to move them - the kernel reads them directly from the trapframe.</p>
+</div>
+<div class="block warn">
+<h4>Return value in a0</h4>
+<p>The kernel writes the return value into <code>trapframe->a0</code>. When <code>userret</code> restores registers, <code>a0</code> holds the result - exactly where the C caller expects it.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 23: KERNEL-SIDE DISPATCH -->
+<div class="slide">
+<h2 class="st">Kernel-Side Dispatch (syscall.c)</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>From syscall.c</h4>
+</div>
+<pre><code class="language-c">static uint64 (*syscalls[])(void) = {
+  [SYS_fork]   sys_fork,
+  [SYS_exit]   sys_exit,
+  [SYS_read]   sys_read,
+  [SYS_write]  sys_write,
+  // ... 22 total
+};
+
+void syscall(void) {
+  int num = myproc()->trapframe->a7;
+  if (num > 0 && num < NELEM(syscalls)
+      && syscalls[num])
+    myproc()->trapframe->a0 =
+      syscalls[num]();
+  else
+    myproc()->trapframe->a0 = -1;
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>How dispatch works</h4>
+<ol>
+<li><strong>Read syscall number</strong> from <code>trapframe->a7</code> - this is the value the user stub put there before <code>ecall</code>.</li>
+<li><strong>Bounds check</strong> - verify <code>num</code> is within the table and the slot is non-NULL.</li>
+<li><strong>Call the handler</strong> - <code>syscalls[num]()</code> invokes the corresponding kernel function (e.g., <code>sys_fork()</code>).</li>
+<li><strong>Store return value</strong> - write the result into <code>trapframe->a0</code>, which <code>userret</code> will restore into the user's <code>a0</code>.</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Invalid syscall number</h4>
+<p>If <code>num</code> is out of range or the slot is NULL, <code>trapframe->a0 = -1</code>. The user gets <code>-1</code> as the return value - the standard error indicator.</p>
+</div>
+<div class="block note">
+<h4>Function pointer table</h4>
+<p>The <code>syscalls[]</code> array is indexed by syscall number. Each entry is a function pointer to the implementation. This is a classic <strong>O(1) dispatch</strong> - no switch statement needed.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: SYSCALL NUMBERS -->
+<div class="slide">
+<h2 class="st">Syscall Numbers (from syscall.h)</h2>
+<table class="tbl">
+<tr><th>#</th><th>Constant</th><th>Syscall</th><th>#</th><th>Constant</th><th>Syscall</th></tr>
+<tr><td>1</td><td><code>SYS_fork</code></td><td>Create child process</td><td>12</td><td><code>SYS_sbrk</code></td><td>Grow memory</td></tr>
+<tr><td>2</td><td><code>SYS_exit</code></td><td>Terminate process</td><td>13</td><td><code>SYS_pause</code></td><td>Pause execution</td></tr>
+<tr><td>3</td><td><code>SYS_wait</code></td><td>Wait for child</td><td>14</td><td><code>SYS_uptime</code></td><td>Get uptime</td></tr>
+<tr><td>4</td><td><code>SYS_pipe</code></td><td>Create pipe</td><td>15</td><td><code>SYS_open</code></td><td>Open file</td></tr>
+<tr><td>5</td><td><code>SYS_read</code></td><td>Read from fd</td><td>16</td><td><code>SYS_write</code></td><td>Write to fd</td></tr>
+<tr><td>6</td><td><code>SYS_kill</code></td><td>Send signal</td><td>17</td><td><code>SYS_mknod</code></td><td>Create device node</td></tr>
+<tr><td>7</td><td><code>SYS_exec</code></td><td>Execute program</td><td>18</td><td><code>SYS_unlink</code></td><td>Remove file</td></tr>
+<tr><td>8</td><td><code>SYS_fstat</code></td><td>File status</td><td>19</td><td><code>SYS_link</code></td><td>Create hard link</td></tr>
+<tr><td>9</td><td><code>SYS_chdir</code></td><td>Change directory</td><td>20</td><td><code>SYS_mkdir</code></td><td>Create directory</td></tr>
+<tr><td>10</td><td><code>SYS_dup</code></td><td>Duplicate fd</td><td>21</td><td><code>SYS_close</code></td><td>Close fd</td></tr>
+<tr><td>11</td><td><code>SYS_getpid</code></td><td>Get process ID</td><td>22</td><td><code>SYS_sync</code></td><td>Flush all FS</td></tr>
+</table>
+<div class="block note" style="margin-top:8px">
+<h4>22 system calls total</h4>
+<p>Each number maps to a <code>sys_*</code> function in the <code>syscalls[]</code> dispatch table. The user stub puts the number in <code>a7</code>; the kernel reads it and dispatches.</p>
+</div>
+</div>
+
+<!-- SLIDE 25: ARGUMENT PASSING -->
+<div class="slide">
+<h2 class="st">Argument Passing</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Convention</h4>
+<ul>
+<li><strong>Syscall number</strong> -> <code>a7</code></li>
+<li><strong>Arguments</strong> -> <code>a0</code>-<code>a5</code> (up to 6 arguments)</li>
+<li><strong>Return value</strong> -> <code>a0</code></li>
+</ul>
+<p>The user stub doesn't move arguments - the C calling convention already placed them in <code>a0</code>-<code>a5</code>. The kernel reads them from the trapframe.</p>
+</div>
+<div class="block">
+<h4>Kernel-side accessors</h4>
+<p>Inside <code>sys_*</code> functions, the kernel uses helper functions to read arguments from the trapframe:</p>
+<table class="tbl" style="margin-top:4px">
+<tr><th>Function</th><th>Reads</th><th>Returns</th></tr>
+<tr><td><code>argint(n)</code></td><td><code>trapframe->a0 + n</code></td><td><code>int</code></td></tr>
+<tr><td><code>argaddr(n)</code></td><td>same</td><td><code>uint64</code> (pointer)</td></tr>
+<tr><td><code>argstr(n)</code></td><td>same</td><td>validated string</td></tr>
+</table>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>argint(n) - how it works</h4>
+<pre><code class="language-c" style="font-size:clamp(9px,.8vw,12px)">int
+argint(int n)
+{
+  return *(
+    int*)(myproc()->
+      trapframe->a0 + n);
+}</code></pre>
+<p>Wait - that's not quite right. Actually, <code>argint(n)</code> reads the <code>n</code>-th argument from the trapframe's argument registers:</p>
+<pre><code class="language-c" style="font-size:clamp(9px,.8vw,12px)">int
+argint(int n)
+{
+  struct trapframe *tf =
+    myproc()->trapframe;
+  switch (n) {
+    case 0: return tf->a0;
+    case 1: return tf->a1;
+    case 2: return tf->a2;
+    // ... a3-a5
+  }
+}</code></pre>
+</div>
+<div class="block note">
+<h4>Validation is critical</h4>
+<p><code>argaddr(n)</code> returns a user pointer, but the kernel must <strong>validate</strong> it before dereferencing. Functions like <code>copyin()</code> / <code>copyout()</code> safely copy data across the user/kernel boundary, checking that the address is within the process's legal memory.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 26: SECTION 7 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 7</p>
+<h2>Return to User</h2>
+<p>userret . kerneltrap</p>
+</div>
+
+<!-- SLIDE 27: USERRET -->
+<div class="slide">
+<h2 class="st">userret (trampoline.S)</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>From trampoline.S (simplified)</h4>
+</div>
+<pre><code class="language-asm">userret:
+    # a0 = TRAPFRAME addr
+    # a1 = user page table (satp)
+
+    # flush instruction cache
+    sfence.vma zero, zero
+
+    # switch to user page table
+    csrw satp, a1
+    sfence.vma zero, zero
+
+    # restore user a0 LAST
+    ld a0, 112(a0)   # a0 = user's a0
+
+    # restore all 32 user regs
+    ld ra, 40(a0)    # ... wait, a0 changed!
+    # (actual code uses t0 as temp)
+
+    sret             # PC=sepc, mode=U</code></pre>
+<div class="block warn">
+<h4>Actual order matters</h4>
+<p>The real <code>userret</code> restores <code>a0</code> <strong>last</strong>, because once <code>a0</code> is overwritten with the user value, it can no longer be used as the trapframe base pointer. All other registers are restored first using <code>a0</code> as base.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="min-height:280px">
+<svg class="clean-svg" viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar3" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<text class="cl-label" x="20" y="30">Return path: kernel -> user</text>
+<g data-step="1">
+<rect class="cl-aad" height="44" rx="8" width="300" x="90" y="40"/>
+<text class="cl-title" x="240" y="62">usertrap() returns</text>
+</g>
+<g data-step="2">
+<path class="cl-arr" d="M240 84 V100" marker-end="url(#ar3)"/>
+<rect class="cl-data" height="44" rx="8" width="300" x="90" y="100"/>
+<text class="cl-title" x="240" y="122">userret (trampoline.S)</text>
+</g>
+<g data-step="3">
+<path class="cl-arr" d="M240 144 V160" marker-end="url(#ar3)"/>
+<rect class="cl-key" height="44" rx="8" width="300" x="90" y="160"/>
+<text class="cl-title" x="240" y="182">sfence + switch satp -> user PT</text>
+</g>
+<g data-step="4">
+<path class="cl-arr" d="M240 204 V220" marker-end="url(#ar3)"/>
+<rect class="cl-data" height="44" rx="8" width="300" x="90" y="220"/>
+<text class="cl-title" x="240" y="242">restore 31 regs (a0 last)</text>
+</g>
+<g data-step="5">
+<path class="cl-arr" d="M240 264 V280" marker-end="url(#ar3)"/>
+<rect class="cl-final" height="44" rx="8" width="300" x="90" y="280"/>
+<text class="cl-title" style="fill:#fff" x="240" y="302">sret -> PC=sepc, U-mode</text>
+</g>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 28: KERNELTRAP -->
+<div class="slide">
+<h2 class="st">kerneltrap()</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Traps FROM kernel mode</h4>
+<p>While the kernel is running (in S-mode), traps can still occur - timer interrupts, device interrupts, or (buggy) exceptions. These are handled by <code>kerneltrap()</code>, not <code>usertrap()</code>.</p>
+</div>
+<div class="block">
+<h4>What kerneltrap does</h4>
+<ol>
+<li><strong>Save</strong> <code>sepc</code>, <code>sstatus</code>, <code>scause</code> - the kernel may call C functions that modify these CSRs.</li>
+<li><strong>Call</strong> <code>devintr()</code> to check if it's a device interrupt.</li>
+<li>If <strong>device</strong>: handle it (timer -> <code>yield()</code> if <code>myproc() != 0</code>).</li>
+<li>If <strong>not a device interrupt</strong>: <code>panic()</code> - the kernel should never fault.</li>
+<li><strong>Restore</strong> <code>sepc</code>, <code>sstatus</code>, <code>scause</code>.</li>
+</ol>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>Why kernel traps are simpler</h4>
+<p>No need to save all 32 registers - the compiler already saved callee-saved registers at the call site. No page table switch - the kernel is already using the kernel page table. No stack switch - already on the kernel stack.</p>
+</div>
+<div class="block note">
+<h4>Timer interrupt -> yield()</h4>
+<p>When a timer interrupt fires while in kernel mode, <code>kerneltrap</code> calls <code>yield()</code> <em>only if</em> <code>myproc() != 0</code> - i.e., if there is a current process. The scheduler itself (no current process) should not yield.</p>
+</div>
+<div class="block warn">
+<h4>panic on unexpected traps</h4>
+<p>If the kernel hits a page fault or illegal instruction, that's a <strong>kernel bug</strong>. There's no safe recovery - <code>panic()</code> halts the system and prints a message. This is by design: kernel bugs must be found, not hidden.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 29: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key Takeaways</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="tiles tiles-2">
+<div class="tile b">
+<h4><i class="fas fa-door-closed"></i> Traps are the only door</h4>
+<p>User -> kernel transition is <strong>hardware-enforced</strong>. <code>ecall</code> is the only way in. The kernel controls the entry point (<code>stvec</code>), the dispatch (<code>scause</code>), and the return (<code>sret</code>).</p>
+</div>
+<div class="tile g">
+<h4><i class="fas fa-exchange-alt"></i> Trampoline = airlock</h4>
+<p>One page, same address in both page tables. <code>uservec</code> saves user state and enters the kernel; <code>userret</code> restores user state and exits. No PTE_U - user can't enter directly.</p>
+</div>
+<div class="tile o">
+<h4><i class="fas fa-database"></i> Trapframe = saved state</h4>
+<p>32 user registers + kernel environment fields. <code>uservec</code> saves, <code>userret</code> restores. <code>usertrapret()</code> pre-fills kernel fields for the next trap.</p>
+</div>
+<div class="tile r">
+<h4><i class="fas fa-cogs"></i> Syscall dispatch = O(1) table</h4>
+<p>User stub puts number in <code>a7</code>, args in <code>a0</code>-<code>a5</code>. Kernel reads <code>a7</code>, indexes into <code>syscalls[]</code>, calls handler, returns result in <code>a0</code>.</p>
+</div>
+</div>
+<div class="block note" style="margin-top:14px">
+<h4>What to do next</h4>
+<p>Open <code>trampoline.S</code>, <code>trap.c</code>, and <code>syscall.c</code> in xv6. Trace a <code>write()</code> call from user stub through <code>ecall</code> -> <code>uservec</code> -> <code>usertrap</code> -> <code>sys_write</code> -> <code>userret</code> -> <code>sret</code>. You now have every concept needed.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 30: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;overflow:auto">
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv - trap.c</h4>
+<p>Kernel trap handler: <code>usertrap()</code>, <code>kerneltrap()</code>, <code>usertrapret()</code>. The C-level dispatch and return logic. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/trap.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/trap.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv - trampoline.S</h4>
+<p>Assembly trap entry (<code>uservec</code>) and exit (<code>userret</code>). Saves/restores all 32 user registers via the trapframe. The airlock between user and kernel. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/trampoline.S" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/trampoline.S</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv - syscall.c &amp; syscall.h</h4>
+<p>System call dispatch table, <code>syscall()</code> function, argument accessors (<code>argint</code>, <code>argaddr</code>, <code>argstr</code>), and syscall number definitions. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/syscall.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/syscall.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv - proc.h</h4>
+<p>Definition of <code>struct trapframe</code> with all field offsets, and <code>struct proc</code> showing where the trapframe lives per-process. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/proc.h" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/proc.h</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">SPEC</div>
+<div>
+<h4>RISC-V Instruction Set Manual - Volume II: Privileged ISA</h4>
+<p>Authoritative reference for <code>ecall</code>, <code>sret</code>, CSRs (<code>sstatus</code>, <code>sepc</code>, <code>scause</code>, <code>stvec</code>, <code>satp</code>, <code>sscratch</code>), and the trap mechanism. <a href="https://riscv.org/technical/specifications/" style="color:var(--blue)">riscv.org/technical/specifications</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">COURSE</div>
+<div>
+<h4>MIT 6.1810 / 6.S081 - Operating Systems</h4>
+<p>xv6 source code, lecture notes on traps and system calls, and lab assignments. The basis for this lecture's code examples. <a href="https://pdos.csail.mit.edu/6.828/2024/xv6.html" style="color:var(--blue)">pdos.csail.mit.edu/6.828</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 30</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L07 TRAPS AND SYSTEM CALLS</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

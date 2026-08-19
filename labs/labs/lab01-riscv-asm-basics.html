@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 01 - RISC-V Assembly Basics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Lab 01: RISC-V Basics</h1>
+    <a class="subtitle" href="../main.html">VGU Operating Systems</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Labs</div>
+      <a class="nav-item active" href="lab01-riscv-asm-basics.html"><span class="nav-num">01</span>RISC-V Basics</a>
+      <a class="nav-item" href="lab02-riscv-stack-frames.html"><span class="nav-num">02</span>Stack Frames</a>
+      <a class="nav-item" href="lab03-x86-64-asm.html"><span class="nav-num">03</span>x86-64 ASM</a>
+      <a class="nav-item" href="lab04-arm64-asm.html"><span class="nav-num">04</span>ARM64 ASM</a>
+      <a class="nav-item" href="lab05-cross-isa-comparison.html"><span class="nav-num">05</span>Cross-ISA</a>
+      <a class="nav-item" href="lab06-c-to-asm-explorer.html"><span class="nav-num">06</span>C to ASM</a>
+      <a class="nav-item" href="lab07-os-syscalls-traps.html"><span class="nav-num">07</span>Syscalls & Traps</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Resources</div>
+      <a class="nav-item" href="../handbook/main.html">Handbook</a>
+      <a class="nav-item" href="../simulator/main.html">Simulator</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Lab 01: RISC-V Assembly Basics</h1>
+<p style="color:var(--text-dim);font-size:14px">Write and run your first RISC-V assembly programs. Learn registers, arithmetic, memory, control flow, and function calls.</p>
+
+<div class="divider"></div>
+
+<h2>Objectives</h2>
+<ul>
+<li>Write and execute RISC-V assembly programs using the <a href="../simulator/main.html">simulator</a></li>
+<li>Use the 32 general-purpose registers (<span class="code-inline">x0</span>-<span class="code-inline">x31</span>) and the RISC-V calling convention</li>
+<li>Perform load/store operations with <span class="code-inline">ld</span>/<span class="code-inline">sd</span> and arithmetic with <span class="code-inline">add</span>, <span class="code-inline">sub</span>, <span class="code-inline">mul</span></li>
+<li>Implement loops and branches using <span class="code-inline">bge</span>, <span class="code-inline">beq</span>, <span class="code-inline">j</span></li>
+<li>Write and call functions using <span class="code-inline">call</span>/<span class="code-inline">ret</span> and the <span class="code-inline">ra</span> register</li>
+<li>Read and understand compiler-generated assembly from C source code</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+<li>Basic familiarity with the C programming language</li>
+<li>Understanding of binary and hexadecimal number representation</li>
+<li>Complete the <a href="../handbook/main.html">Assembly Handbook</a> chapters 1-7 (Foundations + RISC-V)</li>
+<li>Open the <a href="../simulator/main.html">RISC-V Simulator</a> in a browser tab</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title"> Quick Reference</div>
+RISC-V has 32 registers named <code>x0</code> through <code>x31</code>. Register <code>x0</code> is always zero. The ABI names are: <code>ra</code> (x1), <code>sp</code> (x2), <code>a0-a7</code> (x10-x17) for arguments, <code>t0-t6</code> for temporaries, and <code>s0-s11</code> for saved registers.
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== EXERCISE 1 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 1: Hello RISC-V - Compile C, Read Assembly</span>
+</div>
+<p>Start by writing a simple C program, compiling it to RISC-V assembly, and reading the output. This builds the mental model of what the compiler does.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Open the simulator</div>
+<p>Navigate to <a href="../simulator/main.html">../simulator/main.html</a> in your browser. You will see a code editor on the left and an output panel on the right.</p>
+</div>
+<div class="step">
+<div class="step-title">Enter the following C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">main</span>() {
+    <span class="keyword">int</span> a = <span class="number">10</span>;
+    <span class="keyword">int</span> b = <span class="number">20</span>;
+    <span class="keyword">int</span> c = a + b;
+    <span class="keyword">return</span> c;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile and observe the assembly</div>
+<p>Click the <span class="kbd">Compile</span> button. The simulator will display the generated RISC-V assembly. Look for the <span class="code-inline">main</span> label.</p>
+</div>
+<div class="step">
+<div class="step-title">Identify key instructions</div>
+<p>Find and note down each of these in the output:</p>
+<ul>
+<li>The <span class="code-inline">li</span> (load immediate) instruction that sets <span class="code-inline">a0</span> to 10</li>
+<li>The <span class="code-inline">add</span> instruction that computes <span class="code-inline">a0 + a1</span> or similar</li>
+<li>The <span class="code-inline">ret</span> instruction at the end of <span class="code-inline">main</span></li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Run the program</div>
+<p>Click <span class="kbd">Run</span>. The return value (30) should appear in the output panel as the exit code in <span class="code-inline">a0</span>.</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">What to Notice</div>
+The compiler may optimize away variables <code>a</code> and <code>b</code> and just do <code>li a0, 30</code>. Try compiling with <code>-O0</code> (no optimization) to see the full variable storage on the stack.
+</div>
+</div>
+
+<!-- ===== EXERCISE 2 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 2: Register Basics - li, mv, add</span>
+</div>
+<p>Write raw RISC-V assembly that adds 10 and 20 using registers. This teaches you the fundamental register-move and arithmetic instructions.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Switch to assembly mode</div>
+<p>In the simulator, select <span class="code-inline">Assembly</span> mode from the language dropdown.</p>
+</div>
+<div class="step">
+<div class="step-title">Enter this assembly code</div>
+<div class="code-block"><span class="label">main:</span>
+    <span class="keyword">li</span>   <span class="reg">a0</span>, <span class="number">10</span>        <span class="comment"># Load immediate 10 into a0</span>
+    <span class="keyword">li</span>   <span class="reg">a1</span>, <span class="number">20</span>        <span class="comment"># Load immediate 20 into a1</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>    <span class="comment"># a0 = a0 + a1 = 30</span>
+    <span class="keyword">ret</span>                <span class="comment"># Return (a0 holds the result)</span></div>
+</div>
+<div class="step">
+<div class="step-title">Run and verify</div>
+<p>Click <span class="kbd">Run</span>. The exit code should be <strong>30</strong> (0x1E).</p>
+</div>
+<div class="step">
+<div class="step-title">Experiment with mv</div>
+<p>Modify the program to use <span class="code-inline">mv</span> to copy a value between registers:</p>
+<div class="code-block"><span class="label">main:</span>
+    <span class="keyword">li</span>   <span class="reg">t0</span>, <span class="number">42</span>
+    <span class="keyword">mv</span>   <span class="reg">a0</span>, <span class="reg">t0</span>      <span class="comment"># a0 = t0 (copy)</span>
+    <span class="keyword">ret</span></div>
+<p>Run it - the exit code should be <strong>42</strong>.</p>
+</div>
+<div class="step">
+<div class="step-title">Try subtraction and multiplication</div>
+<p>Replace <span class="code-inline">add</span> with <span class="code-inline">sub</span> (subtract) and then <span class="code-inline">mul</span> (multiply). Verify the results:</p>
+<ul>
+<li><span class="code-inline">sub a0, a1, a0</span> -> 20 - 10 = <strong>10</strong></li>
+<li><span class="code-inline">mul a0, a0, a1</span> -> 10 x 20 = <strong>200</strong></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 3 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 3: Load/Store - sd and ld</span>
+</div>
+<p>Learn how to store data to memory (the stack) and load it back. This is essential for understanding how local variables work.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Understand the stack pointer</div>
+<p>The stack pointer <span class="code-inline">sp</span> (<span class="code-inline">x2</span>) points to the top of the stack. We allocate stack space by subtracting from <span class="code-inline">sp</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Enter this store-and-load program</div>
+<div class="code-block"><span class="label">main:</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>   <span class="comment"># Allocate 16 bytes on stack</span>
+    <span class="keyword">li</span>   <span class="reg">t0</span>, <span class="number">42</span>        <span class="comment"># Load value 42 into t0</span>
+    <span class="keyword">sd</span>   <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">sp</span>)      <span class="comment"># Store t0 (8 bytes) at sp+0</span>
+    <span class="keyword">ld</span>   <span class="reg">a0</span>, <span class="number">0</span>(<span class="reg">sp</span>)      <span class="comment"># Load it back into a0</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">16</span>    <span class="comment"># Restore stack pointer</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Run and verify</div>
+<p>The exit code should be <strong>42</strong>. The value was stored to memory and loaded back.</p>
+</div>
+<div class="step">
+<div class="step-title">Store multiple values</div>
+<p>Modify the program to store two values at different offsets:</p>
+<div class="code-block"><span class="keyword">li</span>   <span class="reg">t0</span>, <span class="number">100</span>
+<span class="keyword">li</span>   <span class="reg">t1</span>, <span class="number">200</span>
+<span class="keyword">sd</span>   <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">sp</span>)     <span class="comment"># Store 100 at offset 0</span>
+<span class="keyword">sd</span>   <span class="reg">t1</span>, <span class="number">8</span>(<span class="reg">sp</span>)     <span class="comment"># Store 200 at offset 8</span>
+<span class="keyword">ld</span>   <span class="reg">a0</span>, <span class="number">8</span>(<span class="reg">sp</span>)     <span class="comment"># Load 200 into a0</span></div>
+<p>Run it - the exit code should be <strong>200</strong>.</p>
+</div>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Important</div>
+<code>sd</code> stores a 64-bit (doubleword) value. For 32-bit, use <code>sw</code> (store word). Always restore <code>sp</code> before returning, or you will corrupt the caller's stack frame.
+</div>
+</div>
+
+<!-- ===== EXERCISE 4 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 4: Loop - Sum 1 to 10</span>
+</div>
+<p>Write a loop that sums the numbers 1 through 10 using branch instructions. This teaches control flow in assembly.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Understand the loop structure</div>
+<p>A loop needs: a counter register, an accumulator register, a comparison, and a conditional branch. We will use:</p>
+<ul>
+<li><span class="code-inline">t0</span> = counter (starts at 1)</li>
+<li><span class="code-inline">t1</span> = limit (10)</li>
+<li><span class="code-inline">t2</span> = accumulator (starts at 0)</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Enter the loop program</div>
+<div class="code-block"><span class="label">main:</span>
+    <span class="keyword">li</span>   <span class="reg">t0</span>, <span class="number">1</span>         <span class="comment"># counter = 1</span>
+    <span class="keyword">li</span>   <span class="reg">t1</span>, <span class="number">10</span>        <span class="comment"># limit = 10</span>
+    <span class="keyword">li</span>   <span class="reg">t2</span>, <span class="number">0</span>         <span class="comment"># sum = 0</span>
+<span class="label">loop:</span>
+    <span class="keyword">add</span>  <span class="reg">t2</span>, <span class="reg">t2</span>, <span class="reg">t0</span>     <span class="comment"># sum += counter</span>
+    <span class="keyword">addi</span> <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="number">1</span>     <span class="comment"># counter++</span>
+    <span class="keyword">ble</span>  <span class="reg">t0</span>, <span class="reg">t1</span>, <span class="label">loop</span>  <span class="comment"># if counter <= 10, loop</span>
+    <span class="keyword">mv</span>   <span class="reg">a0</span>, <span class="reg">t2</span>        <span class="comment"># a0 = sum (return value)</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Run and verify</div>
+<p>The exit code should be <strong>55</strong> (1+2+3+...+10 = 55).</p>
+</div>
+<div class="step">
+<div class="step-title">Trace the execution</div>
+<p>Use the <span class="kbd">Step</span> button in the simulator to execute one instruction at a time. Watch how <span class="code-inline">t0</span> increments and <span class="code-inline">t2</span> accumulates. Count how many times the <span class="code-inline">loop</span> label is reached.</p>
+</div>
+<div class="step">
+<div class="step-title">Modify the limit</div>
+<p>Change the limit from 10 to 100. Run again - the result should be <strong>5050</strong>.</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Branch Instructions</div>
+<ul>
+<li><code>beq</code> - branch if equal</li>
+<li><code>bne</code> - branch if not equal</li>
+<li><code>blt</code> - branch if less than (signed)</li>
+<li><code>bge</code> - branch if greater or equal (signed)</li>
+<li><code>ble</code> - branch if less or equal (signed)</li>
+<li><code>bgt</code> - branch if greater than (signed)</li>
+<li><code>j</code> - unconditional jump</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== EXERCISE 5 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 5: Function Call - call and ret</span>
+</div>
+<p>Write a function <span class="code-inline">add_two</span> that takes two arguments and returns their sum. Call it from <span class="code-inline">main</span>.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Understand the calling convention</div>
+<p>Arguments are passed in <span class="code-inline">a0</span>-<span class="code-inline">a7</span>. Return value goes in <span class="code-inline">a0</span>. The <span class="code-inline">call</span> pseudo-instruction saves the return address in <span class="code-inline">ra</span> and jumps. <span class="code-inline">ret</span> jumps back to <span class="code-inline">ra</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Enter the program</div>
+<div class="code-block"><span class="label">main:</span>
+    <span class="keyword">li</span>   <span class="reg">a0</span>, <span class="number">15</span>        <span class="comment"># First argument</span>
+    <span class="keyword">li</span>   <span class="reg">a1</span>, <span class="number">27</span>        <span class="comment"># Second argument</span>
+    <span class="keyword">call</span> <span class="label">add_two</span>       <span class="comment"># Call function (ra = return addr)</span>
+    <span class="keyword">ret</span>                <span class="comment"># Return from main</span>
+
+<span class="label">add_two:</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>     <span class="comment"># a0 = a0 + a1</span>
+    <span class="keyword">ret</span>                <span class="comment"># Return to caller (ra)</span></div>
+</div>
+<div class="step">
+<div class="step-title">Run and verify</div>
+<p>The exit code should be <strong>42</strong> (15 + 27).</p>
+</div>
+<div class="step">
+<div class="step-title">Add a third function</div>
+<p>Add a <span class="code-inline">triple_add</span> function that takes three arguments and calls <span class="code-inline">add_two</span> internally:</p>
+<div class="code-block"><span class="label">triple_add:</span>
+    <span class="comment"># a0, a1, a2 are the three arguments</span>
+    <span class="comment"># Save a2 because add_two will clobber a0</span>
+    <span class="keyword">mv</span>   <span class="reg">t0</span>, <span class="reg">a2</span>        <span class="comment"># Save a2 in t0</span>
+    <span class="keyword">call</span> <span class="label">add_two</span>       <span class="comment"># a0 = a0 + a1</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">t0</span>     <span class="comment"># a0 = a0 + a2</span>
+    <span class="keyword">ret</span></div>
+<p>Call it with <span class="code-inline">li a0, 10; li a1, 20; li a2, 30; call triple_add</span>. Result should be <strong>60</strong>.</p>
+</div>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Caller-Saved Registers</div>
+Registers <code>a0-a7</code> and <code>t0-t6</code> are <strong>caller-saved</strong>. If you need their values after a <code>call</code>, you must save them yourself (on the stack or in a callee-saved register). Lab 02 covers this in depth.
+</div>
+</div>
+
+<!-- ===== EXERCISE 6 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 6: Read Compiler Output</span>
+</div>
+<p>Compile a C function and identify each instruction the compiler generates. This bridges the gap between C and assembly.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code in the simulator</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">compute</span>(<span class="keyword">int</span> x, <span class="keyword">int</span> y) {
+    <span class="keyword">int</span> result = x * <span class="number">2</span> + y;
+    <span class="keyword">if</span> (result &gt; <span class="number">100</span>) {
+        <span class="keyword">return</span> result;
+    } <span class="keyword">else</span> {
+        <span class="keyword">return</span> <span class="number">0</span>;
+    }
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O0</div>
+<p>Set optimization to <span class="code-inline">-O0</span> and compile. Read through the generated assembly.</p>
+</div>
+<div class="step">
+<div class="step-title">Identify these instructions</div>
+<p>Fill in this table as you find each pattern:</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>C Code</th><th>RISC-V Instruction(s)</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x * 2</code></td><td>?</td><td>May use <code>add</code> or <code>slli</code></td></tr>
+<tr><td><code>+ y</code></td><td>?</td><td>Look for <code>add</code></td></tr>
+<tr><td><code>result &gt; 100</code></td><td>?</td><td>Look for <code>li</code> + <code>ble</code> or <code>bgt</code></td></tr>
+<tr><td><code>return result</code></td><td>?</td><td>Look for <code>mv a0, ...</code></td></tr>
+<tr><td><code>return 0</code></td><td>?</td><td>Look for <code>li a0, 0</code> or <code>mv a0, x0</code></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2 and compare</div>
+<p>Switch to <span class="code-inline">-O2</span> and recompile. Notice how the compiler:</p>
+<ul>
+<li>Eliminates the stack frame (no <span class="code-inline">addi sp, sp, ...</span>)</li>
+<li>Keeps everything in registers</li>
+<li>May use <span class="code-inline">slli</span> (shift left) instead of <span class="code-inline">add</span> for <code>x * 2</code></li>
+<li>May rearrange branches for efficiency</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Write down the instruction count</div>
+<p>Count the number of instructions in the <span class="code-inline">compute</span> function at <span class="code-inline">-O0</span> vs <span class="code-inline">-O2</span>. Record the difference.</p>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Insight</div>
+The compiler is very good at eliminating unnecessary memory operations. At <code>-O0</code>, every variable is stored on the stack. At <code>-O2</code>, the compiler keeps values in registers and removes dead code. This is why reading optimized assembly can look very different from the C source.
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>Deliverables</h2>
+<p>Submit the following screenshots and answers:</p>
+<div class="steps">
+<div class="step">
+<div class="step-title">Exercise 1 screenshot</div>
+<p>Screenshot of the simulator showing the C code, compiled assembly, and exit code <strong>30</strong>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 2 screenshot</div>
+<p>Screenshot of the assembly program and exit code <strong>42</strong>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 3 screenshot</div>
+<p>Screenshot of the store/load program and exit code <strong>42</strong> (or <strong>200</strong> for the two-value variant).</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 4 screenshot</div>
+<p>Screenshot of the loop program and exit code <strong>55</strong> (or <strong>5050</strong> for the 1-100 variant).</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 5 screenshot</div>
+<p>Screenshot of the function call program and exit code <strong>42</strong> (or <strong>60</strong> for triple_add).</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 6 table</div>
+<p>The completed instruction identification table, plus the instruction count comparison (<span class="code-inline">-O0</span> vs <span class="code-inline">-O2</span>).</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>References</h2>
+<ul>
+<li><a href="../handbook/main.html">Assembly Handbook</a> - Chapters 4-7 (RISC-V registers, instructions, pseudo-instructions, calling convention)</li>
+<li><a href="../simulator/main.html">RISC-V Simulator</a> - Write and run RISC-V assembly in your browser</li>
+<li>RISC-V ISA Manual - <a href="https://riscv.org/technical/specifications/">riscv.org/specifications</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<script src="../sidebar.js"></script>
+</body>
+</html>

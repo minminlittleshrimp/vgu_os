@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS - OS Concepts Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>OS Concepts Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Overview</div>
+      <a class="nav-item active" data-target="ch01"><span class="nav-num">01</span>What Is an Operating System?</a>
+      <a class="nav-item" data-target="ch02"><span class="nav-num">02</span>OS Structures</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Process Management</div>
+      <a class="nav-item" data-target="ch03"><span class="nav-num">03</span>Processes &amp; Process Control</a>
+      <a class="nav-item" data-target="ch04"><span class="nav-num">04</span>Threads &amp; Concurrency</a>
+      <a class="nav-item" data-target="ch05"><span class="nav-num">05</span>CPU Scheduling</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Memory Management</div>
+      <a class="nav-item" data-target="ch06"><span class="nav-num">06</span>Memory Management Strategies</a>
+      <a class="nav-item" data-target="ch07"><span class="nav-num">07</span>Virtual Memory &amp; Paging</a>
+      <a class="nav-item" data-target="ch08"><span class="nav-num">08</span>Page Replacement</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Concurrency</div>
+      <a class="nav-item" data-target="ch09"><span class="nav-num">09</span>Synchronization</a>
+      <a class="nav-item" data-target="ch10"><span class="nav-num">10</span>Deadlocks</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">I/O &amp; File Systems</div>
+      <a class="nav-item" data-target="ch11"><span class="nav-num">11</span>I/O Systems &amp; Interrupts</a>
+      <a class="nav-item" data-target="ch12"><span class="nav-num">12</span>File Systems</a>
+      <a class="nav-item" data-target="ch13"><span class="nav-num">13</span>Mass-Storage &amp; I/O Scheduling</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Advanced Topics</div>
+      <a class="nav-item" data-target="ch14"><span class="nav-num">14</span>System Calls &amp; Traps</a>
+      <a class="nav-item" data-target="ch15"><span class="nav-num">15</span>Protection &amp; Security</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="lecture-handbook.html">Lecture Companion</a>
+      <a class="nav-item" href="../../books/handbook/part1-overview.html">Silberschatz Handbook</a>
+      <a class="nav-item" href="../../books/handbook/xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>OS Concepts Handbook</h1>
+<p style="color:var(--text-dim);font-size:14px">A comprehensive guide to operating system theory,
+from processes and memory to concurrency and file systems.
+Based on Silberschatz, Galvin &amp; Gagne: "Operating System Concepts."</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#ch01">What Is an Operating System?</a></li>
+<li><a href="#ch02">OS Structures</a></li>
+<li><a href="#ch03">Processes and Process Control</a></li>
+<li><a href="#ch04">Threads and Concurrency</a></li>
+<li><a href="#ch05">CPU Scheduling</a></li>
+<li><a href="#ch06">Memory Management Strategies</a></li>
+<li><a href="#ch07">Virtual Memory and Paging</a></li>
+<li><a href="#ch08">Page Replacement</a></li>
+<li><a href="#ch09">Synchronization</a></li>
+<li><a href="#ch10">Deadlocks</a></li>
+<li><a href="#ch11">I/O Systems and Interrupts</a></li>
+<li><a href="#ch12">File Systems</a></li>
+<li><a href="#ch13">Mass-Storage and I/O Scheduling</a></li>
+<li><a href="#ch14">System Calls and Traps</a></li>
+<li><a href="#ch15">Protection and Security</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch01">1. What Is an Operating System?</h2>
+<p>An operating system is the most fundamental piece of software on a computer. It sits between
+the hardware and all other software, managing every resource the computer has: the CPU, memory,
+storage, and all input/output devices. Without an OS, a modern computer is just a pile of silicon
+that does nothing useful. The OS turns raw hardware into a usable machine.</p>
+
+<p>Think of the OS as the manager of a busy restaurant. The hardware (CPU, memory, disks) is the
+kitchen. The applications (your web browser, text editor, games) are the customers placing orders.
+The OS is the head chef: it decides which order gets cooked first, which ingredients go to which
+station, and makes sure no customer starves while another hogs all the resources. It also acts as a
+<strong>protector</strong> — one misbehaving customer (a crashing program) should not bring down the
+entire restaurant.</p>
+
+<p>The OS plays three fundamental roles simultaneously:</p>
+<ul>
+<li><strong>Resource Manager</strong>: The CPU can only do one thing at a time per core. The OS
+time-shares the CPU among dozens of running programs so they all appear to run simultaneously.
+It allocates memory so programs don't overwrite each other. It manages disk space and I/O devices.</li>
+<li><strong>Protector</strong>: The OS enforces isolation between programs. A bug in your web browser
+should not corrupt your text editor's data. The OS uses hardware features (privileged mode, virtual
+memory, page tables) to build walls between processes.</li>
+<li><strong>Abstractor</strong>: The OS hides hardware complexity. Instead of making every program
+understand disk geometry, the OS presents a simple "file" abstraction. Instead of making programs
+manage raw memory addresses, it gives each program its own clean virtual address space starting at 0.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">The operating system is a <strong>resource manager, protector, and abstractor</strong>.
+It turns raw, hostile hardware into a clean, safe, and usable virtual machine that application
+programs can easily work with.</p>
+</div>
+
+<h3>A Brief History</h3>
+<p>Operating systems have evolved through several major eras, each driven by changing hardware
+capabilities and user needs:</p>
+<table>
+<thead><tr><th>Era</th><th>Period</th><th>Key Idea</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Batch Systems</td><td>1950s–60s</td><td>Run one job at a time, no interaction</td><td>IBM OS/360</td></tr>
+<tr><td>Multiprogramming</td><td>1960s–70s</td><td>Keep multiple jobs in memory; switch when one blocks on I/O</td><td>IBM CTSS</td></tr>
+<tr><td>Time-Sharing</td><td>1970s–80s</td><td>Give each user a time slice; interactive use</td><td>Unix, Multics</td></tr>
+<tr><td>Personal Computing</td><td>1980s–90s</td><td>One user, one machine; GUIs</td><td>MS-DOS, Windows, macOS</td></tr>
+<tr><td>Modern / Mobile</td><td>2000s–present</td><td>Multi-core, virtualization, containers, mobile</td><td>Linux, iOS, Android</td></tr>
+</tbody>
+</table>
+
+<p>In the <strong>batch</strong> era, users submitted punch cards or magnetic tape jobs. The OS ran
+them one at a time. This was terribly inefficient — while one job waited for a slow I/O device (like
+reading a tape), the expensive CPU sat idle. <strong>Multiprogramming</strong> solved this by keeping
+several jobs in memory at once: when job A blocked on I/O, the OS immediately switched to job B.
+<strong>Time-sharing</strong> extended this idea to interactive use: many users at terminals, each
+getting a small slice of CPU time in rapid rotation, creating the illusion that each had their own
+machine. Unix, developed at Bell Labs in 1969, became the most influential time-sharing system and
+its design principles still guide OS design today.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Why This Matters for xv6</div>
+<p style="margin:0">xv6, the teaching OS used in this course, is a direct descendant of Unix Sixth
+Edition (1976). It demonstrates time-sharing, multiprogramming, virtual memory, and a hierarchical
+file system — all in about 10,000 lines of C. When you study xv6, you are studying the same design
+principles that power Linux and macOS today.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch02">2. OS Structures</h2>
+<p>An operating system is a large, complex program — but it is not a monolithic blob of code.
+Modern operating systems are organized into layers and components, each with a clear responsibility.
+Understanding this structure helps you navigate the codebase and understand how the pieces fit
+together.</p>
+
+<p>The most important boundary in an OS is the <strong>kernel/user boundary</strong>. The CPU runs
+in one of two (or more) privilege levels:</p>
+<ul>
+<li><strong>Kernel mode (supervisor mode)</strong>: Full access to all hardware. Can execute any
+instruction, access any memory, talk to any device. The OS kernel runs here.</li>
+<li><strong>User mode</strong>: Restricted. Cannot execute privileged instructions (like halting
+the CPU, modifying page tables, or accessing I/O ports directly). Application programs run here.</li>
+</ul>
+
+<p>When a user program needs to do something privileged — read a file, send a network packet,
+allocate memory — it cannot do so directly. It must ask the kernel to do it on its behalf using a
+<strong>system call</strong>. The system call is the controlled gateway across the kernel/user
+boundary. The kernel checks the request, validates arguments, performs the operation, and returns
+the result to the user program.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">The <strong>kernel/user boundary</strong> is the most important line in an OS.
+User programs run unprivileged and must use <strong>system calls</strong> to request privileged
+operations. This is what prevents a buggy or malicious program from crashing the system or
+accessing other programs' data.</p>
+</div>
+
+<h3>Monolithic vs. Microkernel</h3>
+<p>There are two major architectural approaches to OS design, and they differ in how much code runs
+in kernel mode:</p>
+<table>
+<thead><tr><th>Feature</th><th>Monolithic Kernel</th><th>Microkernel</th></tr></thead>
+<tbody>
+<tr><td>What runs in kernel mode</td><td>Everything: scheduler, file system, drivers, network stack</td><td>Only the essentials: IPC, scheduling, minimal memory management</td></tr>
+<tr><td>Drivers and services</td><td>Inside the kernel</td><td>As user-space processes (servers)</td></tr>
+<tr><td>Performance</td><td>Fast (no context switch for services)</td><td>Slower (IPC overhead between user and kernel)</td></tr>
+<tr><td>Stability</td><td>A buggy driver can crash the whole system</td><td>A buggy driver crashes only itself; kernel stays up</td></tr>
+<tr><td>Examples</td><td>Linux, xv6, most Unix systems</td><td>MINIX, QNX, L4</td></tr>
+</tbody>
+</table>
+
+<p>Linux is a monolithic kernel: the entire file system, network stack, and all device drivers run
+in kernel mode. This makes it fast (no context switches to access services) but means a bug in a
+device driver can crash the entire system. The microkernel approach moves as much as possible into
+user-space "server" processes, communicating via message passing. This is more robust — a crashed
+driver can simply be restarted — but the message-passing overhead can hurt performance. In practice,
+most production systems (Linux, Windows, macOS) are monolithic or hybrid, while microkernels
+dominate embedded and safety-critical systems.</p>
+
+<h3>The xv6 Architecture</h3>
+<p>xv6 is a monolithic kernel, like its ancestor Unix. Its source code is organized into clear
+layers:</p>
+<div class="code-block"><span class="comment"># xv6 source layout (kernel/ directory):</span>
+<span class="comment">#</span>
+<span class="comment"># entry.S, start.c     - Boot code (enters supervisor mode, sets up paging)</span>
+<span class="comment"># main.c              - Kernel main(): initializes subsystems, starts first process</span>
+<span class="comment"># proc.c              - Process table, context switch, fork/exec/wait</span>
+<span class="comment"># vm.c                - Virtual memory, page tables, kernel/user address spaces</span>
+<span class="comment"># trap.c              - Trap handler: syscalls, page faults, interrupts</span>
+<span class="comment"># syscall.c           - System call dispatch table</span>
+<span class="comment"># sysfile.c           - File-related syscalls (open, read, write, close)</span>
+<span class="comment"># file.c, fs.c        - File system implementation (inodes, directories, blocks)</span>
+<span class="comment"># spinlock.c, sleeplock.c - Locking primitives</span>
+<span class="comment"># console.c, uart.c   - Console and serial I/O drivers</span>
+<span class="comment"># virtio_disk.c       - Virtio block device driver</span></div>
+
+<p>The boot sequence is: the hardware loads xv6 into memory and jumps to <code class="code-inline">entry.S</code>,
+which sets up the stack and calls <code class="code-inline">start.c</code>. That code transitions from
+machine mode to supervisor mode, enables paging, and calls <code class="code-inline">main()</code>.
+The <code class="code-inline">main()</code> function initializes each subsystem in order — console,
+virtual memory, process table, traps, file system — and then creates the first user process
+(<code class="code-inline">init</code>) by calling <code class="code-inline">userinit()</code>. From
+that point on, the system is running user processes and responding to system calls and interrupts.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">System Calls Are Not Function Calls</div>
+<p style="margin:0">A system call looks like a function call in C (<code class="code-inline">write(fd, buf, n)</code>),
+but under the hood it executes a special <code class="code-inline">ecall</code> (RISC-V) or
+<code class="code-inline">syscall</code> (x86-64) instruction. This traps into the kernel, switches
+to a kernel stack, and runs kernel code. The overhead is much higher than a normal function call —
+often 1-10 microseconds vs. nanoseconds.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch03">3. Processes and Process Control</h2>
+<p>A <strong>process</strong> is a program in execution. While a program is a passive entity — a file
+on disk containing code and data — a process is an active entity: it has a program counter (the
+next instruction to execute), a set of registers, a stack, and allocated resources. When you run
+<code class="code-inline">./a.out</code>, the OS creates a process that runs the program
+<code class="code-inline">a.out</code>.</p>
+
+<p>Think of a process as a person working in an office. The program is the job description (what to
+do). The process is the actual person sitting at the desk, actively working through the tasks. The
+desk is the process's memory (code, data, stack). The person's current position in the task list is
+the program counter. If the person takes a break and another person sits down to work, that's a
+context switch.</p>
+
+<h3>Process States</h3>
+<p>At any moment, a process is in one of several states. The OS moves processes between these states
+as they execute, block on I/O, or get scheduled:</p>
+<table>
+<thead><tr><th>State</th><th>Meaning</th><th>When it happens</th></tr></thead>
+<tbody>
+<tr><td>New</td><td>Being created</td><td>Just forked, not yet ready</td></tr>
+<tr><td>Ready</td><td>Waiting to run on a CPU</td><td>In the ready queue, waiting for scheduler</td></tr>
+<tr><td>Running</td><td>Executing on a CPU</td><td>Scheduler picked this process</td></tr>
+<tr><td>Waiting (Blocked)</td><td>Waiting for an event</td><td>Blocked on I/O, sleep, or a lock</td></tr>
+<tr><td>Terminated</td><td>Finished execution</td><td>Called exit(); resources being reclaimed</td></tr>
+</tbody>
+</table>
+
+<p>The key transitions are: <strong>New → Ready</strong> (creation completes),
+<strong>Ready → Running</strong> (scheduler dispatches the process),
+<strong>Running → Ready</strong> (time slice expires, preemption),
+<strong>Running → Waiting</strong> (process blocks on I/O or a wait call), and
+<strong>Waiting → Ready</strong> (I/O completes, event occurs). A process never goes directly from
+Waiting to Running — it must go through the Ready queue first.</p>
+
+<h3>The Process Control Block (PCB)</h3>
+<p>To manage processes, the OS maintains a data structure for each one, called the Process Control
+Block (PCB) or process descriptor. In xv6, this is the <code class="code-inline">struct proc</code>
+defined in <code class="code-inline">proc.h</code>. The PCB contains everything the OS needs to know
+about a process:</p>
+<div class="code-block"><span class="comment">// Simplified xv6 struct proc (kernel/proc.h)</span>
+<span class="keyword">struct</span> proc {
+    <span class="keyword">enum</span> procstate state;   <span class="comment">// NEW, READY, RUNNING, etc.</span>
+    <span class="keyword">int</span> pid;                 <span class="comment">// Process ID</span>
+    <span class="keyword">struct</span> proc *parent;      <span class="comment">// Parent process</span>
+    <span class="keyword">void</span> *chan;               <span class="comment">// Sleep channel (for sleep/wakeup)</span>
+    <span class="keyword">int</span> killed;               <span class="comment">// Flag: has been killed?</span>
+    <span class="keyword">uint64</span> sz;                <span class="comment">// Size of process memory (bytes)</span>
+    pagetable_t pagetable;       <span class="comment">// User page table (virtual memory)</span>
+    <span class="keyword">struct</span> trapframe *trapframe; <span class="comment">// Saved registers on trap</span>
+    <span class="keyword">struct</span> context context;   <span class="comment">// Saved registers for context switch</span>
+    <span class="keyword">struct</span> file *ofile[NOFILE]; <span class="comment">// Open files table</span>
+    <span class="keyword">struct</span> inode *cwd;         <span class="comment">// Current working directory</span>
+};</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">The <strong>PCB</strong> is the OS's record of a process. It contains the
+process's state, saved registers (so execution can resume), memory layout, open files, and more.
+A <strong>context switch</strong> is the act of saving one process's state into its PCB and loading
+another process's state from its PCB.</p>
+</div>
+
+<h3>Context Switch</h3>
+<p>When the scheduler decides to switch from process A to process B, it performs a context switch.
+This involves: (1) saving all of process A's registers into A's PCB (specifically the
+<code class="code-inline">context</code> field), (2) loading process B's saved registers from B's
+PCB, and (3) jumping to the instruction after B's last save point. In xv6, the actual register
+save/restore is done in assembly (<code class="code-inline">swtch</code> in
+<code class="code-inline">switch.S</code>), while the scheduling decision is made in
+<code class="code-inline">scheduler()</code> in <code class="code-inline">proc.c</code>.</p>
+
+<div class="code-block"><span class="comment">// Simplified xv6 context switch (kernel/proc.c)</span>
+<span class="keyword">void</span> swtch(<span class="keyword">struct</span> context **old, <span class="keyword">struct</span> context *new);
+
+<span class="keyword">static</span> <span class="keyword">void</span>
+scheduler(<span class="keyword">void</span>)
+{
+    <span class="keyword">struct</span> proc *p;
+    <span class="keyword">for</span> (;;) {
+        <span class="keyword">for</span> (p = proc; p &lt; &amp;proc[NPROC]; p++) {
+            <span class="keyword">if</span> (p-&gt;state == RUNNABLE) {
+                p-&gt;state = RUNNING;
+                c-&gt;proc = p;
+                <span class="comment">// Save scheduler context, load p's context</span>
+                swtch(&amp;c-&gt;context, p-&gt;context);
+                <span class="comment">// When p yields, we come back here</span>
+                c-&gt;proc = <span class="number">0</span>;
+            }
+        }
+    }
+}</div>
+
+<h3>Process Creation: fork / exec / wait</h3>
+<p>Unix-like systems (including xv6) create and manage processes through three fundamental system
+calls:</p>
+<ul>
+<li><strong><code class="code-inline">fork()</code></strong>: Creates an exact copy of the calling
+process. The new process (child) gets a duplicate of the parent's memory, file descriptors, and
+state. The only difference: <code class="code-inline">fork()</code> returns the child's PID to the
+parent and 0 to the child. This single-return-value-differentiates-caller design is elegant and
+powerful.</li>
+<li><strong><code class="code-inline">exec(filename, argv)</code></strong>: Replaces the current
+process's memory image with a new program loaded from a file. The process keeps its PID, open files,
+and environment, but its code and data are completely replaced. If <code class="code-inline">exec</code>
+succeeds, it never returns — the old program is gone.</li>
+<li><strong><code class="code-inline">wait()</code></strong>: Blocks the parent until a child process
+terminates, then returns the child's exit status. This lets parents clean up after children and
+retrieve their results.</li>
+</ul>
+
+<div class="code-block"><span class="comment">// Typical Unix pattern: fork + exec + wait</span>
+<span class="keyword">int</span> pid = fork();
+<span class="keyword">if</span> (pid == <span class="number">0</span>) {
+    <span class="comment">// Child: replace image with /bin/ls</span>
+    exec(<span class="string">"/bin/ls"</span>, argv);
+    <span class="comment">// Only reached if exec fails</span>
+    exit(<span class="number">1</span>);
+} <span class="keyword">else</span> {
+    <span class="comment">// Parent: wait for child to finish</span>
+    <span class="keyword">int</span> status;
+    wait(&amp;status);
+    printf(<span class="string">"child exited with %d\n"</span>, status);
+}</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Why fork + exec Instead of a Single create_process Call?</div>
+<p style="margin:0">Separating <code class="code-inline">fork</code> and <code class="code-inline">exec</code>
+gives enormous flexibility. Between the two calls, the parent (or the child, before exec) can
+redirect file descriptors, set up pipes, change the working directory, or modify environment
+variables. This is how shells implement I/O redirection (<code class="code-inline">ls &gt; file.txt</code>):
+fork, redirect stdout in the child, then exec.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch04">4. Threads and Concurrency</h2>
+<p>A <strong>thread</strong> is a unit of execution within a process. While a process has its own
+memory space (code, data, heap), threads within the same process <strong>share</strong> that memory
+space. Each thread has its own program counter, registers, and stack, but all threads in a process
+can read and write the same global variables and heap data.</p>
+
+<p>Think of a process as a house. The house has rooms (code, data, heap) that everyone in the house
+shares. Each thread is a person living in the house. Each person has their own private workspace
+(their stack and registers), but they all share the kitchen, living room, and storage (the heap and
+global data). If two people try to use the kitchen at the same time without coordination, you get a
+mess. That mess is a <strong>race condition</strong>.</p>
+
+<h3>Threads vs. Processes</h3>
+<table>
+<thead><tr><th>Property</th><th>Process</th><th>Thread</th></tr></thead>
+<tbody>
+<tr><td>Memory</td><td>Each has its own address space</td><td>Shared within the same process</td></tr>
+<tr><td>Creation cost</td><td>Expensive (copy memory, page tables)</td><td>Cheap (just a stack and registers)</td></tr>
+<tr><td>Context switch</td><td>Expensive (change page tables, flush TLB)</td><td>Cheap (just save/restore registers)</td></tr>
+<tr><td>Communication</td><td>Hard (pipes, shared memory, signals)</td><td>Easy (shared variables)</td></tr>
+<tr><td>Isolation</td><td>Strong (one crash doesn't affect others)</td><td>Weak (one thread's bug can corrupt shared data)</td></tr>
+</tbody>
+</table>
+
+<h3>User Threads vs. Kernel Threads</h3>
+<p>There are two levels at which threads can be managed:</p>
+<ul>
+<li><strong>User-level threads</strong>: Managed entirely by a user-space library (e.g., POSIX
+<code class="code-inline">pthread</code> library). The kernel doesn't know they exist — it sees one
+process. Fast to create and switch, but if one thread blocks on a system call, <em>all</em> threads
+in the process block, because the kernel can't schedule the others.</li>
+<li><strong>Kernel-level threads</strong>: Managed by the OS kernel. Each thread is visible to the
+scheduler. If one thread blocks, the kernel can run another thread from the same process. Most
+modern systems (Linux, Windows) use kernel threads (or a hybrid) for this reason.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">Threads share memory; processes don't. Sharing memory makes communication fast
+and easy, but introduces <strong>race conditions</strong> — bugs that occur when multiple threads
+access shared data concurrently and at least one modifies it, without proper synchronization.</p>
+</div>
+
+<h3>Race Conditions</h3>
+<p>A race condition occurs when the outcome of a program depends on the timing of thread execution.
+Consider two threads both incrementing a shared counter <code class="code-inline">counter++</code>.
+In C, this single statement is actually three operations: (1) read <code class="code-inline">counter</code>
+from memory, (2) add 1, (3) write the result back. If thread A reads the value 5, and before it
+writes back 6, thread B also reads 5 and writes 6 — the counter ends up as 6 instead of 7. One
+increment is lost.</p>
+
+<div class="code-block"><span class="comment">// Race condition: two threads incrementing a shared counter</span>
+<span class="keyword">int</span> counter = <span class="number">0</span>;
+
+<span class="keyword">void</span> *thread_func(<span class="keyword">void</span> *arg) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) {
+        counter++;  <span class="comment">// NOT atomic! Can lose increments</span>
+    }
+    <span class="keyword">return</span> NULL;
+}
+<span class="comment">// If two threads run this, counter may end up &lt; 2000000</span></div>
+
+<h3>Mutual Exclusion</h3>
+<p>The solution to race conditions is <strong>mutual exclusion</strong>: ensure that only one thread
+at a time can execute a critical section of code that accesses shared data. A <strong>lock</strong>
+(or mutex) is the primary tool for this. Before entering a critical section, a thread acquires the
+lock; after leaving, it releases the lock. If another thread tries to acquire a held lock, it blocks
+until the lock is released.</p>
+
+<div class="code-block"><span class="comment">// Fixed: use a lock to protect the counter</span>
+<span class="keyword">int</span> counter = <span class="number">0</span>;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+<span class="keyword">void</span> *thread_func(<span class="keyword">void</span> *arg) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) {
+        pthread_mutex_lock(&amp;lock);    <span class="comment">// enter critical section</span>
+        counter++;
+        pthread_mutex_unlock(&amp;lock);  <span class="comment">// leave critical section</span>
+    }
+    <span class="keyword">return</span> NULL;
+}</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">The Critical Section Problem</div>
+<p style="margin:0">A <strong>critical section</strong> is code that accesses shared data that must
+not be accessed by more than one thread at a time. A correct solution must satisfy three conditions:
+(1) <strong>Mutual exclusion</strong> — at most one thread in the critical section at a time;
+(2) <strong>Progress</strong> — if no thread is in the section, a thread that wants to enter cannot
+be indefinitely postponed; (3) <strong>Bounded waiting</strong> — there's a limit on how many times
+other threads can enter before a waiting thread gets its turn.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch05">5. CPU Scheduling</h2>
+<p>When multiple processes are ready to run but there is only one CPU (or fewer CPUs than ready
+processes), the OS must decide which process runs next. This decision is made by the
+<strong>scheduler</strong>, a core component of the OS. The quality of scheduling decisions
+directly affects system performance, responsiveness, and fairness.</p>
+
+<p>The scheduler maintains a <strong>ready queue</strong> — a list of processes that are ready to
+run but waiting for a CPU. Each time the CPU becomes available (because the running process blocked,
+yielded, or used up its time slice), the scheduler picks the next process from the ready queue. The
+act of switching from one process to another is called a <strong>context switch</strong>, and the
+time a process runs before being switched out is called a <strong>CPU burst</strong>.</p>
+
+<h3>Preemptive vs. Non-Preemptive</h3>
+<ul>
+<li><strong>Non-preemptive</strong>: Once a process gets the CPU, it keeps it until it voluntarily
+yields (blocks on I/O or calls a yield system call). Simple, but a CPU-bound process can monopolize
+the CPU and starve others.</li>
+<li><strong>Preemptive</strong>: The OS can forcibly take the CPU away from a running process (e.g.,
+when a timer interrupt fires after a time slice). This is what modern time-sharing systems use — it
+ensures fairness and responsiveness.</li>
+</ul>
+
+<h3>Scheduling Algorithms</h3>
+<table>
+<thead><tr><th>Algorithm</th><th>Strategy</th><th>Pros</th><th>Cons</th></tr></thead>
+<tbody>
+<tr><td>FCFS (First-Come, First-Served)</td><td>Run processes in arrival order</td><td>Simple, fair</td><td>Convoy effect: short jobs stuck behind long ones</td></tr>
+<tr><td>SJF (Shortest Job First)</td><td>Run the shortest job first</td><td>Optimal average wait time</td><td>Must know job length; starvation of long jobs</td></tr>
+<tr><td>Round Robin (RR)</td><td>Each process gets a time slice (quantum), then goes to back of queue</td><td>Fair, responsive</td><td>Context switch overhead; quantum must be tuned</td></tr>
+<tr><td>Priority</td><td>Run highest-priority process first</td><td>Important tasks get CPU</td><td>Starvation of low-priority processes</td></tr>
+<tr><td>Multilevel Feedback Queue</td><td>Multiple queues with different priorities; jobs move between them based on behavior</td><td>Adapts to workload</td><td>Complex to configure</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0"><strong>Round Robin</strong> is the most common scheduling algorithm in
+time-sharing systems. Each process gets a fixed <strong>time quantum</strong> (e.g., 10ms). When
+the quantum expires, the running process is preempted and moved to the back of the ready queue.
+This gives every process a fair share of the CPU and keeps the system responsive.</p>
+</div>
+
+<h3>Round Robin Example</h3>
+<p>Suppose three processes arrive at time 0, with a quantum of 4ms:</p>
+<div class="code-block"><span class="comment"># Process   Burst Time</span>
+<span class="comment"># P1        10ms</span>
+<span class="comment"># P2        5ms</span>
+<span class="comment"># P3        3ms</span>
+<span class="comment">#</span>
+<span class="comment"># Round Robin (quantum = 4):</span>
+<span class="comment"># Time 0-4:  P1 runs (6ms remaining)</span>
+<span class="comment"># Time 4-8:  P2 runs (1ms remaining)</span>
+<span class="comment"># Time 8-11: P3 runs (done!)</span>
+<span class="comment"># Time 11-12: P2 runs (done!)</span>
+<span class="comment"># Time 12-16: P1 runs (2ms remaining)</span>
+<span class="comment"># Time 16-18: P1 runs (done!)</span>
+<span class="comment">#</span>
+<span class="comment"># Average wait time = (8 + 7 + 8) / 3 = 7.67ms</span></div>
+
+<h3>Scheduling Criteria</h3>
+<p>Different scheduling algorithms optimize for different metrics. The choice depends on the
+system's goals:</p>
+<ul>
+<li><strong>CPU utilization</strong>: Keep the CPU as busy as possible (target: near 100%).</li>
+<li><strong>Throughput</strong>: Number of processes completed per unit time.</li>
+<li><strong>Turnaround time</strong>: Total time from submission to completion (includes waiting +
+execution).</li>
+<li><strong>Waiting time</strong>: Time spent in the ready queue, not executing.</li>
+<li><strong>Response time</strong>: Time from request to first response (critical for interactive
+systems).</li>
+</ul>
+
+<div class="callout callout-tip">
+<div class="callout-title">SJF is Optimal (But Impractical)</div>
+<p style="margin:0">Shortest Job First gives the minimum average waiting time of all non-preemptive
+schedulers. But it requires knowing how long each job will take — which is usually impossible. In
+practice, systems estimate job length from past behavior (exponential averaging) and use preemptive
+variants like Shortest Remaining Time First (SRTF).</p>
+</div>
+
+<h3>xv6 Scheduling</h3>
+<p>xv6 uses a simple Round Robin scheduler. The <code class="code-inline">scheduler()</code> function
+in <code class="code-inline">proc.c</code> loops through the process table, and whenever it finds a
+<code class="code-inline">RUNNABLE</code> process, it marks it <code class="code-inline">RUNNING</code>
+and context-switches to it. When that process yields (blocks or its timer interrupt triggers a
+yield), control returns to <code class="code-inline">scheduler()</code>, which continues the loop.
+There is no priority system — every runnable process gets equal treatment.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch06">6. Memory Management Strategies</h2>
+<p>Memory is one of the most precious resources a computer has. The OS's job is to allocate memory
+to processes efficiently, keep them isolated from each other, and make the best use of whatever
+physical RAM is available. Before virtual memory became universal, OS designers used several
+strategies for managing physical memory directly.</p>
+
+<p>Think of memory as a parking lot. Each process needs spaces to park its code and data. The OS is
+the parking attendant: it assigns spaces, tracks which are free, and reclaims them when a process
+exits. The challenge is that processes come in all sizes, and over time the lot becomes fragmented
+with gaps too small for any new arrival.</p>
+
+<h3>Contiguous Allocation</h3>
+<p>The simplest approach is <strong>contiguous allocation</strong>: each process gets a single
+contiguous block of memory. The OS maintains a list of free holes and allocates the best-fitting one
+when a process requests memory. There are three common strategies for choosing which hole to use:</p>
+<table>
+<thead><tr><th>Strategy</th><th>How it works</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>First Fit</td><td>Use the first hole that's big enough</td><td>Fast; tends to fragment the front of memory</td></tr>
+<tr><td>Best Fit</td><td>Use the smallest hole that's big enough</td><td>Minimizes wasted space; leaves many tiny unusable holes</td></tr>
+<tr><td>Worst Fit</td><td>Use the largest hole</td><td>Leaves large remainders; reduces tiny-fragment problem</td></tr>
+</tbody>
+</table>
+
+<h3>Fragmentation</h3>
+<p>Over time, as processes are loaded and removed, memory becomes divided into small, non-contiguous
+free pieces. There are two types of fragmentation:</p>
+<ul>
+<li><strong>External fragmentation</strong>: There is enough total free memory to satisfy a request,
+but it is scattered in small pieces, none large enough. Example: 100KB free total, but the largest
+contiguous free block is only 20KB — a 50KB request fails.</li>
+<li><strong>Internal fragmentation</strong>: Allocated memory is larger than requested. If the
+allocator rounds up to fixed-size blocks (e.g., 4KB pages), a 1-byte allocation wastes 4095 bytes
+inside the allocated block.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0"><strong>External fragmentation</strong> is solved by <strong>compaction</strong>
+(moving processes to consolidate free space) or, more effectively, by <strong>paging</strong>
+(breaking memory into fixed-size pages so any free page can be used). <strong>Internal
+fragmentation</strong> is the cost of fixed-size allocation — some space inside each block is
+wasted.</p>
+</div>
+
+<h3>Swapping</h3>
+<p>When physical memory is full, the OS can <strong>swap</strong> processes out to disk, freeing
+their RAM for other processes. A swapped-out process is moved entirely to a backing store (disk);
+when it needs to run again, it is swapped back in. This allows the system to run more processes
+than fit in physical memory, but at a huge performance cost — disk is thousands of times slower
+than RAM.</p>
+
+<div class="code-block"><span class="comment">// Swapping lifecycle:</span>
+<span class="comment">//</span>
+<span class="comment">// 1. Process P is running in RAM</span>
+<span class="comment">// 2. Memory is full; OS needs space for process Q</span>
+<span class="comment">// 3. OS swaps P out: copies P's memory image to disk</span>
+<span class="comment">// 4. P's state = "swapped" (not runnable)</span>
+<span class="comment">// 5. Q is loaded into the freed RAM and runs</span>
+<span class="comment">// 6. Later, when P needs to run again:</span>
+<span class="comment">//    - OS swaps some other process out</span>
+<span class="comment">//    - Swaps P back in from disk</span>
+<span class="comment">//    - P resumes execution</span></div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Swapping vs. Paging</div>
+<p style="margin:0">Swapping moves entire processes to/from disk. <strong>Demand paging</strong>
+(chapter 7) is more granular: it moves individual <strong>pages</strong> (typically 4KB) to/from
+disk, only loading the pages a process actually needs. Modern systems use demand paging, not
+whole-process swapping, because it is far more efficient.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch07">7. Virtual Memory and Paging</h2>
+<p>Virtual memory is one of the most powerful abstractions in computing. It gives each process the
+illusion that it has its own large, private, contiguous address space — starting at address 0 and
+extending to some maximum — even though physical RAM is shared among all processes and may be
+smaller than the virtual space. The OS and hardware work together to translate virtual addresses
+into physical addresses on every memory access.</p>
+
+<p>Think of virtual memory like a hotel. Each guest (process) gets a room number that starts from
+their own perspective (room 101, 102...). But the hotel's actual room layout is different — the
+front desk (the MMU) translates each guest's room number to the real physical room. Two guests can
+both have "room 101" in their mental map, but they map to different physical rooms. No guest can
+access another guest's room, because the translation only works for their own mapping.</p>
+
+<h3>Address Spaces</h3>
+<p>Each process has its own <strong>virtual address space</strong> — the set of virtual addresses it
+can use. A typical layout (on 64-bit systems) looks like this:</p>
+<div class="code-block"><span class="comment"># Process virtual address space layout:</span>
+<span class="comment">#</span>
+<span class="comment">#  High addresses  +-------------------+</span>
+<span class="comment">#                 | Kernel space      |  (mapped for all processes)</span>
+<span class="comment">#                 +-------------------+</span>
+<span class="comment">#                 | Stack (grows ↓)   |  ← function frames, local vars</span>
+<span class="comment">#                 |                   |</span>
+<span class="comment">#                 | (free space)      |</span>
+<span class="comment">#                 |                   |</span>
+<span class="comment">#                 | Heap (grows ↑)    |  ← malloc'd memory</span>
+<span class="comment">#                 +-------------------+</span>
+<span class="comment">#                 | Data (BSS + data)  |  ← global/static vars</span>
+<span class="comment">#                 +-------------------+</span>
+<span class="comment">#  Low addresses  | Code (text)       |  ← program instructions</span>
+<span class="comment">#                 +-------------------+</span>
+<span class="comment">#  Address 0      | (unmapped guard)  |  ← NULL pointer protection</span></div>
+
+<h3>Paging</h3>
+<p>Virtual memory is implemented through <strong>paging</strong>. Both virtual and physical memory
+are divided into fixed-size blocks called <strong>pages</strong> (virtual) and
+<strong>frames</strong> (physical). A typical page size is 4KB. The OS maintains a
+<strong>page table</strong> for each process that maps virtual page numbers to physical frame
+numbers.</p>
+
+<table>
+<thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>Page</td><td>A fixed-size block of virtual memory (e.g., 4KB)</td></tr>
+<tr><td>Frame (Page Frame)</td><td>A fixed-size block of physical memory (same size as a page)</td></tr>
+<tr><td>Page Table</td><td>Per-process data structure mapping virtual pages → physical frames</td></tr>
+<tr><td>Page Fault</td><td>Exception raised when a accessed page is not in physical memory</td></tr>
+<tr><td>MMU (Memory Management Unit)</td><td>Hardware that translates virtual addresses to physical addresses</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">Paging eliminates external fragmentation: any free frame can hold any virtual
+page. The page table maps each virtual page to a physical frame, so a process's virtual pages can
+be scattered anywhere in physical memory. The process sees a contiguous address space; the hardware
+translates every access.</p>
+</div>
+
+<h3>Address Translation</h3>
+<p>When a process accesses memory at virtual address V, the MMU splits V into two parts: a
+<strong>page number</strong> (high bits) and a <strong>page offset</strong> (low bits). It looks up
+the page number in the page table to find the corresponding physical frame number, then combines
+that with the offset to form the physical address.</p>
+<div class="code-block"><span class="comment"># Example: 64-bit address, 4KB pages (12-bit offset)</span>
+<span class="comment">#</span>
+<span class="comment"># Virtual address: 0x0000003a7b4f8</span>
+<span class="comment">#   Page number:   0x0000003a7b  (bits 63..12)</span>
+<span class="comment">#   Offset:         0x4f8         (bits 11..0)</span>
+<span class="comment">#</span>
+<span class="comment"># Page table lookup: VPN 0x3a7b → PFN 0x12c0</span>
+<span class="comment"># Physical address: PFN || offset = 0x12c04f8</span></div>
+
+<h3>Multi-Level Page Tables</h3>
+<p>A single-level page table for a 64-bit address space would be impossibly large (petabytes). So
+modern systems use <strong>multi-level (hierarchical) page tables</strong>. RISC-V (and xv6) uses a
+three-level page table (Sv39): the virtual address is split into three indices (L2, L1, L0) and an
+offset. Each level points to a table of 512 entries (9 bits each). Only the tables actually needed
+are allocated, saving enormous amounts of memory.</p>
+
+<div class="code-block"><span class="comment">// RISC-V Sv39 page table (3 levels, 4KB pages):</span>
+<span class="comment">//</span>
+<span class="comment">// Virtual address (39 bits used):</span>
+<span class="comment">//   [ L2 index (9b) | L1 index (9b) | L0 index (9b) | offset (12b) ]</span>
+<span class="comment">//</span>
+<span class="comment">// Translation:</span>
+<span class="comment">//   1. Start at root table (satp register points here)</span>
+<span class="comment">//   2. L2 entry → points to L1 table</span>
+<span class="comment">//   3. L1 entry → points to L0 table</span>
+<span class="comment">//   4. L0 entry → physical frame number (PFN)</span>
+<span class="comment">//   5. Physical address = PFN || offset</span>
+<span class="comment">//</span>
+<span class="comment">// Each table = 512 entries × 8 bytes = 4KB = one page</span></div>
+
+<h3>The TLB (Translation Lookaside Buffer)</h3>
+<p>Translating every memory access through a multi-level page table would require 3-4 memory
+accesses per instruction — far too slow. The <strong>TLB</strong> is a small, fast hardware cache
+inside the MMU that stores recent virtual-to-physical translations. On a memory access, the MMU
+first checks the TLB; if the translation is there (a <strong>TLB hit</strong>), it's used directly
+in one cycle. If not (a <strong>TLB miss</strong>), the hardware (or software, depending on the
+architecture) walks the page table to find the translation and loads it into the TLB.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">TLB and Context Switches</div>
+<p style="margin:0">When the OS switches from process A to process B, the TLB still contains A's
+translations — which are wrong for B. The OS must either <strong>flush</strong> (invalidate) the
+entire TLB on every context switch (expensive — the new process starts with a cold TLB) or use
+<strong>ASIDs</strong> (Address Space Identifiers) to tag TLB entries by process, allowing entries
+from multiple processes to coexist.</p>
+</div>
+
+<h3>Page Faults and Demand Paging</h3>
+<p>Not all virtual pages need to be in physical memory at once. The page table entry for a page can
+be marked <strong>invalid</strong> (the "valid bit" is 0). When a process accesses such a page, the
+MMU raises a <strong>page fault</strong> — a trap to the OS. The OS then: (1) finds the page's data
+(often on disk, in the swap area or the executable file), (2) finds a free physical frame (or evicts
+one using a page replacement algorithm), (3) loads the page from disk into the frame, (4) updates
+the page table to point to the frame and mark it valid, and (5) restarts the faulting instruction.
+This is <strong>demand paging</strong>: pages are loaded only when demanded by access.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Demand Paging = Lazy Loading</div>
+<p style="margin:0">With demand paging, a program can start running before all its code is in memory.
+Only the pages needed for startup are loaded; the rest are fetched on demand. This lets programs
+be larger than physical memory and start faster. If a program never calls a particular function,
+its code page is never loaded at all.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch08">8. Page Replacement</h2>
+<p>When a page fault occurs and there are no free physical frames, the OS must
+<strong>evict</strong> a page from memory to make room. The choice of which page to evict is the
+<strong>page replacement problem</strong>, and it has a huge impact on performance. A bad choice
+means evicting a page that will be needed again soon, causing another page fault — a phenomenon
+called <strong>thrashing</strong>, where the system spends more time paging than computing.</p>
+
+<p>The ideal algorithm would evict the page that won't be used for the longest time in the future.
+This is called <strong>OPT</strong> or <strong>Belady's optimal algorithm</strong>. It's impossible
+to implement (you can't predict the future), but it serves as a benchmark: any real algorithm's
+performance is measured against OPT.</p>
+
+<h3>Replacement Algorithms</h3>
+<table>
+<thead><tr><th>Algorithm</th><th>Strategy</th><th>Pros</th><th>Cons</th></tr></thead>
+<tbody>
+<tr><td>FIFO (First-In, First-Out)</td><td>Evict the oldest loaded page</td><td>Simple to implement</td><td>May evict frequently used pages; suffers from Belady's anomaly</td></tr>
+<tr><td>LRU (Least Recently Used)</td><td>Evict the page not used for the longest time</td><td>Excellent in practice; approximates OPT</td><td>Requires tracking access order (hardware support needed)</td></tr>
+<tr><td>Clock (Second Chance)</td><td>Like FIFO, but gives pages a "second chance" via a reference bit</td><td>Good LRU approximation; cheap to implement</td><td>Slightly worse than true LRU</td></tr>
+<tr><td>OPT (Optimal)</td><td>Evict page not used for longest future time</td><td>Theoretical optimum</td><td>Impossible to implement (needs future knowledge)</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0"><strong>LRU</strong> is the best practical algorithm: it exploits
+<strong>locality of reference</strong> — the tendency of programs to access the same set of pages
+repeatedly (temporal locality) and to access nearby addresses (spatial locality). Pages used
+recently are likely to be used again soon, so LRU keeps them in memory.</p>
+</div>
+
+<h3>FIFO Example</h3>
+<div class="code-block"><span class="comment"># Reference string: 7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2
+# 3 frames, FIFO replacement:
+#
+# Access  7: [7]              miss (page fault)
+# Access  0: [7, 0]           miss
+# Access  1: [7, 0, 1]        miss
+# Access  2: [0, 1, 2]        miss (evict 7 — oldest)
+# Access  0: [0, 1, 2]        hit!
+# Access  3: [1, 2, 3]        miss (evict 0 — oldest)
+# Access  0: [2, 3, 0]        miss (evict 1)
+# Access  4: [3, 0, 4]        miss (evict 2)
+# Access  2: [0, 4, 2]        miss (evict 3)
+# Access  3: [4, 2, 3]        miss (evict 0)
+# Access  0: [2, 3, 0]        miss (evict 4)
+# Access  3: [2, 3, 0]        hit!
+# Access  2: [2, 3, 0]        hit!
+#
+# Total: 10 page faults out of 13 accesses</span></div>
+
+<h3>The Clock Algorithm</h3>
+<p>True LRU requires updating a timestamp on every memory access, which is expensive. The
+<strong>clock algorithm</strong> (also called second-chance) is a practical approximation. It
+arranges pages in a circular list with a "hand" pointer. Each page has a <strong>reference bit</strong>
+set by hardware when the page is accessed. When eviction is needed, the hand advances: if the
+current page's reference bit is 1, clear it and move on (give it a "second chance"); if it's 0, evict
+that page. Pages accessed recently have their bit set and survive; pages not accessed recently have
+their bit cleared by the hand and get evicted.</p>
+
+<div class="code-block"><span class="comment">// Clock algorithm (simplified):</span>
+<span class="comment">//</span>
+<span class="comment">// while (need to evict) {</span>
+<span class="comment">//     if (page[hand].reference_bit == 1) {</span>
+<span class="comment">//         page[hand].reference_bit = 0;  // give second chance</span>
+<span class="comment">//         hand = (hand + 1) % num_pages;</span>
+<span class="comment">//     } else {</span>
+<span class="comment">//         evict(page[hand]);            // this one gets evicted</span>
+<span class="comment">//         hand = (hand + 1) % num_pages;</span>
+<span class="comment">//         break;</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span></div>
+
+<h3>Thrashing</h3>
+<p>If a process doesn't have enough physical frames to hold its working set (the set of pages it's
+actively using), it will constantly page fault: evict a page, immediately need it again, fault,
+evict another, need that one, fault... The CPU spends all its time servicing page faults and almost
+no time executing the program. This is <strong>thrashing</strong>. The system's throughput collapses
+to near zero. The solution is to either give the process more frames (if available) or reduce the
+degree of multiprogramming (run fewer processes simultaneously).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">Belady's Anomaly</div>
+<p style="margin:0">With the FIFO algorithm, <strong>adding more frames can actually increase the
+number of page faults</strong> for certain reference strings. This counterintuitive result is called
+Belady's anomaly. LRU and the clock algorithm do not suffer from this anomaly — more frames always
+helps or stays the same.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch09">9. Synchronization</h2>
+<p>When multiple threads or processes share data, they need <strong>synchronization</strong> —
+mechanisms to coordinate access to shared resources and prevent race conditions. Synchronization
+is one of the hardest problems in systems programming: get it wrong, and you get subtle bugs that
+appear only under specific timing conditions and are nearly impossible to reproduce.</p>
+
+<p>The fundamental tool for synchronization is the <strong>lock</strong>. A lock protects a
+<strong>critical section</strong> — a piece of code that accesses shared data. Before entering the
+critical section, a thread <strong>acquires</strong> the lock; after leaving, it
+<strong>releases</strong> it. If the lock is already held, the acquiring thread waits. This ensures
+only one thread is in the critical section at a time.</p>
+
+<h3>Types of Locks</h3>
+<table>
+<thead><tr><th>Lock Type</th><th>How it works</th><th>When to use</th></tr></thead>
+<tbody>
+<tr><td>Spinlock</td><td>Thread "spins" in a tight loop, repeatedly trying to acquire the lock</td><td>Short critical sections; held for a few instructions; no context switch overhead</td></tr>
+<tr><td>Sleeplock (Mutex)</td><td>Thread that can't acquire the lock is put to sleep (descheduled) and woken when the lock is freed</td><td>Longer critical sections; may block on I/O; avoids wasting CPU</td></tr>
+<tr><td>Reader-Writer Lock</td><td>Multiple readers can hold the lock simultaneously; writers get exclusive access</td><td>Read-heavy data structures where reads outnumber writes</td></tr>
+<tr><td>Condition Variable</td><td>Thread waits for a condition to become true; another thread signals when it might</td><td>Producer-consumer patterns, waiting for events</td></tr>
+</tbody>
+</table>
+
+<h3>Spinlocks in xv6</h3>
+<p>xv6 implements spinlocks for short critical sections. A spinlock is a single integer: 0 means
+free, 1 means held. Acquiring the lock uses an atomic instruction (like
+<code class="code-inline">amoswap</code> on RISC-V) to test-and-set the value in a single
+indivisible operation. If the lock is held, the CPU spins in a loop retrying until it becomes free.</p>
+<div class="code-block"><span class="comment">// Simplified xv6 spinlock (kernel/spinlock.c)</span>
+<span class="keyword">void</span>
+acquire(<span class="keyword">struct</span> spinlock *lk)
+{
+    push_off();  <span class="comment">// disable interrupts on this CPU</span>
+    <span class="keyword">while</span>(__sync_lock_test_and_set(&amp;lk-&gt;locked, <span class="number">1</span>) != <span class="number">0</span>)
+        ;  <span class="comment">// spin until we get the lock</span>
+    lk-&gt;cpu = mycpu();  <span class="comment">// record which CPU holds it</span>
+}
+
+<span class="keyword">void</span>
+release(<span class="keyword">struct</span> spinlock *lk)
+{
+    lk-&gt;cpu = <span class="number">0</span>;
+    __sync_lock_release(&amp;lk-&gt;locked);  <span class="comment">// atomically set to 0</span>
+    pop_off();  <span class="comment">// re-enable interrupts</span>
+}</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">A <strong>spinlock</strong> busy-waits (spins) when the lock is held. This wastes
+CPU cycles but avoids the cost of a context switch. Use spinlocks only for <strong>very short</strong>
+critical sections. For longer waits (especially if the holder might block on I/O), use a
+<strong>sleeplock</strong> that puts the waiting thread to sleep instead of spinning.</p>
+</div>
+
+<h3>Why Spinlocks Disable Interrupts</h3>
+<p>Notice that xv6's <code class="code-inline">acquire()</code> calls <code class="code-inline">push_off()</code>
+to disable interrupts. Why? If a thread holds a spinlock and then a timer interrupt fires, the OS
+might switch to another thread. If that thread tries to acquire the same lock, it will spin forever
+— the original holder can never run to release it. This is a <strong>deadlock</strong>. By disabling
+interrupts while holding a spinlock, xv6 ensures the holder can't be preempted. (This only works on
+single-core systems or for per-CPU locks; on multicore, the spin itself handles contention from
+other CPUs.)</p>
+
+<h3>Semaphores</h3>
+<p>A <strong>semaphore</strong> is a more general synchronization primitive, invented by Edsger
+Dijkstra. It's an integer with two atomic operations:</p>
+<ul>
+<li><strong><code class="code-inline">wait(S)</code></strong> (also called P or down): Decrement S.
+If S becomes negative, the calling thread blocks until S is positive again.</li>
+<li><strong><code class="code-inline">signal(S)</code></strong> (also called V or up): Increment S.
+If S was negative (threads waiting), wake one up.</li>
+</ul>
+<p>A semaphore initialized to 1 acts like a mutex (binary semaphore). A semaphore initialized to N
+allows up to N threads into a section simultaneously — useful for resource pools (e.g., N database
+connections).</p>
+
+<div class="code-block"><span class="comment">// Producer-Consumer with semaphores (bounded buffer)</span>
+<span class="keyword">sem_t</span> empty = N;   <span class="comment">// N empty slots</span>
+<span class="keyword">sem_t</span> full = <span class="number">0</span>;    <span class="comment">// 0 full slots</span>
+<span class="keyword">sem_t</span> mutex = <span class="number">1</span>;   <span class="comment">// protects the buffer</span>
+
+<span class="keyword">void</span> producer() {
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        item = produce();
+        wait(&amp;empty);     <span class="comment">// wait for an empty slot</span>
+        wait(&amp;mutex);     <span class="comment">// enter critical section</span>
+        put_item(item);
+        signal(&amp;mutex);   <span class="comment">// leave critical section</span>
+        signal(&amp;full);    <span class="comment">// announce a full slot</span>
+    }
+}
+
+<span class="keyword">void</span> consumer() {
+    <span class="keyword">while</span> (<span class="number">1</span>) {
+        wait(&amp;full);      <span class="comment">// wait for a full slot</span>
+        wait(&amp;mutex);     <span class="comment">// enter critical section</span>
+        item = get_item();
+        signal(&amp;mutex);   <span class="comment">// leave critical section</span>
+        signal(&amp;empty);   <span class="comment">// announce an empty slot</span>
+        consume(item);
+    }
+}</div>
+
+<h3>Monitors</h3>
+<p>A <strong>monitor</strong> is a high-level synchronization construct — a module or object that
+encapsulates shared data with the rule that only one thread can be executing inside the monitor at
+a time. Monitors use <strong>condition variables</strong> for threads to wait for specific
+conditions. Java's <code class="code-inline">synchronized</code> keyword implements monitors. The
+advantage of monitors over raw locks and semaphores is that the locking is automatic — you can't
+forget to release the lock, and the critical section is clearly defined by the monitor's methods.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">The Bounded Buffer Problem</div>
+<p style="margin:0">The producer-consumer problem (bounded buffer) is the classic synchronization
+challenge. Producers add items to a fixed-size buffer; consumers remove them. You must ensure:
+(1) producers wait when the buffer is full, (2) consumers wait when it's empty, (3) only one thread
+modifies the buffer at a time. The semaphore solution above elegantly handles all three conditions.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch10">10. Deadlocks</h2>
+<p>A <strong>deadlock</strong> is a situation where two or more processes are each waiting for a
+resource held by another, and none can proceed. Everyone is blocked, waiting for someone else to go
+first, and nothing ever happens. Deadlocks are among the most insidious bugs in concurrent systems
+because they often don't manifest until specific timing conditions arise in production.</p>
+
+<p>Imagine two people at a dinner table. There is one knife and one fork. Person A picks up the
+knife and waits for the fork. Person B picks up the fork and waits for the knife. Neither will give
+up their utensil. They are deadlocked — both will starve. This is exactly what happens in software
+when two threads each hold one lock and try to acquire the other's lock.</p>
+
+<h3>The Four Necessary Conditions</h3>
+<p>For a deadlock to occur, four conditions must all hold simultaneously. These are known as the
+<strong>Coffman conditions</strong>:</p>
+<table>
+<thead><tr><th>Condition</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>Mutual Exclusion</td><td>At least one resource is held in non-shareable mode (only one process can use it at a time)</td></tr>
+<tr><td>Hold and Wait</td><td>A process holding at least one resource is waiting to acquire additional resources held by others</td></tr>
+<tr><td>No Preemption</td><td>Resources can't be forcibly taken away; they must be released voluntarily</td></tr>
+<tr><td>Circular Wait</td><td>There exists a circular chain of processes, each waiting for a resource held by the next in the chain</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">All four conditions must hold for deadlock. <strong>Break any one</strong>, and
+deadlock is impossible. This is the basis for deadlock prevention: design the system so that at
+least one condition can never be true.</p>
+</div>
+
+<h3>Resource Allocation Graph</h3>
+<p>A <strong>resource allocation graph</strong> visualizes the deadlock situation. Processes and
+resources are nodes. An edge from process P to resource R means P is requesting R. An edge from R to
+P means R is allocated to P. If the graph contains a <strong>cycle</strong>, and each resource has
+only one instance, then deadlock exists. If resources have multiple instances, a cycle is necessary
+but not sufficient for deadlock.</p>
+
+<div class="code-block"><span class="comment">// Classic deadlock: two locks acquired in opposite order</span>
+<span class="comment">//</span>
+<span class="comment">// Thread 1:                    Thread 2:</span>
+<span class="comment">//   acquire(lockA);              acquire(lockB);</span>
+<span class="comment">//   acquire(lockB);  ← waits     acquire(lockA);  ← waits</span>
+<span class="comment">//   ...                          ...</span>
+<span class="comment">//   release(lockB);              release(lockA);</span>
+<span class="comment">//   release(lockA);              release(lockB);</span>
+<span class="comment">//</span>
+<span class="comment">// Both threads block forever — deadlock!</span></div>
+
+<h3>Deadlock Handling Strategies</h3>
+<p>There are four approaches to dealing with deadlocks, ranging from "ignore it" to "actively
+prevent it":</p>
+<table>
+<thead><tr><th>Strategy</th><th>Approach</th><th>Used in practice?</th></tr></thead>
+<tbody>
+<tr><td>Ignore (Ostrich Algorithm)</td><td>Pretend deadlocks don't happen; reboot if they do</td><td>Yes — most desktop OSes (Windows, Linux desktop)</td></tr>
+<tr><td>Prevention</td><td>Design the system so at least one Coffman condition can't hold</td><td>Sometimes — e.g., lock ordering</td></tr>
+<tr><td>Avoidance</td><td>At each resource request, check if granting it could lead to deadlock (Banker's algorithm)</td><td>Rarely — too conservative; needs max resource info</td></tr>
+<tr><td>Detection &amp; Recovery</td><td>Allow deadlocks, periodically check for them, then kill a process to break the cycle</td><td>Sometimes — databases, some server systems</td></tr>
+</tbody>
+</table>
+
+<h3>Deadlock Prevention</h3>
+<p>Prevention works by ensuring at least one Coffman condition can never hold:</p>
+<ul>
+<li><strong>Break Hold and Wait</strong>: Require processes to request all resources at once,
+before starting. Impractical — processes don't know what they'll need.</li>
+<li><strong>Break No Preemption</strong>: If a process can't get a resource, it must release all
+held resources and try again. Works for some resources (e.g., locks) but not for others (e.g., a
+printer mid-print).</li>
+<li><strong>Break Circular Wait</strong>: Impose a <strong>total ordering</strong> on all resources
+and require processes to acquire them in order. If every process acquires locks in the same global
+order, circular wait is impossible. This is the most practical prevention technique.</li>
+</ul>
+
+<div class="callout callout-tip">
+<div class="callout-title">Lock Ordering: The Practical Fix</div>
+<p style="margin:0">The most common deadlock prevention in real code is <strong>lock ordering</strong>:
+assign a global order to all locks and always acquire them in that order. If Thread 1 and Thread 2
+both need locks A and B, they both acquire A first, then B. No deadlock is possible. In xv6, the
+code comments document the required lock ordering for multi-lock operations.</p>
+</div>
+
+<h3>Banker's Algorithm (Avoidance)</h3>
+<p>Dijkstra's <strong>Banker's Algorithm</strong> is the classic deadlock avoidance method. It
+models the system like a bank: each process declares its maximum resource needs upfront. When a
+process requests resources, the algorithm checks whether granting the request leaves the system in
+a <strong>safe state</strong> — one where there exists some sequence of allocations that lets all
+processes eventually complete. If the state is safe, the request is granted; otherwise, the process
+must wait. The algorithm is correct but rarely used in practice because it requires knowing maximum
+resource needs in advance and is conservative.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch11">11. I/O Systems and Interrupts</h2>
+<p>A computer is useless without I/O — input from keyboards and networks, output to screens and
+printers, storage on disks and SSDs. The OS's I/O subsystem manages all these devices, providing a
+uniform interface to wildly different hardware. Understanding I/O is essential because it's where
+the OS meets the physical world, and it's where many performance and reliability challenges arise.</p>
+
+<p>I/O devices are incredibly diverse: a keyboard sends a few bytes per second; an SSD transfers
+gigabytes per second; a network card handles millions of packets per second. The OS abstracts this
+diversity behind a few standard interfaces: <strong>block devices</strong> (random access, fixed-size
+blocks — disks, SSDs) and <strong>character devices</strong> (stream of bytes — keyboards, serial
+ports, network interfaces).</p>
+
+<h3>How I/O Works: Polling vs. Interrupts</h3>
+<p>When the CPU needs to interact with a device, there are two ways to know when the device is ready:</p>
+<ul>
+<li><strong>Polling</strong>: The CPU repeatedly reads a device status register in a loop, waiting
+for a "ready" bit. Simple, but wastes CPU cycles that could be doing useful work.</li>
+<li><strong>Interrupts</strong>: The device sends a hardware signal (an interrupt) to the CPU when
+it needs attention. The CPU can do other work and is notified when the device is ready. This is how
+virtually all modern I/O works.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">An <strong>interrupt</strong> is a hardware signal that causes the CPU to stop
+its current execution, save its state, and jump to a predefined <strong>interrupt handler</strong>
+in the OS. After handling the interrupt, the CPU restores the saved state and resumes. Interrupts
+let the CPU do useful work while slow I/O devices operate in the background.</p>
+</div>
+
+<h3>Interrupt Handling</h3>
+<p>When an interrupt fires, the hardware does the following automatically: (1) saves the current
+program counter and some registers, (2) switches to a privileged mode (kernel mode), (3) jumps to
+the interrupt handler address stored in an <strong>interrupt vector table</strong>. The OS's
+interrupt handler then processes the event and returns. In xv6, the trap handler in
+<code class="code-inline">trap.c</code> dispatches to the appropriate handler based on the cause
+of the trap (timer interrupt, device interrupt, syscall, or page fault).</p>
+
+<div class="code-block"><span class="comment">// Simplified xv6 trap dispatch (kernel/trap.c)</span>
+<span class="keyword">void</span>
+trap(<span class="keyword">struct</span> trapframe *tf)
+{
+    <span class="keyword">if</span> ((r_scause() &amp; <span class="number">0x8000000000000000</span>)) {
+        <span class="comment">// Interrupt</span>
+        <span class="keyword">int</span> which = (r_scause() &amp; <span class="number">0xff</span>);
+        <span class="keyword">if</span> (which == <span class="number">5</span>)
+            clockintr();    <span class="comment">// Timer interrupt</span>
+        <span class="keyword">else if</span> (which == <span class="number">10</span>)
+            virtio_disk_intr();  <span class="comment">// Disk I/O complete</span>
+        <span class="keyword">else if</span> (which == <span class="number">8</span>)
+            uartintr();     <span class="comment">// Serial input</span>
+        <span class="comment">// ...</span>
+    } <span class="keyword">else</span> {
+        <span class="comment">// Exception or syscall</span>
+        <span class="keyword">if</span> (r_scause() == <span class="number">8</span>)
+            syscall();      <span class="comment">// System call from user mode</span>
+        <span class="comment">// ...</span>
+    }
+}</div>
+
+<h3>Top-Half / Bottom-Half Design</h3>
+<p>Interrupt handlers run with interrupts disabled and must be fast — a slow handler delays all
+other interrupts. To handle complex I/O without blocking, OS designers split interrupt handling into
+two parts:</p>
+<ul>
+<li><strong>Top half (interrupt handler)</strong>: Runs immediately, in interrupt context. Does the
+minimum: acknowledge the interrupt, copy data from device to a buffer, schedule the bottom half.
+Must be fast and non-blocking.</li>
+<li><strong>Bottom half (deferred work)</strong>: Runs later, in process context, with interrupts
+enabled. Does the heavy lifting: parsing data, waking up waiting processes, starting the next I/O.
+In Linux, this is done via softirqs, tasklets, or workqueues.</li>
+</ul>
+
+<h3>Device Drivers</h3>
+<p>A <strong>device driver</strong> is the OS code that knows how to talk to a specific piece of
+hardware. It translates generic OS requests ("read block 42") into device-specific commands
+("write these values to these I/O ports"). Drivers are notoriously the buggiest part of an OS — they
+run in kernel mode, so a bug can crash the system, and they deal with complex, poorly documented
+hardware. In xv6, the virtio disk driver (<code class="code-inline">virtio_disk.c</code>) and
+console driver (<code class="code-inline">console.c</code>) are examples.</p>
+
+<h3>DMA (Direct Memory Access)</h3>
+<p>Without DMA, the CPU must copy every byte of I/O data between the device and memory — a huge
+waste for large transfers. <strong>DMA</strong> is a hardware feature where a dedicated
+<strong>DMA controller</strong> transfers data directly between the device and memory, bypassing
+the CPU. The CPU sets up the transfer (source, destination, length) and is interrupted when it's
+done. This lets the CPU do other work during large I/O operations.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">DMA and Cache Coherence</div>
+<p style="margin:0">DMA transfers data directly to/from physical memory, bypassing the CPU cache.
+This can cause <strong>cache incoherence</strong>: the CPU has a stale cached copy while DMA wrote
+new data to memory. The OS must flush or invalidate caches around DMA operations to ensure the CPU
+sees the correct data. Modern hardware often handles this automatically, but some architectures
+require explicit cache management.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch12">12. File Systems</h2>
+<p>A <strong>file system</strong> is the OS subsystem that organizes data on storage devices into
+<strong>files</strong> and <strong>directories</strong>. Without a file system, a disk is just a
+flat array of blocks. The file system imposes structure: it tracks which blocks belong to which
+file, organizes files into a directory hierarchy, and provides names, permissions, and metadata
+(sizes, timestamps, types).</p>
+
+<p>Think of a file system as a library. The raw disk is a warehouse full of unorganized books. The
+file system is the librarian's catalog: it records where each book (file) is shelved, what section
+(directory) it's in, who can read it (permissions), and its metadata (author, date, size). When
+you ask for a file by name, the file system looks it up in the catalog and finds the physical
+location on disk.</p>
+
+<h3>Files and Directories</h3>
+<p>A <strong>file</strong> is a named collection of related data. In Unix, a file is just a
+sequence of bytes — the OS doesn't impose any structure (no "records" or "fields"). The
+interpretation is up to the application. A <strong>directory</strong> (or folder) is a special file
+that contains a list of (name, file) pairs. Directories can contain other directories, forming a
+tree (or, with links, a graph) structure.</p>
+
+<table>
+<thead><tr><th>File Attribute</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Name</td><td>Human-readable identifier</td><td>report.pdf</td></tr>
+<tr><td>Type</td><td>File type (often encoded in extension)</td><td>.pdf, .txt, .c</td></tr>
+<tr><td>Size</td><td>Current size in bytes</td><td>1048576</td></tr>
+<tr><td>Permissions</td><td>Who can read/write/execute</td><td>rwxr-xr-x</td></tr>
+<tr><td>Timestamps</td><td>Creation, modification, access times</td><td>2026-08-16 14:30</td></tr>
+<tr><td>Location</td><td>Where on disk the data lives</td><td>inode #1234, blocks 100-200</td></tr>
+</tbody>
+</table>
+
+<h3>Allocation Methods</h3>
+<p>The file system must track which disk blocks belong to each file. There are three classic
+allocation strategies:</p>
+<table>
+<thead><tr><th>Method</th><th>How it works</th><th>Pros</th><th>Cons</th></tr></thead>
+<tbody>
+<tr><td>Contiguous</td><td>File occupies consecutive blocks; store start + length</td><td>Fast sequential access; simple</td><td>Fragmentation; hard to grow files</td></tr>
+<tr><td>Linked List</td><td>Each block points to the next; store first block</td><td>No external fragmentation; easy to grow</td><td>Slow random access; pointer overhead per block</td></tr>
+<tr><td>Indexed (Inode)</td><td>Each file has an index block listing all its data blocks</td><td>Fast random access; supports large files</td><td>Index block overhead; fixed max size (unless extended)</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">Unix file systems (including xv6) use <strong>inodes</strong> (index nodes). Each
+file has an inode that stores metadata and an array of <strong>block pointers</strong>. The first
+12 pointers point to direct data blocks; the 13th points to an <strong>indirect block</strong>
+(containing more pointers); the 14th to a <strong>double-indirect block</strong>; the 15th to a
+<strong>triple-indirect block</strong>. This allows small files to be fast (direct access) while
+supporting very large files (through indirection).</p>
+</div>
+
+<h3>The xv6 File System</h3>
+<p>xv6 implements a simple Unix-like file system. The disk is divided into regions:</p>
+<div class="code-block"><span class="comment">// xv6 file system layout on disk:</span>
+<span class="comment">//</span>
+<span class="comment">//  Block 0:    [ boot block ]        (unused by FS)</span>
+<span class="comment">//  Block 1:    [ superblock ]        (FS metadata: size, nblocks, ninodes)</span>
+<span class="comment">//  Block 2..:  [ log ]               (write-ahead log for crash recovery)</span>
+<span class="comment">//  Block ..:   [ inode blocks ]      (array of on-disk inodes)</span>
+<span class="comment">//  Block ..:   [ bitmap ]            (free block bitmap)</span>
+<span class="comment">//  Block ..:   [ data blocks ]       (actual file/directory data)</span>
+<span class="comment">//</span>
+<span class="comment">// On-disk inode (kernel/fs.h):</span>
+<span class="comment">//   type (file/dir/device), nlink, size, addrs[13]</span>
+<span class="comment">//   addrs[0..11] = direct block numbers</span>
+<span class="comment">//   addrs[12]    = indirect block (256 more pointers)</span></div>
+
+<p>The xv6 file system supports three types of files: regular files (data), directories (lists of
+directory entries), and device files (special files that map to I/O devices). It also supports
+<strong>hard links</strong> — multiple directory entries pointing to the same inode — and
+<strong>symbolic links</strong> are not implemented in basic xv6 but are a common extension.</p>
+
+<h3>Directory Structure</h3>
+<p>A directory is a file containing an array of directory entries, each with an inode number and a
+name. The root directory (<code class="code-inline">/</code>) has inode 1 in xv6. To resolve a path
+like <code class="code-inline">/home/user/file.txt</code>, the file system: (1) starts at the root
+inode, (2) reads the root directory data, (3) searches for "home" and gets its inode number, (4)
+reads the "home" directory, (5) searches for "user", and so on until it reaches the final file.</p>
+
+<div class="code-block"><span class="comment">// xv6 directory entry (kernel/fs.h)</span>
+<span class="keyword">struct</span> dirent {
+    <span class="keyword">ushort</span> inum;    <span class="comment">// inode number (0 = free entry)</span>
+    <span class="keyword">char</span> name[DIRSIZ]; <span class="comment">// file name (14 bytes in xv6)</span>
+};</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">The Log for Crash Recovery</div>
+<p style="margin:0">xv6 uses a <strong>write-ahead log</strong> for crash recovery. Before modifying
+file system data, xv6 writes all intended changes to the log area on disk. Once the complete
+transaction is in the log, it "commits" by writing a commit record. Only then does it apply the
+changes to the actual file system blocks. If the system crashes mid-transaction, the log can be
+replayed (or discarded) on reboot, ensuring the file system is never left in an inconsistent state.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch13">13. Mass-Storage and I/O Scheduling</h2>
+<p>While SSDs have replaced mechanical hard drives in many systems, the principles of disk I/O
+scheduling remain important. Even with SSDs, I/O is orders of magnitude slower than memory, and
+intelligent scheduling can dramatically improve throughput and latency. This chapter covers how
+the OS organizes and optimizes access to mass storage.</p>
+
+<h3>Disk Structure (Mechanical HDDs)</h3>
+<p>A traditional hard disk drive consists of one or more <strong>platters</strong> (circular disks)
+coated with magnetic material. Data is stored in concentric <strong>tracks</strong> on each
+platter surface. Tracks are divided into <strong>sectors</strong> (typically 512 bytes or 4KB). A
+<strong>read/write head</strong> on a movable arm accesses data. The time to access a sector has
+three components:</p>
+<ul>
+<li><strong>Seek time</strong>: Time to move the head to the correct track (slowest — milliseconds).</li>
+<li><strong>Rotational latency</strong>: Time for the correct sector to rotate under the head.</li>
+<li><strong>Transfer time</strong>: Time to read/write the data once the head is positioned.</li>
+</ul>
+
+<p>Because seek time dominates, disk scheduling algorithms try to minimize head movement. SSDs have
+no moving parts, so seek time is near zero — but they still benefit from I/O scheduling for
+fairness and wear-leveling.</p>
+
+<h3>Disk Scheduling Algorithms</h3>
+<table>
+<thead><tr><th>Algorithm</th><th>Strategy</th><th>Pros</th><th>Cons</th></tr></thead>
+<tbody>
+<tr><td>FCFS</td><td>Service requests in arrival order</td><td>Simple, fair</td><td>Excessive head movement</td></tr>
+<tr><td>SSTF (Shortest Seek Time First)</td><td>Service the request closest to current head position</td><td>Minimizes seek time</td><td>Starvation of distant requests</td></tr>
+<tr><td>SCAN (Elevator)</td><td>Head sweeps in one direction servicing requests, then reverses</td><td>Fair; no starvation</td><td>Requests at extremes wait longer</td></tr>
+<tr><td>C-SCAN (Circular SCAN)</td><td>Like SCAN, but jumps back to start after reaching the end</td><td>More uniform wait times</td><td>Wasted movement on the return trip</td></tr>
+<tr><td>LOOK / C-LOOK</td><td>Like SCAN/C-SCAN, but only goes as far as the last request (not the disk edge)</td><td>More efficient than full SCAN</td><td>Slightly more complex</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">The <strong>elevator algorithm</strong> (SCAN) is the most widely used disk
+scheduling strategy. Like an elevator, the disk head moves in one direction, servicing all requests
+in its path, then reverses. This prevents the head from thrashing back and forth and ensures no
+request waits indefinitely.</p>
+</div>
+
+<h3>SCAN Example</h3>
+<div class="code-block"><span class="comment"># Disk has 200 tracks (0-199). Head at 53, moving toward 199.
+# Request queue: 98, 183, 37, 122, 14, 124, 65, 67
+#
+# SCAN (moving up first):
+#   53 → 65 → 67 → 98 → 122 → 124 → 183 → [199] → 37 → 14
+#   Total head movement: (199-53) + (199-14) = 146 + 185 = 331 tracks
+#
+# Compare FCFS:
+#   53 → 98 → 183 → 37 → 122 → 14 → 124 → 65 → 67
+#   Total: 45+85+146+85+108+110+59+2 = 640 tracks
+#
+# SCAN nearly halves the head movement!</span></div>
+
+<h3>RAID (Redundant Array of Independent Disks)</h3>
+<p>RAID combines multiple physical disks into a single logical unit to improve performance,
+reliability, or both. Different RAID levels offer different trade-offs:</p>
+<table>
+<thead><tr><th>Level</th><th>Name</th><th>How it works</th><th>Pros</th><th>Cons</th></tr></thead>
+<tbody>
+<tr><td>RAID 0</td><td>Striping</td><td>Data spread across N disks (no redundancy)</td><td>Fastest; full capacity</td><td>No fault tolerance — one disk fails, all data lost</td></tr>
+<tr><td>RAID 1</td><td>Mirroring</td><td>Identical data on 2 disks</td><td>Good read speed; tolerates 1 failure</td><td>50% capacity wasted</td></tr>
+<tr><td>RAID 4</td><td>Striping + Parity</td><td>Data striped across N disks + 1 parity disk</td><td>Tolerates 1 failure; good read speed</td><td>Parity disk is a bottleneck</td></tr>
+<tr><td>RAID 5</td><td>Striping + Distributed Parity</td><td>Like RAID 4 but parity distributed across all disks</td><td>Tolerates 1 failure; no parity bottleneck</td><td>Slow writes (parity calculation)</td></tr>
+<tr><td>RAID 6</td><td>Striping + Double Parity</td><td>Two parity blocks per stripe</td><td>Tolerates 2 failures</td><td>Even slower writes; more capacity overhead</td></tr>
+<tr><td>RAID 10</td><td>1 + 0</td><td>Mirrored pairs, then striped</td><td>Fast reads and writes; tolerates 1 failure per pair</td><td>50% capacity wasted</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-title">RAID 5: The Workhorse</div>
+<p style="margin:0">RAID 5 is the most popular RAID level for general-purpose storage. It stripes
+data across N+1 disks with distributed parity, giving good read performance, tolerating a single
+disk failure, and wasting only 1/N of the capacity. The parity is computed with XOR: if any one
+disk fails, its data can be reconstructed from the remaining data and the parity.</p>
+</div>
+
+<h3>SSD Considerations</h3>
+<p>SSDs store data in flash memory cells and have no moving parts, so seek time and rotational
+latency are effectively zero. However, SSDs have their own challenges: <strong>wear leveling</strong>
+(each cell can only be erased a limited number of times), <strong>write amplification</strong>
+(writing one page may require erasing and rewriting an entire erase block), and
+<strong>garbage collection</strong> (reclaiming pages that are no longer in use). Modern SSDs include
+a <strong>flash translation layer (FTL)</strong> that handles these issues transparently, making
+the SSD look like a simple block device to the OS.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch14">14. System Calls and Traps</h2>
+<p>The <strong>system call</strong> is the fundamental interface between user programs and the
+operating system kernel. User programs run in unprivileged mode and cannot directly access hardware,
+modify page tables, or perform I/O. When they need any of these services, they make a system call —
+a controlled, secure transition from user mode to kernel mode.</p>
+
+<p>Think of a system call like the counter at a bank. You (the user program) can't go into the vault
+yourself (kernel mode). You fill out a request form (put arguments in registers) and hand it to the
+teller (execute the <code class="code-inline">ecall</code> instruction). The teller checks your
+request, performs the operation in the vault, and hands you the result. You never enter the vault
+yourself — the teller controls everything.</p>
+
+<h3>The Trap Mechanism</h3>
+<p>The hardware mechanism that switches from user mode to kernel mode is called a <strong>trap</strong>.
+A trap can be triggered by three things:</p>
+<ul>
+<li><strong>System call</strong>: The user program explicitly requests kernel service (e.g.,
+<code class="code-inline">ecall</code> on RISC-V, <code class="code-inline">syscall</code> on x86-64).</li>
+<li><strong>Exception (fault)</strong>: The program does something illegal — divides by zero,
+accesses an invalid address, executes an illegal instruction. The CPU traps to the OS, which
+typically terminates the process.</li>
+<li><strong>Interrupt</strong>: A hardware device signals the CPU (timer expired, I/O complete,
+keyboard input). The OS handles the interrupt and resumes the interrupted program.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">All three — syscalls, exceptions, and interrupts — use the same
+<strong>trap mechanism</strong>. The hardware saves the current state (PC, registers), switches to
+kernel mode, and jumps to a trap handler. The OS examines the cause and dispatches accordingly.
+After handling, it restores the saved state and returns to user mode (or terminates the process,
+for fatal exceptions).</p>
+</div>
+
+<h3>Syscall Dispatch in xv6</h3>
+<p>When a user program calls <code class="code-inline">exec()</code>, the C library wrapper puts the
+syscall number in a register (a7 on RISC-V) and executes <code class="code-inline">ecall</code>.
+The hardware traps to the kernel. xv6's trap handler saves the user registers into a
+<code class="code-inline">trapframe</code>, reads the syscall number from a7, and dispatches to the
+corresponding kernel function via a function pointer table.</p>
+
+<div class="code-block"><span class="comment">// Simplified xv6 syscall dispatch (kernel/syscall.c)</span>
+<span class="keyword">static</span> <span class="keyword">uint64</span> (*syscalls[])(<span class="keyword">void</span>) = {
+[SYS_fork]    sys_fork,
+[SYS_exit]    sys_exit,
+[SYS_wait]    sys_wait,
+[SYS_exec]    sys_exec,
+[SYS_read]    sys_read,
+[SYS_write]   sys_write,
+[SYS_open]    sys_open,
+[SYS_close]   sys_close,
+[SYS_kill]    sys_kill,
+[SYS_getpid]  sys_getpid,
+<span class="comment">// ...</span>
+};
+
+<span class="keyword">void</span>
+syscall(<span class="keyword">void</span>)
+{
+    <span class="keyword">int</span> num = p-&gt;trapframe-&gt;a7;  <span class="comment">// syscall number</span>
+    <span class="keyword">if</span> (num &gt; <span class="number">0</span> &amp;&amp; num &lt; NELEM(syscalls) &amp;&amp; syscalls[num]) {
+        p-&gt;trapframe-&gt;a0 = syscalls[num]();  <span class="comment">// call handler, store result in a0</span>
+    } <span class="keyword">else</span> {
+        p-&gt;trapframe-&gt;a0 = -<span class="number">1</span>;  <span class="comment">// unknown syscall</span>
+    }
+}</div>
+
+<h3>The User/Kernel Transition</h3>
+<p>The transition from user to kernel mode involves several steps, each with a cost:</p>
+<ol>
+<li><strong>Execute the trap instruction</strong> (<code class="code-inline">ecall</code> /
+<code class="code-inline">syscall</code>). The hardware: saves the user PC, switches to kernel mode,
+jumps to the trap vector.</li>
+<li><strong>Save user registers</strong>. The kernel saves all user registers (into the
+<code class="code-inline">trapframe</code>) because the kernel will use those registers for its own
+work.</li>
+<li><strong>Switch to kernel stack</strong>. The user stack is in user memory and may be
+inaccessible or corrupted. The kernel uses its own stack.</li>
+<li><strong>Handle the syscall</strong>. The kernel runs the actual system call handler.</li>
+<li><strong>Restore user registers</strong> and return. The <code class="code-inline">sret</code>
+(RISC-V) or <code class="code-inline">iret</code> (x86) instruction restores the user PC and
+switches back to user mode.</li>
+</ol>
+
+<div class="callout callout-warn">
+<div class="callout-title">Syscall Overhead</div>
+<p style="margin:0">A system call is much more expensive than a function call — typically 1-10
+microseconds vs. nanoseconds. This is why programs that make many small syscalls (like reading a
+file one byte at a time) are slow. The fix is <strong>buffering</strong>: read a large chunk in one
+syscall and process it in user space, or use <strong>batching</strong> APIs like
+<code class="code-inline">io_uring</code> (Linux) that submit multiple I/O operations in one
+syscall.</p>
+</div>
+
+<h3>Categories of System Calls</h3>
+<table>
+<thead><tr><th>Category</th><th>Examples</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Process Control</td><td>fork, exec, exit, wait, kill</td><td>Create, terminate, manage processes</td></tr>
+<tr><td>File Management</td><td>open, close, read, write, lseek</td><td>Create, delete, read, write files</td></tr>
+<tr><td>Device Management</td><td>ioctl, mmap</td><td>Control I/O devices</td></tr>
+<tr><td>Information Maintenance</td><td>getpid, time, getuid</td><td>Get/set system information</td></tr>
+<tr><td>Communication</td><td>pipe, socket, shmget</td><td>Inter-process communication</td></tr>
+<tr><td>Protection</td><td>chmod, chown, umask</td><td>Set file permissions</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-title">Standard C Library Wrappers</div>
+<p style="margin:0">You rarely write <code class="code-inline">ecall</code> directly. The C standard
+library (glibc on Linux) provides wrapper functions: <code class="code-inline">fork()</code>,
+<code class="code-inline">read()</code>, <code class="code-inline">write()</code>, etc. These
+wrappers put the syscall number in the right register, execute the trap instruction, and return the
+result. In xv6, <code class="code-inline">user/usys.S</code> contains these auto-generated
+wrappers.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch15">15. Protection and Security</h2>
+<p><strong>Protection</strong> and <strong>security</strong> are about ensuring that programs and
+users can only access the resources they're authorized to use. Protection is the mechanism — the
+hardware and OS features that enforce access rules. Security is the broader goal — protecting the
+system from malicious attacks, unauthorized access, and data theft. A well-designed OS provides
+multiple layers of defense.</p>
+
+<p>Think of protection like the security system of a building. There are outer doors (user/kernel
+boundary), interior doors with different keys (file permissions), ID badges (authentication), and
+security guards (the OS checking every access). No single layer is sufficient — defense in depth
+means if one layer fails, others still protect the system.</p>
+
+<h3>Access Control</h3>
+<p>The OS controls access to resources through <strong>access control</strong>. There are two main
+models:</p>
+<ul>
+<li><strong>Discretionary Access Control (DAC)</strong>: The owner of a resource decides who can
+access it. Unix file permissions (rwx for owner/group/others) are DAC. Flexible, but the owner can
+accidentally grant too much access.</li>
+<li><strong>Mandatory Access Control (MAC)</strong>: The system enforces access rules that users
+cannot override. Security classifications (Top Secret, Secret, Confidential) are MAC. More secure,
+but less flexible. SELinux and AppArmor bring MAC to Linux.</li>
+</ul>
+
+<h3>Unix File Permissions</h3>
+<p>Unix uses a simple but effective DAC model. Each file has an owner (user), a group, and a set of
+permission bits for three classes: owner, group, and others. Each class has three bits: read (r),
+write (w), execute (x).</p>
+<div class="code-block"><span class="comment"># Unix permission bits: rwxrwxrwx
+#                    owner | group | others
+#
+# Examples:
+#   rwxr-xr-x (755) - owner: full; group &amp; others: read + execute
+#   rw-r--r-- (644) - owner: read+write; group &amp; others: read only
+#   rwx------ (700) - owner: full; nobody else can access
+#
+# For directories:
+#   r = can list contents
+#   w = can create/delete files in it
+#   x = can cd into it and access files by name
+#
+# Change permissions:  chmod 644 file.txt
+# Change owner:        chown alice file.txt</span></div>
+
+<table>
+<thead><tr><th>Permission</th><th>For Files</th><th>For Directories</th></tr></thead>
+<tbody>
+<tr><td>Read (r)</td><td>View file contents</td><td>List directory entries</td></tr>
+<tr><td>Write (w)</td><td>Modify file contents</td><td>Create/delete/rename files in directory</td></tr>
+<tr><td>Execute (x)</td><td>Run as a program</td><td>Enter directory (cd) and access named files</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0"><strong>Protection rings</strong> are hardware-enforced privilege levels. x86
+has 4 rings (0-3); most OSes use only ring 0 (kernel) and ring 3 (user). RISC-V has three modes:
+Machine (M), Supervisor (S), and User (U). The OS kernel runs in S mode; user programs run in U
+mode. The hardware prevents user-mode code from executing privileged instructions or accessing
+kernel memory — this is the foundation of process isolation.</p>
+</div>
+
+<h3>Authentication</h3>
+<p>Before access control can work, the system must know <em>who</em> is making a request. This is
+<strong>authentication</strong> — verifying identity. Common methods:</p>
+<ul>
+<li><strong>Passwords</strong>: The most common. The system stores a hash (not the plaintext) and
+compares the hash of the entered password. Vulnerable to guessing, phishing, and brute force.</li>
+<li><strong>Multi-factor authentication (MFA)</strong>: Combine something you know (password) with
+something you have (phone/token) or something you are (biometric). Much stronger than passwords
+alone.</li>
+<li><strong>Public key cryptography</strong>: SSH keys, certificates. The user proves possession of
+a private key without revealing it. Used for automated systems and secure shell access.</li>
+</ul>
+
+<h3>Isolation Mechanisms</h3>
+<p>Beyond access control, the OS provides several mechanisms to isolate programs from each other:</p>
+<ul>
+<li><strong>Virtual memory</strong>: Each process has its own address space. A process cannot read
+or write another process's memory (unless they explicitly share it via shared memory or mmap).</li>
+<li><strong>Sandboxing</strong>: Running untrusted code in a restricted environment with limited
+access to files, network, and system calls. Examples: browser tabs, Docker containers, seccomp
+filters.</li>
+<li><strong>Containers</strong>: Lightweight virtualization using OS-level isolation (namespaces,
+cgroups). Processes in a container see their own filesystem, process list, and network, but share
+the host kernel. Faster than full VMs but weaker isolation.</li>
+<li><strong>Virtual machines</strong>: Full hardware virtualization. Each VM runs its own kernel.
+Strongest isolation (a VM escape is very rare) but heaviest overhead.</li>
+</ul>
+
+<div class="callout callout-warn">
+<div class="callout-title">The Principle of Least Privilege</div>
+<p style="margin:0">Every program, process, and user should have <strong>only the privileges needed
+to do its job — no more</strong>. A web server doesn't need to read /etc/shadow. A text editor
+doesn't need raw disk access. Following this principle limits the damage from bugs and attacks: if
+a program is compromised, the attacker only gets that program's limited privileges, not full system
+access.</p>
+</div>
+
+<h3>Common Security Threats</h3>
+<table>
+<thead><tr><th>Threat</th><th>How it works</th><th>Defense</th></tr></thead>
+<tbody>
+<tr><td>Buffer Overflow</td><td>Write past array bounds, overwrite return address to hijack control</td><td>Stack canaries, ASLR, DEP/NX, bounds checking</td></tr>
+<tr><td>Privilege Escalation</td><td>Exploit a bug to gain higher privileges (e.g., user → root)</td><td>Least privilege, capability-based security, auditing</td></tr>
+<tr><td>Malware / Viruses</td><td>Malicious code that replicates and spreads</td><td>Antivirus, code signing, app stores</td></tr>
+<tr><td>Denial of Service (DoS)</td><td>Overwhelm a system with requests to make it unavailable</td><td>Rate limiting, firewalls, redundancy</td></tr>
+<tr><td>Social Engineering</td><td>Trick users into revealing credentials or running malware</td><td>Education, MFA, verification procedures</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<div class="callout-title">Defense in Depth</div>
+<p style="margin:0">No single security measure is sufficient. <strong>Defense in depth</strong> means
+layering multiple independent protections: hardware privilege levels, virtual memory isolation,
+file permissions, authentication, firewalls, encryption, and auditing. If an attacker breaches one
+layer, others still stand. This is why modern systems combine kernel/user separation, ASLR, stack
+canaries, DEP, and sandboxing — each makes the next attack harder.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - OS Concepts Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts"
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = this.dataset.target;
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      // Hide section if all items hidden
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

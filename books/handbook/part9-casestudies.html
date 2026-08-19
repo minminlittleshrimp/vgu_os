@@ -1,0 +1,3001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 9: Case Studies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item active" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 20: The Linux System</div>
+      <a class="nav-item" data-target="sec-20-1"><span class="nav-num">20.1</span>Linux History</a>
+      <a class="nav-item" data-target="sec-20-2"><span class="nav-num">20.2</span>Design Principles</a>
+      <a class="nav-item" data-target="sec-20-3"><span class="nav-num">20.3</span>Kernel Modules</a>
+      <a class="nav-item" data-target="sec-20-4"><span class="nav-num">20.4</span>Process Management</a>
+      <a class="nav-item" data-target="sec-20-5"><span class="nav-num">20.5</span>Scheduling</a>
+      <a class="nav-item" data-target="sec-20-6"><span class="nav-num">20.6</span>Memory Management</a>
+      <a class="nav-item" data-target="sec-20-7"><span class="nav-num">20.7</span>File Systems</a>
+      <a class="nav-item" data-target="sec-20-8"><span class="nav-num">20.8</span>Input and Output</a>
+      <a class="nav-item" data-target="sec-20-9"><span class="nav-num">20.9</span>Interprocess Communication</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 21: Windows 10</div>
+      <a class="nav-item" data-target="sec-21-1"><span class="nav-num">21.1</span>Design Principles</a>
+      <a class="nav-item" data-target="sec-21-2"><span class="nav-num">21.2</span>System Components</a>
+      <a class="nav-item" data-target="sec-21-3"><span class="nav-num">21.3</span>Terminal Services &amp; Fast User Switching</a>
+      <a class="nav-item" data-target="sec-21-4"><span class="nav-num">21.4</span>File System</a>
+      <a class="nav-item" data-target="sec-21-5"><span class="nav-num">21.5</span>Networking</a>
+      <a class="nav-item" data-target="sec-21-6"><span class="nav-num">21.6</span>Interface</a>
+      <a class="nav-item" data-target="sec-21-7"><span class="nav-num">21.7</span>Virtualization (WSL)</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 22: Influential Operating Systems</div>
+      <a class="nav-item" data-target="sec-22-1"><span class="nav-num">22.1</span>Early Systems</a>
+      <a class="nav-item" data-target="sec-22-2"><span class="nav-num">22.2</span>Atlas</a>
+      <a class="nav-item" data-target="sec-22-3"><span class="nav-num">22.3</span>XDS-940</a>
+      <a class="nav-item" data-target="sec-22-4"><span class="nav-num">22.4</span>THE</a>
+      <a class="nav-item" data-target="sec-22-5"><span class="nav-num">22.5</span>Multics</a>
+      <a class="nav-item" data-target="sec-22-6"><span class="nav-num">22.6</span>CP/M and MS-DOS</a>
+      <a class="nav-item" data-target="sec-22-7"><span class="nav-num">22.7</span>Macintosh and Windows</a>
+      <a class="nav-item" data-target="sec-22-8"><span class="nav-num">22.8</span>Mach</a>
+      <a class="nav-item" data-target="sec-22-9"><span class="nav-num">22.9</span>Capabilities (Hydra/CAP)</a>
+      <a class="nav-item" data-target="sec-22-10"><span class="nav-num">22.10</span>Other Influential Systems</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 9: Case Studies</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 20–22 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers three case studies: the Linux
+system (design, kernel modules, scheduling, memory, file systems, IPC), Windows 10
+(components, NTFS, networking, WSL), and influential operating systems throughout history.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-20-1">20.1 Linux History</a></li>
+<li><a href="#sec-20-2">20.2 Design Principles</a></li>
+<li><a href="#sec-20-3">20.3 Kernel Modules</a></li>
+<li><a href="#sec-20-4">20.4 Process Management</a></li>
+<li><a href="#sec-20-5">20.5 Scheduling</a></li>
+<li><a href="#sec-20-6">20.6 Memory Management</a></li>
+<li><a href="#sec-20-7">20.7 File Systems</a></li>
+<li><a href="#sec-20-8">20.8 Input and Output</a></li>
+<li><a href="#sec-20-9">20.9 Interprocess Communication</a></li>
+<li><a href="#sec-21-1">21.1 Design Principles</a></li>
+<li><a href="#sec-21-2">21.2 System Components</a></li>
+<li><a href="#sec-21-3">21.3 Terminal Services and Fast User Switching</a></li>
+<li><a href="#sec-21-4">21.4 File System</a></li>
+<li><a href="#sec-21-5">21.5 Networking</a></li>
+<li><a href="#sec-21-6">21.6 Interface</a></li>
+<li><a href="#sec-21-7">21.7 Virtualization (WSL)</a></li>
+<li><a href="#sec-22-1">22.1 Early Systems</a></li>
+<li><a href="#sec-22-2">22.2 Atlas</a></li>
+<li><a href="#sec-22-3">22.3 XDS-940</a></li>
+<li><a href="#sec-22-4">22.4 THE</a></li>
+<li><a href="#sec-22-5">22.5 Multics</a></li>
+<li><a href="#sec-22-6">22.6 CP/M and MS-DOS</a></li>
+<li><a href="#sec-22-7">22.7 Macintosh and Windows</a></li>
+<li><a href="#sec-22-8">22.8 Mach</a></li>
+<li><a href="#sec-22-9">22.9 Capabilities (Hydra/CAP)</a></li>
+<li><a href="#sec-22-10">22.10 Other Influential Systems</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-1">20.1 Linux History</h2>
+
+<p><strong>Linux</strong> began in 1991 when Linus Torvalds, a Finnish university student,
+wrote a free operating system kernel for his 386 PC. Frustrated with the limitations of
+MINIX (a teaching OS by Andrew Tanenbaum) and the high cost of commercial Unix, Torvalds
+released Linux under the GNU General Public License (GPL), making it free and open
+source. The first public release, Linux 0.01 (September 1991), was a minimal kernel
+supporting only the 386 processor. Within a few years, Linux had grown into a
+full-featured operating system, thanks to contributions from thousands of developers
+worldwide.</p>
+
+<p>The name "Linux" technically refers only to the <em>kernel</em>—the core that manages
+CPU, memory, and devices. The complete operating system is more properly called
+<em>GNU/Linux</em>, because most of the user-space utilities (shell, compilers, core
+utilities) come from the <strong>GNU Project</strong>, started by Richard Stallman in 1983
+with the goal of creating a free Unix-like operating system. GNU had written the
+utilities but lacked a kernel; Linux provided the kernel. Together, GNU and Linux formed
+a complete, free operating system. The distinction is important: when you run "Linux,"
+you are running the Linux kernel with GNU (and other) user-space software.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Timeline</div>
+<ul>
+<li><strong>1991</strong>: Linus Torvalds announces Linux on comp.os.minix</li>
+<li><strong>1992</strong>: Linux 0.96, first X Window System port</li>
+<li><strong>1994</strong>: Linux 1.0, first "stable" release</li>
+<li><strong>1996</strong>: Linux 2.0, SMP (multiprocessor) support</li>
+<li><strong>2001</strong>: Linux 2.4, improved SMP, large file support</li>
+<li><strong>2003</strong>: Linux 2.6, O(1) scheduler, NPTL threads</li>
+<li><strong>2011</strong>: Linux 3.0 (version number reset, no major change)</li>
+<li><strong>2015</strong>: Linux 4.0, live kernel patching</li>
+<li><strong>2019</strong>: Linux 5.0 (version number reset)</li>
+<li><strong>2022+</strong>: Linux 6.x, Rust support, io_uring, BPF</li>
+</ul>
+</div>
+
+<p>Linux's success is due in large part to its <strong>open-source development model</strong>.
+The kernel is developed by a global community of contributors, coordinated by Torvalds
+and a team of maintainers. Anyone can contribute: the kernel source is on GitHub (and
+git.kernel.org), and patches are reviewed on the Linux Kernel Mailing List (LKML). This
+model, sometimes called <em>bazaar development</em> (as opposed to the <em>cathedral</em>
+model of closed development), has produced a kernel that supports more hardware
+architectures, devices, and features than any other operating system. Companies like
+Intel, AMD, Google, Red Hat, and IBM contribute heavily, ensuring Linux runs well on
+their hardware and in their environments.</p>
+
+<p>The <strong>Linux ecosystem</strong> includes <em>distributions</em> (distros) that
+package the kernel with user-space software: <strong>Ubuntu</strong>, <strong>Debian</strong>,
+<strong>Fedora</strong>, <strong>Red Hat Enterprise Linux (RHEL)</strong>,
+<strong>Arch Linux</strong>, <strong>Alpine</strong>, and many others. Each distro targets
+different users: Ubuntu for desktops, RHEL for enterprise, Alpine for containers, OpenWrt
+for routers. The kernel is the same; the user-space differs. This separation of kernel
+and user-space is a key Linux design principle, inherited from Unix.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Linux and xv6</div>
+<p>xv6 is a simplified, teaching version of Unix. Linux is a production, full-featured
+Unix-like kernel. Comparing them is instructive: xv6 has ~10,000 lines of code; Linux has
+over 30 million. xv6 supports one architecture (RISC-V, x86); Linux supports dozens.
+xv6 has a simple round-robin scheduler; Linux has the Completely Fair Scheduler (CFS).
+xv6 has a basic file system; Linux supports ext4, XFS, Btrfs, NFS, and dozens of others.
+But the <em>core concepts</em> are the same: processes, system calls, page tables, file
+descriptors, inodes. Studying xv6 teaches you the foundation; Linux shows you what
+happens when that foundation is scaled to production.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-2">20.2 Design Principles</h2>
+
+<p>Linux is designed as a <strong>monolithic kernel</strong>: the entire kernel
+(scheduler, memory manager, file systems, device drivers, network stack) runs in a single
+address space in kernel mode. This contrasts with <em>microkernel</em> design (like Mach,
+seL4), where the kernel is minimal and services run as user-space processes. The
+monolithic design is faster (no message passing between kernel components) but less
+modular (a bug in any component can crash the kernel). Linux mitigates this with
+<em>loadable kernel modules</em> (Section 20.3), which allow code to be loaded and
+unloaded at runtime, providing some of the flexibility of a microkernel without the
+performance cost.</p>
+
+<p>The <strong>Unix philosophy</strong> heavily influences Linux design: <em>everything
+is a file</em> (devices, processes, network sockets are represented as files),
+<em>small, composable tools</em> (do one thing well, combine via pipes), <em>text as the
+universal interface</em> (configuration files, logs, data are text), and <em>policy
+separation from mechanism</em> (the kernel provides mechanisms; user-space provides
+policy). These principles make Linux flexible and scriptable: you can combine simple
+commands into complex pipelines, and configure the system through text files.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Design Principles</div>
+<ul>
+<li><strong>Monolithic kernel</strong>: all kernel services in one address space</li>
+<li><strong>Loadable modules</strong>: dynamically load/unload kernel code</li>
+<li><strong>Everything is a file</strong>: uniform interface for devices, processes, network</li>
+<li><strong>Multi-user, multitasking</strong>: multiple users, preemptive multitasking</li>
+<li><strong>POSIX compliance</strong>: compatible with Unix standards</li>
+<li><strong>Portable</strong>: runs on many architectures (x86, ARM, RISC-V, MIPS, ...)</li>
+<li><strong>Open source</strong>: GPL-licensed, community-developed</li>
+<li><strong>Stable kernel API</strong>: user-space API is stable; internal kernel API can change</li>
+</ul>
+</div>
+
+<p>Linux is <strong>POSIX-compliant</strong>: it implements the POSIX standard for
+operating system interfaces, meaning software written for other POSIX systems (Unix,
+macOS) can be ported to Linux with minimal changes. The system call interface
+(<code class="code-inline">open</code>, <code class="code-inline">read</code>,
+<code class="code-inline">write</code>, <code class="code-inline">fork</code>,
+<code class="code-inline">exec</code>, <code class="code-inline">wait</code>) is the same
+as in xv6 and other Unix systems. This is why xv6 is such a good teaching tool: its
+system calls are a subset of Linux's, so what you learn in xv6 transfers directly to
+Linux.</p>
+
+<p>A key design decision is the <strong>stable user-space API</strong>: the system call
+interface is stable and backward-compatible. A program compiled for Linux 2.0 (1996)
+will still run on Linux 6.x (2022) without recompilation. This is a deliberate choice:
+the kernel maintainers refuse to break user-space. In contrast, the <em>internal</em>
+kernel API (functions and data structures used by kernel code and modules) can change
+between versions. This means kernel modules (drivers) may need to be updated for new
+kernel versions, but user-space applications do not. This stability is a major reason
+for Linux's success in enterprise environments.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Monolithic vs. Microkernel: The Tanenbaum-Torvalds Debate</div>
+<p>In 1992, Andrew Tanenbaum (creator of MINIX) published a famous critique of Linux's
+monolithic design, arguing that microkernels were the future. Torvalds defended the
+monolithic approach, citing performance and simplicity. The debate continues: microkernels
+(like seL4, Fuchsia's Zircon) offer better isolation and security, while monolithic
+kernels (Linux, Windows) offer better performance and simpler development. In practice,
+Linux has incorporated microkernel ideas (loadable modules, user-space drivers via FUSE,
+VFIO) while remaining fundamentally monolithic. The debate illustrates that OS design
+involves fundamental trade-offs with no single "right" answer.</p>
+</div>
+
+<p>Linux is <strong>portable</strong>: it runs on more CPU architectures than any other
+operating system, including x86, x86-64, ARM, ARM64, RISC-V, MIPS, PowerPC, SPARC, s390,
+and many embedded processors. This portability is achieved by separating
+architecture-independent code (the bulk of the kernel) from architecture-dependent code
+(in <code class="code-inline">arch/</code> directory). Porting Linux to a new
+architecture involves writing the architecture-specific code (boot, page tables,
+interrupt handling, system call entry) while reusing the architecture-independent code.
+xv6 follows a similar pattern: the RISC-V and x86 versions share most code but differ in
+the <code class="code-inline">kernel/</code> and <code class="code-inline">entry*</code>
+files.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-3">20.3 Kernel Modules</h2>
+
+<p><strong>Kernel modules</strong> are pieces of code that can be loaded and unloaded
+into the kernel at runtime, without rebooting. This provides much of the flexibility of
+a microkernel (load only the drivers you need) while keeping the performance of a
+monolithic kernel (modules run in kernel space, not user space). Modules are used for
+device drivers, file systems, network protocols, and security modules. When you plug in
+a USB device, Linux loads the appropriate driver module; when you mount an ext4 file
+system, Linux loads the ext4 module (if not already loaded).</p>
+
+<p>A module is a <strong>relocatable object file</strong> (.ko) that is linked into the
+running kernel. The module's code runs in kernel mode with full kernel privileges—it can
+access any kernel data structure and any hardware. This is powerful but dangerous: a
+bug in a module can crash the entire kernel. Modules are loaded with
+<code class="code-inline">insmod</code> (load a specific module) or
+<code class="code-inline">modprobe</code> (load a module and its dependencies) and
+unloaded with <code class="code-inline">rmmod</code>. The
+<code class="code-inline">lsmod</code> command lists loaded modules.</p>
+
+<div class="code-block"><span class="comment">/* Linux kernel module example (simplified) */</span>
+
+<span class="preprocessor">#include &lt;linux/module.h&gt;</span>
+<span class="preprocessor">#include &lt;linux/kernel.h&gt;</span>
+
+<span class="comment">// Called when module is loaded</span>
+<span class="keyword">static int __init</span> hello_init(<span class="keyword">void</span>) {
+    printk(<span class="string">"Hello, kernel!\n"</span>);
+    <span class="keyword">return</span> 0;
+}
+
+<span class="comment">// Called when module is unloaded</span>
+<span class="keyword">static void __exit</span> hello_exit(<span class="keyword">void</span>) {
+    printk(<span class="string">"Goodbye, kernel!\n"</span>);
+}
+
+<span class="directive">module_init</span>(hello_init);
+<span class="directive">module_exit</span>(hello_exit);
+
+<span class="directive">MODULE_LICENSE</span>(<span class="string">"GPL"</span>);
+<span class="directive">MODULE_DESCRIPTION</span>(<span class="string">"Hello World module"</span>);</div>
+
+<p>Modules interact with the kernel through <strong>exported symbols</strong>: functions
+and variables that the kernel makes available to modules. A module can call
+<code class="code-inline">printk</code> (kernel logging),
+<code class="code-inline">kmalloc</code>/<code class="code-inline">kfree</code> (kernel
+memory allocation), <code class="code-inline">register_chrdev</code> (register a
+character device), and thousands of other kernel functions. The set of exported symbols
+is the <em>kernel API</em> for modules. Unlike the user-space API, this API can change
+between kernel versions, so modules may need updates for new kernels.</p>
+
+<p><strong>Device drivers</strong> are the most common type of module. A character
+device driver implements <code class="code-inline">open</code>,
+<code class="code-inline">read</code>, <code class="code-inline">write</code>,
+<code class="code-inline">release</code> (and optionally
+<code class="code-inline">ioctl</code>) functions that the kernel calls when user-space
+programs access the device file. A block device driver implements
+<code class="code-inline">request</code> or
+<code class="code-inline">submit_bio</code> for block I/O. Network drivers implement
+<code class="code-inline">ndo_start_xmit</code> for packet transmission. The kernel
+provides frameworks (the <em>driver model</em>) that handle common tasks like device
+discovery, power management, and hotplugging.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Module Loading and Dependencies</div>
+<p>Modules can depend on other modules. For example, the ext4 file system module depends
+on the <code class="code-inline">jbd2</code> (journaling block device) module. The
+<code class="code-inline">modprobe</code> command reads
+<code class="code-inline">modules.dep</code> (generated by
+<code class="code-inline">depmod</code>) to find and load dependencies automatically.
+<code class="code-inline">insmod</code> loads a single module without dependencies—if
+dependencies are missing, it fails. The kernel can also <em>auto-load</em> modules: when
+a program requests a feature (like mounting a file system type), the kernel sends a
+request to <code class="code-inline">modprobe</code> via
+<code class="code-inline">kmod</code> to load the needed module.</p>
+</div>
+
+<p><strong>Security modules</strong> are a special class of module that implement
+security policies. <strong>SELinux</strong> and <strong>AppArmor</strong> are
+implemented as Linux Security Modules (LSM): they hook into kernel security decision
+points and enforce mandatory access control policies. <strong>Yama</strong> restricts
+<code class="code-inline">ptrace</code> (debugging). <strong>seccomp</strong> filters
+system calls. These modules demonstrate the flexibility of the module system: security
+policy can be loaded and changed at runtime without modifying the core kernel.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Modules vs. xv6</div>
+<p>xv6 has no loadable modules—all drivers and file systems are compiled into the kernel.
+This is fine for a teaching OS (the kernel is small and the hardware is fixed), but it
+illustrates why Linux needs modules: a production kernel must support thousands of
+devices and file systems, and compiling them all in would bloat the kernel and waste
+memory. Modules let Linux load only what's needed. If you wanted to add modules to xv6,
+you would need: (1) a way to load .o files into kernel memory, (2) a symbol table for
+resolving references, (3) init/exit functions called on load/unload, and (4) a registry
+for drivers to register themselves. This is a significant but instructive extension.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-4">20.4 Process Management</h2>
+
+<p>Linux process management follows the Unix model, with some enhancements. A
+<strong>process</strong> is an instance of a running program, with its own address space,
+file descriptors, and execution context. The <code class="code-inline">fork()</code>
+system call creates a copy of the calling process (the parent); the new process (the
+child) is an almost-exact duplicate, differing only in its PID, PPID, and some
+statistics. The <code class="code-inline">exec()</code> family of system calls replaces
+the current process image with a new program. The
+<code class="code-inline">wait()</code> system call allows a parent to wait for a child
+to exit and retrieve its status. This fork-exec-wait model is the same as in xv6.</p>
+
+<p>Internally, Linux represents a process with a <code class="code-inline">task_struct</code>
+(defined in <code class="code-inline">&lt;sched.h&gt;</code>), which is the Linux
+equivalent of xv6's <code class="code-inline">struct proc</code>. The
+<code class="code-inline">task_struct</code> is large (several kilobytes) and contains
+everything the kernel needs to know about a process: PID, credentials (UID, GID),
+scheduling information, signal handlers, open file descriptors (pointer to
+<code class="code-inline">files_struct</code>), memory management information (pointer to
+<code class="code-inline">mm_struct</code>), parent/child pointers, CPU affinity, and
+much more. The kernel maintains a linked list of all
+<code class="code-inline">task_struct</code>s, accessible via
+<code class="code-inline">current</code> (a macro that expands to the current process's
+<code class="code-inline">task_struct</code>).</p>
+
+<div class="code-block"><span class="comment">/* Linux task_struct (simplified) */</span>
+
+<span class="keyword">struct task_struct</span> {
+    <span class="keyword">pid_t</span> pid;              <span class="comment">// process ID</span>
+    <span class="keyword">pid_t</span> tgid;             <span class="comment">// thread group ID (= PID for main thread)</span>
+    <span class="keyword">struct task_struct</span> *parent;  <span class="comment">// parent process</span>
+    <span class="keyword">struct list_head</span> children;     <span class="comment">// child processes</span>
+
+    <span class="keyword">struct mm_struct</span> *mm;   <span class="comment">// memory descriptor</span>
+    <span class="keyword">struct files_struct</span> *files; <span class="comment">// open files</span>
+
+    <span class="keyword">volatile long</span> state;     <span class="comment">// TASK_RUNNING, TASK_INTERRUPTIBLE, ...</span>
+    <span class="keyword">int</span> prio;                 <span class="comment">// scheduling priority</span>
+    <span class="keyword">cpumask_t</span> cpus_allowed;  <span class="comment">// CPU affinity</span>
+
+    <span class="keyword">struct signal_struct</span> *signal; <span class="comment">// signal handlers</span>
+    <span class="comment">// ... hundreds more fields ...</span>
+};</div>
+
+<p>A key difference from xv6 is <strong>threads</strong>. In Linux, a thread is simply a
+process that shares its address space, file descriptors, and signal handlers with
+another process. The <code class="code-inline">clone()</code> system call (used by
+<code class="code-inline">pthread_create</code>) creates a new process that shares
+selected resources with the parent. By choosing what to share (memory, files, signal
+handlers), <code class="code-inline">clone()</code> can create a thread (share
+everything), a process (share nothing), or something in between. This is more flexible
+than xv6, which has no threads—each process has its own address space.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Threads vs. Processes</div>
+<p>In Linux, threads and processes are both represented by
+<code class="code-inline">task_struct</code>. The difference is what they share:</p>
+<ul>
+<li><strong>Process</strong> (<code class="code-inline">fork</code>): new
+<code class="code-inline">mm_struct</code> (own address space), new
+<code class="code-inline">files_struct</code> (own file descriptors)</li>
+<li><strong>Thread</strong> (<code class="code-inline">clone</code> with
+<code class="code-inline">CLONE_VM | CLONE_FILES</code>): shares
+<code class="code-inline">mm_struct</code> and
+<code class="code-inline">files_struct</code> with parent</li>
+</ul>
+<p>The <code class="code-inline">tgid</code> (thread group ID) groups threads of the same
+process: <code class="code-inline">getpid()</code> returns the
+<code class="code-inline">tgid</code> (the main thread's PID), while
+<code class="code-inline">gettid()</code> returns the actual thread ID. This design
+simplifies the kernel (one data structure for both) while presenting the expected
+process/thread distinction to user-space.</p>
+</div>
+
+<p>Linux supports <strong>namespaces</strong>, which provide isolation for various
+resources. A namespace wraps a global system resource to make it appear as a separate
+instance to processes within the namespace. Types include: <em>PID namespace</em>
+(isolated process IDs), <em>mount namespace</em> (isolated file system view),
+<em>network namespace</em> (isolated network stack), <em>UTS namespace</em> (isolated
+hostname), <em>IPC namespace</em> (isolated IPC), <em>user namespace</em> (isolated
+UID/GID mapping), and <em>cgroup namespace</em>. Namespaces are the foundation of
+containers: a Docker container is a process (or group of processes) in a set of
+namespaces, isolated from the host.</p>
+
+<p><strong>cgroups (control groups)</strong> complement namespaces by limiting and
+isolating resource usage. A cgroup limits how much CPU, memory, I/O, and network
+bandwidth a group of processes can use. Combined with namespaces (isolation) and cgroups
+(limits), this provides lightweight virtualization: containers. The
+<code class="code-inline">unshare</code> and <code class="code-inline">clone</code>
+system calls create new namespaces; the
+<code class="code-inline">cgroup</code> filesystem configures resource limits.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Comparing Linux and xv6 Process Management</div>
+<p>xv6's <code class="code-inline">struct proc</code> is a simplified version of Linux's
+<code class="code-inline">task_struct</code>. Both track the process's PID, parent,
+state, memory, and open files. The key differences: (1) xv6 has no threads (Linux has
+<code class="code-inline">clone</code>), (2) xv6 has no namespaces or cgroups (Linux
+has both, enabling containers), (3) xv6 uses a simple round-robin scheduler (Linux uses
+CFS or EEVDF), (4) xv6 has a fixed-size process table (Linux dynamically allocates
+<code class="code-inline">task_struct</code>s). But the <em>fundamental model</em>—fork,
+exec, wait, signals, file descriptors—is the same. Learning xv6's process management
+gives you the foundation to understand Linux's.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-5">20.5 Scheduling</h2>
+
+<p>Linux scheduling has evolved significantly. Early Linux (2.4 and earlier) used a simple
+O(n) scheduler that scanned the entire run queue to find the next process. Linux 2.6
+introduced the <strong>O(1) scheduler</strong>, which used per-CPU run queues with
+priority arrays, making scheduling time constant regardless of the number of processes.
+From Linux 2.6.23 (2007) to 6.5 (2023), Linux used the <strong>Completely Fair Scheduler
+(CFS)</strong>, which aimed to provide fair CPU sharing using a red-black tree. Linux
+6.6+ uses <strong>EEVDF (Earliest Eligible Virtual Deadline First)</strong>, which
+improves latency for interactive and real-time tasks.</p>
+
+<p>The <strong>Completely Fair Scheduler (CFS)</strong> models an "ideal, precise
+multitasking processor" that would give each runnable process an equal share of CPU time.
+Since this is impossible (a single CPU can run only one process at a time), CFS
+approximates it by tracking each process's <em>virtual runtime</em> (<code class="code-inline">vruntime</code>):
+the amount of CPU time the process has received, normalized by its priority. CFS always
+runs the process with the smallest <code class="code-inline">vruntime</code>, which is
+the process that has received the least CPU time relative to its priority. Processes are
+stored in a red-black tree ordered by <code class="code-inline">vruntime</code>, making
+selection O(log n).</p>
+
+<div class="code-block"><span class="comment">/* CFS scheduling (simplified) */</span>
+
+<span class="comment">// Each process has a vruntime (virtual runtime)</span>
+<span class="comment">// Lower vruntime = has received less CPU = should run next</span>
+
+<span class="comment">// On each scheduling decision:</span>
+<span class="keyword">struct task_struct</span> *pick_next() {
+    <span class="comment">// Select leftmost node in red-black tree (min vruntime)</span>
+    <span class="keyword">return</span> rb_tree_leftmost(runqueue);
+}
+
+<span class="comment">// As a process runs, its vruntime increases:</span>
+vruntime += delta_exec * (NICE_0_LOAD / load_weight);
+<span class="comment">// delta_exec = actual CPU time used</span>
+<span class="comment">// load_weight = based on nice value (priority)</span>
+<span class="comment">// Higher priority → lower weight → vruntime grows slower → runs more</span>
+
+<span class="comment">// Result: each process gets CPU proportional to its priority</span>
+<span class="comment">// No starvation: every process eventually gets CPU</span></div>
+
+<p>Linux uses <strong>nice values</strong> for priority, ranging from -20 (highest
+priority) to +19 (lowest priority), with 0 as the default. The nice value affects the
+process's weight in CFS: a process with nice -20 has a much higher weight than one with
+nice +19, so it gets more CPU time. The <code class="code-inline">nice</code> and
+<code class="code-inline">renice</code> commands adjust nice values. Only root can set
+negative nice values (higher priority); regular users can only lower priority (increase
+nice value).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Class</th><th>Purpose</th><th>Algorithm</th></tr>
+</thead>
+<tbody>
+<tr><td>Stop-Scheduled (CFS/EEVDF)</td><td>Normal processes</td><td>Fair scheduling (red-black tree)</td></tr>
+<tr><td>Real-time (FIFO)</td><td>Real-time, same priority</td><td>First-in-first-out, no preemption by same prio</td></tr>
+<tr><td>Real-time (RR)</td><td>Real-time, time-sliced</td><td>Round-robin with time slices</td></tr>
+<tr><td>Deadline</td><td>Real-time with deadlines</td><td>Earliest deadline first (EDF)</td></tr>
+<tr><td>Idle</td><td>Background work</td><td>Runs only when nothing else</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Linux supports <strong>SMP (symmetric multiprocessing)</strong>: multiple CPUs
+sharing the same memory. Each CPU has its own run queue, and the scheduler tries to keep
+processes on the same CPU (cache affinity) for performance. <strong>Load balancing</strong>
+moves processes between CPUs to keep them balanced. The scheduler also supports
+<strong>CPU affinity</strong> (<code class="code-inline">sched_setaffinity</code>):
+pinning a process to specific CPUs. This is important for performance (cache locality)
+and real-time applications (avoiding interference).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Scheduling Classes</div>
+<p>Linux has multiple scheduling classes, tried in priority order:</p>
+<ol>
+<li><strong>Deadline</strong>: tasks with explicit deadlines (highest priority)</li>
+<li><strong>Real-time (RT)</strong>: FIFO and round-robin real-time tasks</li>
+<li><strong>CFS / EEVDF</strong>: normal (time-sharing) tasks</li>
+<li><strong>Idle</strong>: background tasks (lowest priority)</li>
+</ol>
+<p>Within each class, the scheduler picks the highest-priority runnable task. Real-time
+tasks always preempt normal tasks. This allows Linux to support soft real-time
+applications (audio, video) alongside normal applications, though it is not a hard
+real-time system without the PREEMPT_RT patch.</li>
+</div>
+
+<p><strong>Preemption</strong> is a key feature. The Linux kernel can be preempted at
+most points (with <code class="code-inline">CONFIG_PREEMPTION</code>), meaning a
+higher-priority process can interrupt the kernel itself, not just user-space code. This
+reduces scheduling latency for real-time tasks. The <code class="code-inline">PREEMPT_RT</code>
+patch (merged into mainline in 2024 as <code class="code-inline">CONFIG_PREEMPT_RT</code>)
+makes the kernel fully preemptible, enabling hard real-time behavior. Without
+preemption, kernel code runs to completion (or until it voluntarily yields), which can
+cause latency spikes for real-time tasks.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 Scheduling vs. Linux</div>
+<p>xv6 uses a simple round-robin scheduler: it iterates through the process table and
+runs each runnable process in turn. There are no priorities, no fairness guarantees, and
+no real-time support. Each process runs until it blocks, yields, or its time slice
+expires (timer interrupt). This is easy to understand but would be inadequate for a
+production system. Linux's CFS/EEVDF is far more sophisticated: it provides fairness,
+priorities, SMP support, and real-time classes. But the <em>concept</em> is the same:
+the scheduler decides which process runs next, based on some policy. xv6 shows you the
+simplest possible policy; Linux shows you what a production policy looks like.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-6">20.6 Memory Management</h2>
+
+<p>Linux memory management is built on <strong>paging</strong>: the physical memory is
+divided into fixed-size <em>pages</em> (typically 4 KB), and each process has a
+<em>page table</em> that maps virtual addresses to physical addresses. The CPU's MMU
+(Memory Management Unit) translates virtual addresses to physical addresses using the
+page table, with a TLB (Translation Lookaside Buffer) cache for speed. This is the same
+mechanism as in xv6, but Linux adds many optimizations and features.</p>
+
+<p>Each process has a <code class="code-inline">mm_struct</code> (memory descriptor) that
+describes its address space. The <code class="code-inline">mm_struct</code> contains a
+list of <code class="code-inline">vm_area_struct</code>s (VMAs), each describing a
+contiguous region of virtual memory with the same attributes (permissions, backing
+file, etc.). A VMA might represent the code segment, data segment, heap, stack, or a
+memory-mapped file. When a process accesses an address, the kernel finds the VMA
+containing that address and checks permissions. If no VMA contains the address (or
+permissions don't allow the access), a <em>segmentation fault</em> occurs.</p>
+
+<div class="code-block"><span class="comment">/* Linux mm_struct and VMA (simplified) */</span>
+
+<span class="keyword">struct mm_struct</span> {
+    <span class="keyword">struct vm_area_struct</span> *mmap;  <span class="comment">// list of VMAs</span>
+    <span class="keyword">pgd_t</span> *pgd;               <span class="comment">// page global directory (top of page table)</span>
+    <span class="keyword">unsigned long</span> start_code, end_code;  <span class="comment">// code segment</span>
+    <span class="keyword">unsigned long</span> start_data, end_data;  <span class="comment">// data segment</span>
+    <span class="keyword">unsigned long</span> start_brk, brk;        <span class="comment">// heap</span>
+    <span class="keyword">unsigned long</span> start_stack;           <span class="comment">// stack</span>
+    <span class="keyword">atomic_t</span> mm_users;            <span class="comment">// number of users (threads)</span>
+};
+
+<span class="keyword">struct vm_area_struct</span> {
+    <span class="keyword">unsigned long</span> vm_start;   <span class="comment">// start address</span>
+    <span class="keyword">unsigned long</span> vm_end;     <span class="comment">// end address (exclusive)</span>
+    <span class="keyword">unsigned long</span> vm_flags;  <span class="comment">// VM_READ, VM_WRITE, VM_EXEC, ...</span>
+    <span class="keyword">struct file</span> *vm_file;    <span class="comment">// backing file (if mmap'd)</span>
+    <span class="keyword">struct vm_area_struct</span> *vm_next;  <span class="comment">// next VMA</span>
+};</div>
+
+<p><strong>Page replacement</strong> is a critical function. When physical memory is
+full, the kernel must evict pages to make room. Linux uses a variant of the
+<strong>clock algorithm</strong> (also called the "second chance" algorithm). Each page
+has a <em>referenced bit</em> that the hardware sets when the page is accessed. The
+kernel periodically scans pages, clearing the referenced bit. Pages whose bit is still
+clear on the next scan (not recently accessed) are candidates for eviction. The kernel
+maintains <em>active</em> and <em>inactive</em> lists: pages start on the inactive list
+and are promoted to active if accessed; pages on the inactive list are evicted first.</p>
+
+<p><strong>Swap</strong> allows the kernel to use disk space as overflow for physical
+memory. When memory is full, the kernel writes inactive pages to a <em>swap area</em> (a
+disk partition or file) and frees the physical page. When the page is accessed again, a
+<em>page fault</em> occurs, and the kernel reads the page back from swap. Swap extends
+the effective memory but is much slower than RAM. Modern systems with large RAM may
+disable swap or use it mainly for anonymous memory (memory not backed by a file).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The OOM Killer</div>
+<p>When the system is completely out of memory (no pages to evict, no swap available),
+Linux invokes the <strong>OOM (Out of Memory) Killer</strong>. The OOM killer selects a
+process to kill to free memory, based on a heuristic that considers the process's memory
+usage, runtime, and importance (root processes are protected). The goal is to kill the
+process that will free the most memory with the least impact. This is a last resort:
+ideally, the system should never reach this state. The OOM killer is controversial
+because it can kill important processes, but it prevents the system from hanging
+completely.</p>
+</div>
+
+<p><strong>Memory mapping (mmap)</strong> allows a process to map a file or device into
+its address space. After <code class="code-inline">mmap</code>, the process can read and
+write the file as if it were memory—no <code class="code-inline">read</code> or
+<code class="code-inline">write</code> calls needed. The kernel loads pages on demand
+(page faults) and writes them back (for writable mappings) when evicted or
+<code class="code-inline">msync</code> is called. <code class="code-inline">mmap</code> is
+used for shared libraries (the dynamic linker maps .so files), shared memory (IPC), and
+large file I/O (more efficient than read/write for random access).</p>
+
+<p><strong>Transparent Huge Pages (THP)</strong> allow the kernel to use large pages
+(2 MB or 1 GB on x86) automatically, reducing TLB pressure for large-memory
+applications. Large pages mean fewer page table entries, so the TLB (which caches
+translations) can cover more memory, reducing TLB misses. THP is transparent:
+applications do not need to be modified; the kernel coalesces 4 KB pages into 2 MB pages
+when beneficial. Applications can also explicitly request huge pages via
+<code class="code-inline">mmap</code> with
+<code class="code-inline">MAP_HUGETLB</code>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Memory Zones</div>
+<p>Linux divides physical memory into <strong>zones</strong> based on what the memory
+can be used for:</p>
+<ul>
+<li><strong>ZONE_DMA</strong>: memory below 16 MB (for legacy DMA devices)</li>
+<li><strong>ZONE_DMA32</strong>: memory below 4 GB (for 32-bit DMA devices)</li>
+<li><strong>ZONE_NORMAL</strong>: normal memory (directly mapped by the kernel)</li>
+<li><strong>ZONE_HIGHMEM</strong>: memory above the kernel's direct mapping (32-bit only)</li>
+<li><strong>ZONE_MOVABLE</strong>: movable pages (for memory hotplug, defragmentation)</li>
+</ul>
+<p>The <strong>buddy allocator</strong> allocates physical pages within zones, splitting
+and coalescing blocks of pages (powers of 2) to satisfy allocation requests. The
+<strong>slab allocator</strong> (SLAB, SLUB, SLOB) allocates small objects from
+pre-allocated pools, reducing fragmentation and initialization overhead for frequently
+allocated objects like <code class="code-inline">task_struct</code> or
+<code class="code-inline">inode</code>.</p>
+</div>
+
+<p><strong>Memory cgroups</strong> allow limiting the memory usage of a group of
+processes (e.g., a container). When a cgroup exceeds its memory limit, the kernel
+reclaims pages from that cgroup (or invokes the OOM killer for that cgroup). This is
+essential for containers: without memory cgroups, one container could exhaust the
+host's memory, affecting all other containers. The
+<code class="code-inline">memory.max</code> cgroup control file sets the limit;
+<code class="code-inline">memory.current</code> reports current usage.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Linux vs. xv6 Memory Management</div>
+<p>xv6 has a simple memory manager: a physical page allocator (free list), a kernel page
+table (direct-mapped), and per-process page tables (with
+<code class="code-inline">uvmalloc</code>, <code class="code-inline">uvmdealloc</code>).
+There is no swap, no page replacement (xv6 assumes enough physical memory), no
+<code class="code-inline">mmap</code>, no huge pages, no memory cgroups. But the
+<em>fundamental mechanism</em>—page tables, virtual-to-physical translation, TLB—is the
+same. xv6's <code class="code-inline">kalloc</code>/<code class="code-inline">kfree</code>
+is a simplified version of Linux's buddy allocator. xv6's
+<code class="code-inline">proc_pagetable</code> is a simplified version of Linux's
+<code class="code-inline">mm_struct</code> + page table. Learning xv6's memory management
+gives you the foundation; Linux shows you the production version with all the
+optimizations.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-7">20.7 File Systems</h2>
+
+<p>Linux has a <strong>Virtual File System (VFS)</strong> that provides a uniform
+interface to multiple file systems. VFS defines a set of operations (open, read, write,
+close, stat, etc.) that all file systems must implement. This allows user-space programs
+to use the same system calls regardless of whether the file is on ext4, XFS, NFS, or a
+FUSE file system. VFS is the key abstraction that makes Linux's file system
+extensible.</p>
+
+<p>The VFS has four main objects: <strong>superblock</strong> (represents a mounted file
+system), <strong>inode</strong> (represents a file), <strong>dentry</strong> (directory
+entry, links a name to an inode), and <strong>file</strong> (an open file, with a
+position and mode). Each file system implements these objects with its own data
+structures. For example, ext4 has <code class="code-inline">ext4_inode</code> on disk,
+which VFS wraps in a <code class="code-inline">struct inode</code> in memory. The VFS
+operations (like <code class="code-inline">read</code>,
+<code class="code-inline">write</code>) are dispatched to the file system's
+implementation.</p>
+
+<div class="code-block"><span class="comment">/* VFS objects (simplified) */</span>
+
+<span class="comment">// Superblock: one per mounted file system</span>
+<span class="keyword">struct super_block</span> {
+    <span class="keyword">struct file_system_type</span> *s_type;  <span class="comment">// ext4, xfs, ...</span>
+    <span class="keyword">struct super_operations</span> *s_op;     <span class="comment">// alloc_inode, ...</span>
+    <span class="keyword">struct dentry</span> *s_root;             <span class="comment">// root directory</span>
+};
+
+<span class="comment">// Inode: one per file</span>
+<span class="keyword">struct inode</span> {
+    <span class="keyword">unsigned long</span> i_ino;        <span class="comment">// inode number</span>
+    <span class="keyword">umode_t</span> i_mode;              <span class="comment">// file type + permissions</span>
+    <span class="keyword">loff_t</span> i_size;                <span class="comment">// file size</span>
+    <span class="keyword">struct inode_operations</span> *i_op; <span class="comment">// create, lookup, ...</span>
+    <span class="keyword">struct file_operations</span> *i_fop; <span class="comment">// read, write, ...</span>
+};
+
+<span class="comment">// Dentry: links a name to an inode (in-memory cache)</span>
+<span class="keyword">struct dentry</span> {
+    <span class="keyword">struct qstr</span> d_name;           <span class="comment">// name</span>
+    <span class="keyword">struct inode</span> *d_inode;         <span class="comment">// associated inode</span>
+    <span class="keyword">struct dentry</span> *d_parent;        <span class="comment">// parent directory</span>
+};
+
+<span class="comment">// File: an open file (one per open() call)</span>
+<span class="keyword">struct file</span> {
+    <span class="keyword">struct path</span> f_path;            <span class="comment">// dentry + vfsmount</span>
+    <span class="keyword">loff_t</span> f_pos;                  <span class="comment">// current position</span>
+    <span class="keyword">fmode_t</span> f_mode;                <span class="comment">// read/write mode</span>
+    <span class="keyword">struct file_operations</span> *f_op;  <span class="comment">// read, write, ...</span>
+};</div>
+
+<p><strong>ext4 (Fourth Extended File System)</strong> is the default file system for
+most Linux distributions. It is a <em>journaling</em> file system: it maintains a
+<em>journal</em> of pending changes before writing them to the main file system. If the
+system crashes, the journal can be replayed to restore consistency, avoiding the long
+<code class="code-inline">fsck</code> (file system check) that non-journaling file
+systems require. ext4 supports files up to 16 TB, file systems up to 1 EB, extents
+(contiguous block ranges, more efficient than indirect blocks), and delayed allocation
+(buffer writes and allocate blocks in bulk for efficiency).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux File Systems</div>
+<table>
+<thead><tr><th>File System</th><th>Type</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td>ext4</td><td>Journaling</td><td>Default Linux file system</td></tr>
+<tr><td>XFS</td><td>Journaling (SGI origin)</td><td>Large files, high performance</td></tr>
+<tr><td>Btrfs</td><td>Copy-on-write</td><td>Snapshots, checksums, subvolumes</td></tr>
+<tr><td>ZFS (via FUSE)</td><td>Copy-on-write</td><td>Data integrity, pools</td></tr>
+<tr><td>F2FS</td><td>Flash-optimized</td><td>SSD, eMMC, SD cards</td></tr>
+<tr><td>NFS</td><td>Network</td><td>Remote file access</td></tr>
+<tr><td>FUSE</td><td>User-space</td><td>Custom file systems in user space</td></tr>
+<tr><td>tmpfs</td><td>In-memory</td><td>Temporary files, /tmp</td></tr>
+<tr><td>procfs</td><td>Pseudo</td><td>/proc (process info)</td></tr>
+<tr><td>sysfs</td><td>Pseudo</td><td>/sys (device info)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>FUSE (Filesystem in Userspace)</strong> allows file systems to be implemented
+in user space. A FUSE file system registers with the kernel; when a process accesses a
+FUSE file, the kernel forwards the operation to a user-space daemon, which implements
+the file system logic. This is safer (a bug in the file system does not crash the
+kernel) and more flexible (file systems can be written in any language). Examples
+include <em>SSHFS</em> (mount remote directories over SSH), <em>NTFS-3G</em> (read/write
+NTFS), and <em>GlusterFS</em> (distributed file system). The trade-off is performance:
+each operation crosses the user-kernel boundary twice.</p>
+
+<p><strong>The page cache</strong> is a critical performance feature. Linux caches file
+data in memory (the page cache) to avoid disk I/O. When a process reads a file, the
+kernel first checks the page cache; if the data is there (cache hit), it returns
+immediately. If not (cache miss), the kernel reads from disk and caches the data. Writes
+are also cached: <code class="code-inline">write</code> copies data to the page cache,
+and the kernel writes it to disk later (<em>write-back</em>). The
+<code class="code-inline">sync</code> command flushes dirty pages to disk. This
+dramatically improves performance but means data may be lost if the system crashes
+before dirty pages are written.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Write-Back and Data Loss</div>
+<p>Linux's default write-back policy means that
+<code class="code-inline">write</code> returns before data is on disk. If the system
+crashes, recently written data may be lost. Applications that need durability (databases,
+journals) use <code class="code-inline">fsync</code> to force dirty pages to disk before
+proceeding. <code class="code-inline">fsync</code> is expensive (it waits for disk I/O),
+so it should be used judiciously. The <code class="code-inline">O_SYNC</code> open flag
+makes all writes synchronous (each write blocks until on disk). The trade-off between
+performance (write-back) and durability (write-through) is a fundamental file system
+design decision.</p>
+</div>
+
+<p><strong>Special file systems</strong> provide non-disk-backed data as files.
+<code class="code-inline">/proc</code> (procfs) exposes kernel and process information
+as files: <code class="code-inline">/proc/cpuinfo</code> (CPU info),
+<code class="code-inline">/proc/meminfo</code> (memory info),
+<code class="code-inline">/proc/[pid]/</code> (per-process info).
+<code class="code-inline">/sys</code> (sysfs) exposes device and driver information.
+<code class="code-inline">/dev</code> (devtmpfs) provides device files.
+<code class="code-inline">/tmp</code> is often a tmpfs (in-memory). These pseudo-file
+systems demonstrate the power of the "everything is a file" philosophy: you can read
+kernel state by reading a file, and configure devices by writing to a file.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Linux vs. xv6 File Systems</div>
+<p>xv6 has a simple file system: a flat directory structure, inodes with direct and
+indirect blocks, a simple log for crash consistency, and no page cache (all I/O goes
+through a buffer cache). Linux's VFS, ext4, page cache, and FUSE are far more
+sophisticated. But the <em>core concepts</em> are the same: inodes, directories, file
+descriptors, the open-read-write-close model. xv6's
+<code class="code-inline">struct inode</code> is a simplified version of Linux's
+<code class="code-inline">struct inode</code>. xv6's log is a simplified version of
+ext4's journal. Learning xv6's file system gives you the foundation to understand
+Linux's.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-8">20.8 Input and Output</h2>
+
+<p>Linux I/O is built on the <strong>device file</strong> abstraction: devices are
+represented as files in <code class="code-inline">/dev</code>, accessed with the same
+<code class="code-inline">open</code>, <code class="code-inline">read</code>,
+<code class="code-inline">write</code>, <code class="code-inline">close</code> system
+calls as regular files. There are three types of devices: <strong>character
+devices</strong> (accessed as a stream of bytes: terminals, serial ports, keyboards),
+<strong>block devices</strong> (accessed in blocks: disks, SSDs), and
+<strong>network devices</strong> (not represented as files; accessed via sockets).</p>
+
+<p><strong>Character devices</strong> are the simplest: the driver implements
+<code class="code-inline">read</code>, <code class="code-inline">write</code>, and
+optionally <code class="code-inline">ioctl</code> (I/O control, for device-specific
+operations). Examples: <code class="code-inline">/dev/tty</code> (terminal),
+<code class="code-inline">/dev/null</code> (discard all writes, EOF on read),
+<code class="code-inline">/dev/random</code> (random numbers),
+<code class="code-inline">/dev/urandom</code> (non-blocking random). The
+<code class="code-inline">ioctl</code> system call is the escape hatch for operations
+that don't fit the read/write model: setting terminal baud rate, ejecting a CD, querying
+device status.</p>
+
+<div class="code-block"><span class="comment">/* Character device access */</span>
+
+<span class="comment">// Open a serial port</span>
+<span class="keyword">int</span> fd = open(<span class="string">"/dev/ttyS0"</span>, O_RDWR);
+
+<span class="comment">// Set baud rate via ioctl</span>
+<span class="keyword">struct termios</span> options;
+tcgetattr(fd, &options);
+cfsetispeed(&options, B9600);
+cfsetospeed(&options, B9600);
+tcsetattr(fd, TCSANOW, &options);
+
+<span class="comment">// Read and write</span>
+<span class="func">write</span>(fd, <span class="string">"AT\r"</span>, 3);
+<span class="func">read</span>(fd, buf, 1024);
+
+<span class="comment">// Special devices</span>
+<span class="func">write</span>(open(<span class="string">"/dev/null"</span>, O_WRONLY), data, n); <span class="comment">// discard</span>
+<span class="func">read</span>(open(<span class="string">"/dev/urandom"</span>, O_RDONLY), &key, 32); <span class="comment">// random bytes</span></div>
+
+<p><strong>Block devices</strong> support random access in fixed-size blocks (typically
+512 bytes or 4 KB). The driver implements <code class="code-inline">submit_bio</code>
+(submit a block I/O request). Block devices are typically accessed through a file system
+(ext4, XFS) rather than directly, but can also be accessed raw via
+<code class="code-inline">/dev/sda</code>, <code class="code-inline">/dev/nvme0n1</code>.
+The <strong>I/O scheduler</strong> (block layer) reorders and merges block I/O requests
+for efficiency: it may sort requests by sector (elevator algorithm) to minimize disk
+seek, or merge adjacent requests into larger ones. Modern NVMe SSDs use a simpler
+scheduler (none or kyber) because they have no seek penalty.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ The Block I/O Layer</div>
+<p>Linux's block I/O layer sits between the file system and the device driver:</p>
+<ol>
+<li><strong>VFS</strong> receives <code class="code-inline">read</code>/<code class="code-inline">write</code></li>
+<li><strong>File system</strong> (ext4) translates file offsets to disk blocks</li>
+<li><strong>Page cache</strong> caches data; on miss, creates a <code class="code-inline">bio</code> (block I/O) request</li>
+<li><strong>I/O scheduler</strong> merges and sorts <code class="code-inline">bio</code> requests</li>
+<li><strong>Device driver</strong> (e.g., NVMe, AHCI) sends requests to hardware</li>
+<li><strong>Hardware</strong> (disk, SSD) performs the I/O and raises an interrupt</li>
+<li><strong>Interrupt handler</strong> completes the request, wakes the waiting process</li>
+</ol>
+<p>For NVMe SSDs, the driver may use <strong>polling</strong> (busy-wait for completion)
+or <strong>interrupts</strong>. Polling reduces latency for high-IOPS workloads but
+consumes CPU.</p>
+</div>
+
+<p><strong>Network I/O</strong> is handled differently from character and block devices.
+Network devices (NICs) are not represented as files in
+<code class="code-inline">/dev</code>; instead, they are accessed via the
+<strong>socket API</strong>. A socket is an endpoint for network communication. The
+<code class="code-inline">socket</code> system call creates a socket;
+<code class="code-inline">bind</code> assigns an address;
+<code class="code-inline">listen</code> marks it as a server;
+<code class="code-inline">accept</code> accepts a connection;
+<code class="code-inline">connect</code> initiates a connection;
+<code class="code-inline">send</code>/<code class="code-inline">recv</code> (or
+<code class="code-inline">read</code>/<code class="code-inline">write</code>) transfer
+data. The kernel's network stack (TCP/IP) handles protocol processing, and the NIC
+driver handles the hardware.</p>
+
+<p><strong>Interrupt handling</strong> in Linux is split into two halves:
+<strong>top half</strong> (the interrupt handler, runs with interrupts disabled, must be
+fast) and <strong>bottom half</strong> (deferred work, runs later with interrupts
+enabled). The top half acknowledges the interrupt, queues work, and schedules the bottom
+half. The bottom half (implemented via <em>softirqs</em>, <em>tasklets</em>, or
+<em>workqueues</em>) does the heavy processing. This split ensures that the system
+remains responsive: interrupt handlers are fast, and heavy work is deferred to a safe
+time.</p>
+
+<div class="code-block"><span class="comment">/* Interrupt handling: top half and bottom half */</span>
+
+<span class="comment">// Top half: interrupt handler (runs in interrupt context)</span>
+<span class="keyword">static irqreturn_t</span> nic_interrupt(<span class="keyword">int</span> irq, <span class="keyword">void</span> *dev) {
+    <span class="comment">// 1. Acknowledge interrupt on hardware</span>
+    <span class="comment">// 2. Disable further interrupts from this device</span>
+    <span class="comment">// 3. Schedule bottom half (deferred work)</span>
+    schedule_work(&nic_work);
+    <span class="keyword">return</span> IRQ_HANDLED;
+    <span class="comment">// Must be fast! No sleeping, no heavy work.</span>
+}
+
+<span class="comment">// Bottom half: workqueue (runs in process context)</span>
+<span class="keyword">static void</span> nic_work_handler(<span class="keyword">struct work_struct</span> *work) {
+    <span class="comment">// Process received packets</span>
+    <span class="comment">// Can sleep, allocate memory, etc.</span>
+    <span class="keyword">while</span> (packet = rx_ring_next()) {
+        netif_receive_skb(packet);
+    }
+    <span class="comment">// Re-enable interrupts</span>
+}</div>
+
+<p><strong>Asynchronous I/O</strong> allows a process to initiate an I/O operation and
+continue executing while the I/O is in progress. Linux supports several async I/O
+mechanisms: <strong>POSIX AIO</strong> (<code class="code-inline">aio_read</code>,
+<code class="code-inline">aio_write</code>), <strong>io_uring</strong> (a modern,
+high-performance ring buffer interface), and <strong>epoll</strong> (for network I/O).
+<code class="code-inline">io_uring</code> (Linux 5.1+, 2019) is the state of the art: it
+uses shared ring buffers between user space and kernel, allowing batched, zero-copy I/O
+with minimal system call overhead. It is significantly faster than traditional AIO for
+high-IOPS workloads.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Linux vs. xv6 I/O</div>
+<p>xv6's I/O is minimal: a console driver (UART), a virtio block device driver, and a
+virtio network driver. There is no I/O scheduler, no async I/O, no interrupt top/bottom
+halves. xv6's interrupt handler does all the work directly. But the <em>concept</em> is
+the same: the driver provides <code class="code-inline">read</code> and
+<code class="code-inline">write</code> functions, and the kernel dispatches to them when
+a process accesses the device file. xv6's virtio driver is a simplified version of
+Linux's virtio driver. Learning xv6's I/O gives you the foundation; Linux shows you the
+production version with all the performance optimizations.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-20-9">20.9 Interprocess Communication</h2>
+
+<p>Linux provides several <strong>interprocess communication (IPC)</strong> mechanisms,
+inherited from Unix and extended. The basic mechanism is the <strong>pipe</strong>: a
+one-way data channel between two processes. A pipe is created with
+<code class="code-inline">pipe()</code>, which returns two file descriptors: one for
+reading and one for writing. After <code class="code-inline">fork</code>, the parent and
+child each have both ends; one closes the read end and writes, the other closes the
+write end and reads. Pipes are the foundation of the shell's
+<code class="code-inline">|</code> operator: <code class="code-inline">ls | grep .c</code>
+creates a pipe between <code class="code-inline">ls</code> and
+<code class="code-inline">grep</code>.</p>
+
+<div class="code-block"><span class="comment">/* Pipe communication */</span>
+
+<span class="keyword">int</span> fds[2];
+pipe(fds);  <span class="comment">// fds[0] = read end, fds[1] = write end</span>
+
+<span class="keyword">if</span> (fork() == 0) {
+    <span class="comment">// Child: read from pipe</span>
+    close(fds[1]);  <span class="comment">// close write end</span>
+    read(fds[0], buf, 1024);
+    printf(<span class="string">"Got: %s\n"</span>, buf);
+} <span class="keyword">else</span> {
+    <span class="comment">// Parent: write to pipe</span>
+    close(fds[0]);  <span class="comment">// close read end</span>
+    write(fds[1], <span class="string">"hello"</span>, 5);
+}
+
+<span class="comment">// Shell pipeline: ls | grep .c</span>
+<span class="comment">// Creates pipe, forks two processes, connects them</span></div>
+
+<p><strong>Named pipes (FIFOs)</strong> are pipes that exist in the file system (created
+with <code class="code-inline">mkfifo</code>). Unlike anonymous pipes (which require a
+parent-child relationship), FIFOs can be used between unrelated processes. A process
+opens the FIFO for reading (blocks until a writer opens it) or writing (blocks until a
+reader opens it). FIFOs are useful for simple inter-process communication between
+unrelated programs.</p>
+
+<p><strong>Shared memory</strong> is the fastest IPC mechanism: two or more processes
+map the same physical memory into their address spaces. Writes by one process are
+immediately visible to others. Shared memory is created with
+<code class="code-inline">shmget</code> (System V) or
+<code class="code-inline">shm_open</code> (POSIX), and attached with
+<code class="code-inline">shmat</code> or
+<code class="code-inline">mmap</code>. The challenge is <em>synchronization</em>:
+without coordination, processes can race on shared data. Semaphores (see below) or
+mutexes are used to coordinate access. Shared memory is used for high-performance IPC
+where copying data (as in pipes) is too expensive.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>IPC Mechanism</th><th>Speed</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td>Pipe</td><td>Medium (copy)</td><td>Parent-child, shell pipelines</td></tr>
+<tr><td>FIFO (named pipe)</td><td>Medium (copy)</td><td>Unrelated processes</td></tr>
+<tr><td>Shared memory</td><td>Fast (no copy)</td><td>High-performance data sharing</td></tr>
+<tr><td>Message queue</td><td>Medium (copy)</td><td>Structured messages</td></tr>
+<tr><td>Socket</td><td>Medium (copy)</td><td>Network, local IPC</td></tr>
+<tr><td>Signal</td><td>Fast (no data)</td><td>Notifications, simple events</td></tr>
+<tr><td>Eventfd / timerfd</td><td>Fast</td><td>Event notification, timers</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Message queues</strong> allow processes to exchange structured messages.
+System V message queues (<code class="code-inline">msgget</code>,
+<code class="code-inline">msgsnd</code>,
+<code class="code-inline">msgrcv</code>) support typed messages: a receiver can select
+messages by type. POSIX message queues (<code class="code-inline">mq_open</code>,
+<code class="code-inline">mq_send</code>,
+<code class="code-inline">mq_receive</code>) provide a similar interface with priorities.
+Message queues are useful when processes need to exchange discrete messages rather than
+byte streams.</p>
+
+<p><strong>Semaphores</strong> are synchronization primitives for IPC. A semaphore is a
+counter with atomic <code class="code-inline">wait</code> (decrement, block if zero) and
+<code class="code-inline">post</code> (increment, wake one waiter) operations. System V
+semaphores (<code class="code-inline">semget</code>,
+<code class="code-inline">semop</code>) support arrays of semaphores with complex atomic
+operations. POSIX semaphores (<code class="code-inline">sem_open</code>,
+<code class="code-inline">sem_wait</code>,
+<code class="code-inline">sem_post</code>) are simpler. Semaphores are used to coordinate
+access to shared resources, especially shared memory.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Synchronization Primitives</div>
+<p>Linux provides several synchronization primitives for both kernel and user space:</p>
+<ul>
+<li><strong>Mutex</strong>: mutual exclusion lock (one holder at a time)</li>
+<li><strong>Spinlock</strong>: busy-wait lock (for short critical sections, interrupt context)</li>
+<li><strong>Semaphore</strong>: counting or binary, for signaling</li>
+<li><strong>Condition variable</strong>: wait for a condition (with mutex)</li>
+<li><strong>Seqlock</strong>: lock-free reads, for frequently-read, rarely-written data</li>
+<li><strong>RCU (Read-Copy-Update)</strong>: extremely fast reads (no locks), for read-mostly data</li>
+<li><strong>futex</strong>: fast user-space mutex (spins in user space, syscalls only on contention)</li>
+</ul>
+<p><strong>RCU</strong> is a Linux innovation: readers access data without locks, and
+writers create a copy, update it, and atomically swap the pointer. Old data is freed
+after all readers have finished (via a grace period). RCU is used heavily in the kernel
+for data structures that are read frequently but updated rarely (e.g., routing tables).</p>
+</div>
+
+<p><strong>Sockets</strong> are the most general IPC mechanism, supporting both local and
+network communication. <strong>Unix domain sockets</strong>
+(<code class="code-inline">AF_UNIX</code>) are local-only sockets that use the file system
+for addressing. They are faster than network sockets (no TCP/IP overhead) and support
+passing file descriptors between processes (via
+<code class="code-inline">SCM_RIGHTS</code>). Unix domain sockets are used by X11, Docker,
+systemd, and many other services. <strong>Network sockets</strong>
+(<code class="code-inline">AF_INET</code>,
+<code class="code-inline">AF_INET6</code>) use TCP or UDP for network communication.</p>
+
+<p><strong>Signals</strong> are a simple IPC mechanism for asynchronous notification. A
+signal is a small integer sent to a process, causing it to execute a signal handler (or
+take the default action, like terminating). Common signals:
+<code class="code-inline">SIGINT</code> (Ctrl-C, terminate),
+<code class="code-inline">SIGKILL</code> (cannot be caught, force kill),
+<code class="code-inline">SIGTERM</code> (polite terminate),
+<code class="code-inline">SIGSEGV</code> (segmentation fault),
+<code class="code-inline">SIGCHLD</code> (child exited). Signals are coarse (no data
+payload in standard Unix signals) and have tricky semantics (signal handlers must be
+async-signal-safe). <strong>signalfd</strong> and
+<strong>eventfd</strong> provide file-descriptor-based alternatives that integrate with
+<code class="code-inline">epoll</code>.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Linux vs. xv6 IPC</div>
+<p>xv6 has pipes (the same <code class="code-inline">pipe</code> system call as Linux)
+and signals (a simplified version). It does not have shared memory, message queues,
+semaphores, or sockets. But the <em>pipe</em> in xv6 is the same concept as in Linux:
+a one-way data channel between processes. xv6's
+<code class="code-inline">pipealloc</code>,
+<code class="code-inline">pipewrite</code>,
+<code class="code-inline">piperead</code> are simplified versions of Linux's pipe
+implementation. Learning xv6's pipe gives you the foundation; Linux's additional IPC
+mechanisms (shared memory, sockets, semaphores) build on the same principles of
+synchronization and data transfer.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-1">21.1 Design Principles</h2>
+
+<p>Windows 10 (and its successor Windows 11) is Microsoft's flagship operating system,
+designed for a wide range of devices from phones and tablets to desktops and servers.
+The design principles reflect decades of evolution from MS-DOS (1981) through Windows
+3.x/9x (1990s) to the NT family (1993–present). The <strong>Windows NT</strong>
+architecture, designed by Dave Cutler (who previously designed VMS at DEC), is the
+foundation of all modern Windows versions. NT was designed from scratch as a 32-bit
+(later 64-bit), preemptive multitasking, multi-user, secure operating system.</p>
+
+<p>The key design principles of Windows NT (and Windows 10) are:</p>
+
+<ul>
+<li><strong>Compatibility</strong>: run existing MS-DOS and Windows applications</li>
+<li><strong>Portability</strong>: run on multiple architectures (originally x86, MIPS, Alpha, PowerPC; now x86, x64, ARM64)</li>
+<li><strong>Reliability</strong>: robust memory protection, structured exception handling</li>
+<li><strong>Security</strong>: C2-level security (US government standard), access control</li>
+<li><strong>Extensibility</strong>: modular design, layered architecture</li>
+<li><strong>International support</strong>: Unicode throughout</li>
+<li><strong>Performance</strong>: efficient kernel, SMP support</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows NT Design Goals</div>
+<p>The Windows NT design (1989–1993) was guided by these requirements:</p>
+<ul>
+<li><strong>Hardware independence</strong>: a Hardware Abstraction Layer (HAL) isolates
+the kernel from hardware differences</li>
+<li><strong>Kernel-mode / user-mode separation</strong>: the kernel and executive run in
+kernel mode; applications and subsystems run in user mode</li>
+<li><strong>Object-based</strong>: resources (processes, threads, files, events) are
+represented as <em>objects</em> managed by the object manager</li>
+<li><strong>Client-server architecture</strong>: user-mode subsystems communicate with
+the kernel via a local procedure call (LPC) mechanism</li>
+<li><strong>Preemptive multitasking</strong>: the scheduler can preempt any thread at
+any time (unlike Windows 3.x cooperative multitasking)</li>
+</ul>
+</div>
+
+<p>The <strong>Windows NT architecture</strong> is layered. At the bottom is the
+<strong>Hardware Abstraction Layer (HAL)</strong>, which isolates the kernel from
+hardware differences (interrupt controllers, timers, I/O ports). Above the HAL is the
+<strong>kernel</strong>, a small, highly optimized layer that handles thread
+scheduling, interrupt dispatching, and synchronization. Above the kernel is the
+<strong>executive</strong>, which implements the major OS functions: process/thread
+management, memory management, I/O management, IPC, and security. The executive exposes
+its services through a <strong>system call interface</strong> (the Native API).</p>
+
+<p>Above the executive are <strong>user-mode subsystems</strong>. The
+<strong>environment subsystems</strong> provide compatibility with different APIs: the
+<strong>Win32 subsystem</strong> (the primary one, implements the Windows API),
+<strong>POSIX subsystem</strong> (deprecated, replaced by WSL), and
+<strong>OS/2 subsystem</strong> (deprecated). Applications call the subsystem's API,
+which translates calls into Native API calls to the executive. This design allows
+Windows to support multiple API personalities while sharing a common kernel.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Win32 Subsystem Dominance</div>
+<p>Originally, Windows NT supported multiple environment subsystems (Win32, POSIX, OS/2)
+as peers. In practice, the Win32 subsystem became dominant: most Windows applications use
+the Win32 API (or higher-level frameworks like .NET, UWP, WinUI that build on Win32).
+The POSIX and OS/2 subsystems were deprecated. <strong>WSL (Windows Subsystem for
+Linux)</strong> is a modern reimagining of the environment subsystem concept: it
+provides a Linux-compatible environment running on the NT kernel, allowing Linux
+binaries to run natively on Windows.</p>
+</div>
+
+<p>Windows is <strong>object-based</strong>: system resources (processes, threads,
+files, events, semaphores, timers, registry keys) are represented as <em>objects</em>
+managed by the <strong>object manager</strong>. Each object has a type, a name, security
+descriptor, and methods. The object manager provides a uniform interface for creating,
+naming, securing, and referencing objects. This is similar to the "everything is a file"
+philosophy in Unix, but more structured: objects have explicit types and methods, not
+just read/write operations.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Windows vs. Linux vs. xv6 Design</div>
+<p>Windows, Linux, and xv6 represent three points in the design space:</p>
+<ul>
+<li><strong>xv6</strong>: minimal monolithic kernel, no modules, no security, teaching OS</li>
+<li><strong>Linux</strong>: monolithic kernel with loadable modules, POSIX, open source</li>
+<li><strong>Windows</strong>: layered kernel (HAL/kernel/executive), object-based,
+environment subsystems, commercial</li>
+</ul>
+<p>All three use hardware privilege levels (user/kernel mode), page tables, and
+preemptive scheduling. The differences are in architecture (monolithic vs. layered),
+API (POSIX vs. Win32), and philosophy (Unix "everything is a file" vs. Windows
+"everything is an object"). Understanding all three gives you a broad perspective on OS
+design.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-2">21.2 System Components</h2>
+
+<p>The Windows NT architecture consists of several major components, each with a
+specific role. Understanding these components is key to understanding how Windows works.</p>
+
+<p>The <strong>Hardware Abstraction Layer (HAL)</strong> is a DLL
+(<code class="code-inline">hal.dll</code>) that isolates the kernel from
+hardware-specific details. The HAL provides abstractions for interrupt controllers, I/O
+ports, timers, and DMA. Different HALs exist for different hardware (ACPI, non-ACPI,
+MP/SMP). The HAL allows the same kernel binary to run on different hardware by
+abstracting the differences. This is similar to Linux's
+<code class="code-inline">arch/</code> directory, but more formalized.</p>
+
+<p>The <strong>kernel</strong> (<code class="code-inline">ntoskrnl.exe</code>) is the
+core of the OS. It handles thread scheduling, interrupt and exception dispatching, and
+multiprocessor synchronization. The kernel is <em>non-pageable</em> (always resident in
+physical memory) and runs at a higher IRQL (Interrupt Request Level) than most other
+code. The kernel provides <em>kernel objects</em> (dispatcher objects) for
+synchronization: events, semaphores, mutexes, timers, and queues.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ IRQL (Interrupt Request Level)</div>
+<p>Windows uses <strong>IRQL</strong> to manage interrupt priority. Each CPU has a
+current IRQL, and the CPU only services interrupts at a higher IRQL. The levels (on x86)
+are:</p>
+<ul>
+<li><strong>PASSIVE_LEVEL (0)</strong>: normal thread execution, most system calls</li>
+<li><strong>APC_LEVEL (1)</strong>: asynchronous procedure calls, some I/O completion</li>
+<li><strong>DISPATCH_LEVEL (2)</strong>: thread scheduling, DPCs (deferred procedure calls)</li>
+<li><strong>Device IRQLs (3–26)</strong>: device interrupts</li>
+<li><strong>HIGH_LEVEL (31)</strong>: highest, only critical interrupts</li>
+</ul>
+<p>Code at a given IRQL cannot be preempted by code at the same or lower IRQL. This is
+Windows' equivalent of Linux's <code class="code-inline">spin_lock_irqsave</code>: by
+raising IRQL, you prevent preemption. Code at
+<code class="code-inline">DISPATCH_LEVEL</code> or above cannot page fault (must be
+non-pageable) and cannot wait for a page.</p>
+</div>
+
+<p>The <strong>executive</strong> is the upper part of
+<code class="code-inline">ntoskrnl.exe</code>, above the kernel. It implements the major
+OS services:</p>
+
+<ul>
+<li><strong>Process and thread manager</strong>: creates and manages processes and
+threads. A Windows process is represented by an <code class="code-inline">EPROCESS</code>
+structure; a thread by an <code class="code-inline">ETHREAD</code> structure.</li>
+<li><strong>Memory manager</strong>: implements virtual memory, paging, and memory-mapped
+files. Uses a two-level page table (on x86) or multi-level (on x64).</li>
+<li><strong>I/O manager</strong>: manages devices, file systems, and I/O operations.
+Uses an <em>IRP (I/O Request Packet)</em> model: each I/O operation is an IRP that flows
+through the I/O stack.</li>
+<li><strong>Cache manager</strong>: provides a unified cache for file systems (unlike
+Linux's per-file-system page cache, Windows has a central cache manager).</li>
+<li><strong>Security reference monitor</strong>: enforces access control, checks
+security descriptors on every access.</li>
+<li><strong>IPC manager</strong>: implements LPC (Local Procedure Call) for
+inter-process communication.</li>
+<li><strong>Object manager</strong>: manages all kernel objects (processes, threads,
+files, events, etc.).</li>
+<li><strong>Configuration manager</strong>: manages the <em>registry</em>, Windows'
+central configuration database.</li>
+</ul>
+
+<div class="code-block"><span class="comment">/* Windows I/O Request Packet (IRP) flow */</span>
+
+<span class="comment">// User calls ReadFile()</span>
+<span class="comment">// → Win32 API → NtReadFile() (Native API)</span>
+<span class="comment">// → I/O Manager creates IRP</span>
+
+<span class="comment">// IRP flows through the I/O stack:</span>
+<span class="comment">//   [File System Driver]  ← handles file-specific logic</span>
+<span class="comment">//   [Volume Manager]       ← handles volume management</span>
+<span class="comment">//   [Class Driver]         ← handles device class (disk)</span>
+<span class="comment">//   [Port Driver]          ← handles bus (NVMe, AHCI)</span>
+<span class="comment">//   [Miniport Driver]      ← handles specific hardware</span>
+
+<span class="comment">// Each driver processes the IRP and passes it down</span>
+<span class="comment">// On completion, IRP travels back up, completing the I/O</span>
+<span class="comment">// → I/O Manager completes the user's ReadFile() call</span></div>
+
+<p>The <strong>device drivers</strong> are kernel-mode modules that interface with
+hardware or provide services. Windows supports several driver models: <strong>WDM</strong>
+(Windows Driver Model, the traditional model), <strong>WDF</strong> (Windows Driver
+Framework, modern, with KMDF for kernel and UMDF for user-mode drivers),
+<strong>minidrivers</strong> (small drivers that use a class driver for common
+functionality), and <strong>file system drivers</strong> (for file systems like NTFS,
+ReFS). Drivers can be loaded and unloaded dynamically (like Linux modules), using the
+<em>Service Control Manager</em> or the
+<code class="code-inline">ZwLoadDriver</code> system call.</p>
+
+<p>The <strong>registry</strong> is Windows' central configuration database. It is a
+hierarchical database (like a file system with keys and values) that stores system
+configuration, hardware settings, user preferences, and application settings. The
+registry is organized into <em>hives</em>: <code class="code-inline">HKEY_LOCAL_MACHINE</code>
+(system-wide), <code class="code-inline">HKEY_CURRENT_USER</code> (current user),
+<code class="code-inline">HKEY_CLASSES_ROOT</code> (file associations), and others. The
+registry replaces the .ini files used in older Windows and is both a strength (central,
+structured) and a weakness (single point of failure, "registry rot").</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows System Components Summary</div>
+<table>
+<thead><tr><th>Component</th><th>Role</th><th>Linux Equivalent</th></tr>
+</thead>
+<tbody>
+<tr><td>HAL</td><td>Hardware abstraction</td><td>arch/ directory</td></tr>
+<tr><td>Kernel</td><td>Scheduling, interrupts, sync</td><td>kernel/ (scheduler, IRQ)</td></tr>
+<tr><td>Executive</td><td>OS services (memory, I/O, ...)</td><td>mm/, fs/, kernel/</td></tr>
+<tr><td>Object Manager</td><td>Manages kernel objects</td><td>(no direct equivalent)</td></tr>
+<tr><td>I/O Manager</td><td>Device and I/O management</td><td>VFS, block layer</td></tr>
+<tr><td>Cache Manager</td><td>File caching</td><td>Page cache</td></tr>
+<tr><td>Security Ref Monitor</td><td>Access control</td><td>LSM (SELinux, AppArmor)</td></tr>
+<tr><td>Configuration Manager</td><td>Registry</td><td>/etc, sysfs, procfs</td></tr>
+<tr><td>Win32 Subsystem</td><td>Windows API</td><td>glibc, POSIX API</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-3">21.3 Terminal Services and Fast User Switching</h2>
+
+<p><strong>Terminal Services</strong> (now called <strong>Remote Desktop Services</strong>)
+allows multiple users to log in to a Windows system simultaneously, each with their own
+desktop session. This is the Windows equivalent of Unix's multi-user capability, but
+implemented differently. In Terminal Services, each user gets a separate
+<em>session</em> (Session 0 for services, Session 1+ for interactive users). Each session
+has its own window station, desktop, and window manager. Users can connect locally
+(console session) or remotely (via RDP—Remote Desktop Protocol).</p>
+
+<p>The <strong>session</strong> is the fundamental isolation unit in Windows for
+interactive use. Each session has its own <em>window station</em> (a security boundary
+for UI), <em>desktop</em> (the visible work surface), and <em>windows</em>. Processes in
+one session cannot send messages to windows in another session (unless they have the
+right privileges). This isolation is stronger than in traditional Unix, where all users
+share a single X server (though Wayland improves this).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows Sessions</div>
+<ul>
+<li><strong>Session 0</strong>: services and system processes (no interactive UI since
+Vista, for security—prevents "shatter attacks" via window messages)</li>
+<li><strong>Session 1+</strong>: interactive user sessions (local or remote)</li>
+<li><strong>Console session</strong>: the session on the physical display</li>
+<li><strong>RDP session</strong>: a remote session via Remote Desktop Protocol</li>
+</ul>
+<p>Each session has its own <em>csrss.exe</em> (Client/Server Runtime Subsystem), which
+manages the session's processes and console. The <em>winlogon.exe</em> process handles
+login for each session.</p>
+</div>
+
+<p><strong>Fast User Switching</strong> allows multiple users to be logged in
+simultaneously on the same machine, switching between sessions without logging out. When
+user A locks the screen, user B can log in, creating a new session. User A's session
+continues running in the background (processes keep running, downloads continue). This
+is possible because each session is isolated: user B's processes do not interfere with
+user A's. Fast User Switching is essentially Terminal Services for local users: the same
+session infrastructure is used, just without a network connection.</p>
+
+<p><strong>Remote Desktop Protocol (RDP)</strong> is the protocol used for remote
+sessions. RDP transmits screen updates (as compressed bitmaps or drawing commands),
+keyboard and mouse input, audio, and clipboard data over a network connection. RDP is
+optimized for low-bandwidth connections: it uses compression, caching, and differential
+updates (only sending changed regions). RDP supports features like printer redirection
+(use local printer in remote session), drive redirection (access local drives), and
+clipboard sharing. RDP is the Windows equivalent of VNC or X11 forwarding in Unix.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Session 0 Isolation</div>
+<p>Before Windows Vista, services ran in Session 0 alongside interactive users, allowing
+services to display dialog boxes. This was a security vulnerability: a malicious
+application could send window messages to a service running with higher privileges (a
+"shatter attack"), exploiting the service. Starting with Vista, <strong>Session 0
+Isolation</strong> separates services (Session 0) from interactive users (Session 1+).
+Services can no longer display UI directly; if a service needs to interact with the
+user, it must use a broker process in the user's session. This is a security improvement
+that illustrates the principle of <em>least privilege</em> applied to UI isolation.</p>
+</div>
+
+<p><strong>Windows Terminal</strong> (2020) is a modern terminal application that
+supports tabs, panes, Unicode, GPU-accelerated text rendering, and multiple profiles
+(CMD, PowerShell, WSL, Azure Cloud Shell). It replaces the legacy
+<code class="code-inline">cmd.exe</code> console host with a modern, extensible terminal.
+Windows Terminal demonstrates the evolution of Windows from a GUI-centric OS to one that
+embraces command-line and developer workflows, partly in response to the popularity of
+Linux and macOS among developers.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Windows vs. xv6 Multi-user</div>
+<p>xv6 is single-user (no authentication, no sessions). Windows is multi-user with
+sophisticated session management. The contrast is stark: xv6 has no concept of "logging
+in"—any process can do anything. Windows requires authentication, creates isolated
+sessions, and enforces access control between sessions. This illustrates how much
+infrastructure a production multi-user OS requires: authentication, session management,
+window station isolation, and security descriptors. xv6 shows you the raw kernel
+mechanisms; Windows shows you the full multi-user stack built on top.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-4">21.4 File System</h2>
+
+<p><strong>NTFS (New Technology File System)</strong> is the primary file system for
+Windows, introduced with Windows NT in 1993. NTFS replaced the FAT file system (used in
+MS-DOS and Windows 9x) with a modern, journaling, secure file system. NTFS supports
+files up to 16 EB, volumes up to 256 TB (with 64 KB clusters), Unicode filenames (up to
+32,767 characters), hard links, symbolic links, sparse files, file compression, and
+encryption (EFS—Encrypting File System).</p>
+
+<p>NTFS is a <strong>journaling file system</strong>: it writes metadata changes to a
+<em>log file</em> (<code class="code-inline">$LogFile</code>) before committing them to
+the main file system. If the system crashes, the log can be replayed to restore
+consistency. NTFS journals <em>metadata</em> (file names, attributes, directory
+structure) but not <em>data</em> by default—data journaling can be enabled for critical
+files. This is similar to ext4's journaling (which also journals metadata by default).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ NTFS Key Features</div>
+<ul>
+<li><strong>Journaling</strong>: metadata changes logged for crash recovery</li>
+<li><strong>Security</strong>: ACLs (access control lists) on every file and directory</li>
+<li><strong>Large file/volume support</strong>: up to 16 EB files, 256 TB volumes</li>
+<li><strong>Unicode filenames</strong>: up to 32,767 characters</li>
+<li><strong>Hard links and symbolic links</strong>: multiple names for files</li>
+<li><strong>Sparse files</strong>: efficient storage of mostly-empty files</li>
+<li><strong>File compression</strong>: transparent, per-file compression</li>
+<li><strong>EFS (Encrypting File System)</strong>: per-file encryption</li>
+<li><strong>Volume Shadow Copy</strong>: point-in-time copies for backup</li>
+<li><strong>Quotas</strong>: per-user disk usage limits</li>
+</ul>
+</div>
+
+<p>NTFS organizes data using a <strong>Master File Table (MFT)</strong>, a special file
+that contains records for every file and directory in the volume. Each MFT record is
+typically 1024 bytes and contains the file's attributes: standard information
+(timestamps, attributes), file name, data (either inline for small files or a pointer to
+extents for large files), and security descriptor. Small files (under ~700 bytes) can
+be stored entirely within the MFT record (<em>resident files</em>), making access very
+fast. Larger files use <em>data runs</em> (extents) that point to clusters on disk.</p>
+
+<div class="code-block"><span class="comment">/* NTFS MFT record (simplified) */</span>
+
+<span class="comment">// Each file/directory has an MFT record (1024 bytes)</span>
+<span class="comment">// Record contains attributes:</span>
+
+<span class="comment">// $STANDARD_INFORMATION: timestamps, flags</span>
+<span class="comment">//   - Creation time, modification time, access time, change time</span>
+<span class="comment">//   - File attributes (read-only, hidden, system, archive)</span>
+
+<span class="comment">// $FILE_NAME: name, parent directory reference</span>
+<span class="comment">//   - File name (Unicode, up to 255 chars)</span>
+<span class="comment">//   - Parent directory MFT record number</span>
+
+<span class="comment">// $DATA: file contents</span>
+<span class="comment">//   - Resident: data stored in MFT record (small files)</span>
+<span class="comment">//   - Non-resident: data runs pointing to disk clusters</span>
+
+<span class="comment">// $SECURITY_DESCRIPTOR: ACL (access control list)</span>
+<span class="comment">//   - DACL: who can access (allow/deny entries)</span>
+<span class="comment">//   - SACL: what to audit</span>
+<span class="comment">//   - Owner SID</span>
+
+<span class="comment">// Small file (< 700 bytes): all data in MFT record → fast access</span>
+<span class="comment">// Large file: MFT record points to data runs on disk</span></div>
+
+<p><strong>NTFS security</strong> is based on <strong>ACLs (Access Control Lists)</strong>.
+Every file and directory has a <em>security descriptor</em> containing a DACL
+(Discretionary ACL) and SACL (System ACL). The DACL contains <em>access control entries
+(ACEs)</em> that allow or deny specific rights to specific users or groups. When a
+process accesses a file, the security reference monitor checks the process's access
+token against the DACL. If an explicit <em>deny</em> matches, access is denied. If an
+<em>allow</em> matches and grants the requested right, access is granted. If no entry
+matches, access is denied by default. This is more expressive than Unix's
+owner/group/other model (which has only 3 classes × 3 bits = 9 permission bits).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>NTFS</th><th>ext4</th><th>FAT32</th></tr>
+</thead>
+<tbody>
+<tr><td>Journaling</td><td>Yes (metadata)</td><td>Yes (metadata)</td><td>No</td></tr>
+<tr><td>Max file size</td><td>16 EB</td><td>16 TB</td><td>4 GB</td></tr>
+<tr><td>Max volume size</td><td>256 TB</td><td>1 EB</td><td>2 TB (32 KB clusters)</td></tr>
+<tr><td>Security</td><td>ACLs</td><td>POSIX permissions + ACLs</td><td>None</td></tr>
+<tr><td>Unicode names</td><td>Yes</td><td>Yes</td><td>Partial (LFN)</td></tr>
+<tr><td>Hard links</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Sparse files</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Compression</td><td>Yes (built-in)</td><td>Yes (external)</td><td>No</td></tr>
+<tr><td>Encryption</td><td>Yes (EFS)</td><td>Yes (fscrypt)</td><td>No</td></tr>
+<tr><td>Snapshots</td><td>Yes (VSS)</td><td>Yes (LVM, Btrfs)</td><td>No</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Volume Shadow Copy Service (VSS)</strong> creates point-in-time copies
+(snapshots) of volumes, even while files are in use. VSS uses a <em>copy-on-write</em>
+mechanism: when a file is modified after the snapshot, the original blocks are copied
+to the snapshot before the write proceeds. This allows backups to capture a consistent
+point-in-time state of the file system, even if files are being modified. VSS also
+powers <strong>System Restore</strong> (rollback to a previous system state) and
+<strong>Previous Versions</strong> (restore previous versions of files).</p>
+
+<p><strong>ReFS (Resilient File System)</strong> is a newer Windows file system
+(introduced with Windows Server 2012) designed for high availability and data integrity.
+ReFS uses <em>checksums</em> on all metadata and (optionally) data, detecting and
+repairing corruption. ReFS supports <em>storage spaces</em> (storage pools with
+mirroring and parity) and can survive disk failures. ReFS is intended for server
+workloads (file servers, Hyper-V) and is not used for the system volume (C: drive) in
+client Windows.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 NTFS vs. xv6 File System</div>
+<p>xv6's file system is a simplified version of a Unix file system: inodes, direct and
+indirect blocks, a simple log, and no security. NTFS is a production file system with
+journaling, ACLs, compression, encryption, and snapshots. But the <em>core concepts</em>
+are similar: both have a metadata structure (MFT vs. inodes) that describes files, both
+use extents or block lists to locate data, and both journal metadata for crash
+consistency. xv6's <code class="code-inline">struct dinode</code> is a simplified version
+of NTFS's MFT record. Learning xv6's file system gives you the foundation; NTFS shows
+you the production version with all the features.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-5">21.5 Networking</h2>
+
+<p>Windows networking is built on the <strong>TCP/IP stack</strong>, implemented in the
+kernel as the <strong>Winsock</strong> (Windows Sockets) API and the
+<strong>NDIS</strong> (Network Driver Interface Specification) for network drivers. The
+networking stack supports TCP, UDP, IP, ICMP, and many higher-level protocols. Windows
+includes a <strong>firewall</strong> (Windows Defender Firewall), VPN support, and
+network protocols for file sharing (SMB), remote management (WinRM), and authentication
+(Kerberos, NTLM).</p>
+
+<p>The <strong>Winsock API</strong> is Windows' implementation of the Berkeley sockets
+API, with Windows-specific extensions. Winsock provides
+<code class="code-inline">socket</code>,
+<code class="code-inline">bind</code>,
+<code class="code-inline">listen</code>,
+<code class="code-inline">accept</code>,
+<code class="code-inline">connect</code>,
+<code class="code-inline">send</code>,
+<code class="code-inline">recv</code>—the same operations as in Unix. Windows added
+<code class="code-inline">WSAStartup</code> (initialize Winsock),
+<code class="code-inline">WSASocket</code> (extended socket creation), and
+<em>overlapped I/O</em> (asynchronous I/O using
+<code class="code-inline">OVERLAPPED</code> structures and I/O completion ports).</p>
+
+<div class="code-block"><span class="comment">/* Winsock vs. Berkeley sockets */</span>
+
+<span class="comment">// Berkeley sockets (Linux, xv6-style):</span>
+<span class="keyword">int</span> sock = socket(AF_INET, SOCK_STREAM, 0);
+connect(sock, &addr, sizeof(addr));
+write(sock, data, len);
+<span class="comment">// No initialization needed</span>
+
+<span class="comment">// Winsock (Windows):</span>
+WSADATA wsa;
+WSAStartup(MAKEWORD(2, 2), &wsa);  <span class="comment">// initialize Winsock</span>
+SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+connect(sock, &addr, sizeof(addr));
+send(sock, data, len, 0);  <span class="comment">// send, not write</span>
+<span class="comment">// Must WSACleanup() when done</span>
+
+<span class="comment">// Overlapped I/O (async):</span>
+WSAOVERLAPPED overlapped = {0};
+WSASend(sock, &buf, 1, &sent, 0, &overlapped, NULL);
+<span class="comment">// Returns immediately; completion via IOCP or event</span></div>
+
+<p><strong>I/O Completion Ports (IOCP)</strong> is Windows' high-performance async I/O
+mechanism, analogous to Linux's <code class="code-inline">epoll</code> and
+<code class="code-inline">io_uring</code>. A thread creates a completion port, associates
+file handles (including sockets) with it, and then waits on the port. When an async I/O
+completes, the completion is queued to the port, and the waiting thread retrieves it.
+IOCP is designed for high-throughput servers: a small pool of threads can handle
+thousands of connections, with the OS dispatching completions as I/O finishes. This is
+the <em>proactor</em> pattern (initiate I/O, get notified on completion), versus
+<code class="code-inline">epoll</code>'s <em>reactor</em> pattern (get notified when I/O
+is ready, then do the I/O).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows Networking Stack</div>
+<ul>
+<li><strong>Winsock API</strong>: user-space socket interface</li>
+<li><strong>AFD (Ancillary Function Driver)</strong>: kernel component that implements
+Winsock</li>
+<li><strong>TCP/IP driver</strong> (<code class="code-inline">tcpip.sys</code>): kernel
+network protocol stack</li>
+<li><strong>NDIS</strong>: network driver interface (miniport drivers for NICs)</li>
+<li><strong>Windows Filter Platform (WFP)</strong>: kernel-level packet filtering
+(firewall, intrusion detection)</li>
+<li><strong>SMB</strong>: file and printer sharing protocol</li>
+<li><strong>WinRM</strong>: remote management (WS-Management protocol)</li>
+<li><strong>RRAS</strong>: routing and remote access (VPN, NAT)</li>
+</ul>
+</div>
+
+<p><strong>SMB (Server Message Block)</strong> is Windows' file and printer sharing
+protocol. SMB allows a Windows client to access files and printers on a Windows server
+as if they were local. SMB 3.0 added SMB Direct (RDMA for high performance), SMB
+Multichannel (multiple connections for throughput), and SMB Encryption. The
+<em>Samba</em> software implements SMB on Linux, enabling Linux servers to share files
+with Windows clients. SMB is the Windows equivalent of NFS (Unix).</p>
+
+<p><strong>Windows Firewall</strong> (Windows Defender Firewall) is a stateful
+packet-filtering firewall integrated into the OS. It filters inbound and outbound
+traffic based on rules: allow/deny by application, port, protocol, IP address, and
+network profile (domain, private, public). The firewall is implemented in the kernel via
+the <strong>Windows Filtering Platform (WFP)</strong>, which provides hooks at various
+layers of the network stack. WFP also supports intrusion detection, VPN, and parental
+controls.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Network Profiles</div>
+<p>Windows classifies networks into three profiles, each with different firewall rules:</p>
+<ul>
+<li><strong>Domain</strong>: connected to an Active Directory domain (most permissive,
+trusted)</li>
+<li><strong>Private</strong>: home or work network (moderately permissive)</li>
+<li><strong>Public</strong>: public network (most restrictive, blocks most inbound)</li>
+</ul>
+<p>When you connect to a new network, Windows asks which profile to use. Choosing
+"Public" at a coffee shop blocks file sharing and other services, protecting you from
+other users on the same network. This is a practical application of the
+<em>principle of least privilege</em> applied to network access.</p>
+</div>
+
+<p><strong>Active Directory</strong> is Windows' directory service for domain networks.
+Active Directory stores information about users, computers, and resources in a
+hierarchical, replicated database (based on LDAP). It provides <em>authentication</em>
+(via Kerberos), <em>authorization</em> (via security groups and ACLs), and
+<em>policy management</em> (via Group Policy). In an enterprise, Active Directory allows
+centralized management: an administrator can create a user once, and that user can log
+in to any computer in the domain, with consistent permissions and policies. Active
+Directory is the Windows equivalent of LDAP + Kerberos + configuration management on
+Linux.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Windows vs. Linux Networking</div>
+<p>Windows and Linux both implement the TCP/IP stack and the sockets API, but with
+different APIs and architectures:</p>
+<ul>
+<li><strong>API</strong>: Winsock (Windows) vs. BSD sockets (Linux)—similar but not
+identical</li>
+<li><strong>Async I/O</strong>: IOCP (Windows, proactor) vs. epoll/io_uring (Linux,
+reactor)</li>
+<li><strong>File sharing</strong>: SMB (Windows) vs. NFS (Linux)</li>
+<li><strong>Directory</strong>: Active Directory (Windows) vs. LDAP (Linux)</li>
+<li><strong>Firewall</strong>: WFP (Windows) vs. netfilter/iptables (Linux)</li>
+</ul>
+<p>Both support the same protocols (TCP, UDP, IP) and can interoperate (Windows can
+mount NFS, Linux can use SMB). The differences are in the API and management tools, not
+the underlying protocols.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-6">21.6 Interface</h2>
+
+<p>The Windows <strong>graphical user interface (GUI)</strong> is a defining feature.
+Unlike Linux, where the GUI (X11 or Wayland) is a user-space component separate from the
+kernel, the Windows GUI is deeply integrated with the OS. The <strong>Window
+Manager</strong> (<code class="code-inline">win32k.sys</code>) runs in kernel mode and
+handles window creation, drawing, and input dispatch. This integration provides
+performance (no user-kernel boundary for window operations) but has historically been a
+source of security vulnerabilities (win32k.sys is a large, complex kernel component).</p>
+
+<p>The <strong>Desktop Window Manager (DWM)</strong> is the compositing window manager
+(introduced in Vista). DWM composites windows off-screen and then presents the final
+image to the display, enabling effects like transparency, animations, and
+<em>glass</em>. Before DWM, each window painted directly to the screen, which caused
+<em>tearing</em> and limited visual effects. DWM uses the GPU for compositing, providing
+smooth animations and effects with minimal CPU overhead.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows GUI Components</div>
+<ul>
+<li><strong>win32k.sys</strong>: kernel-mode window manager (window creation, input)</li>
+<li><strong>DWM (dwm.exe)</strong>: compositing window manager (visual effects)</li>
+<li><strong>explorer.exe</strong>: shell (taskbar, Start menu, file manager)</li>
+<li><strong>DirectX / Direct2D</strong>: graphics APIs (GPU-accelerated rendering)</li>
+<li><strong>WPF</strong>: .NET UI framework (XAML-based)</li>
+<li><strong>UWP / WinUI</strong>: modern UI frameworks (Windows 10/11)</li>
+<li><strong>Win32 API</strong>: the core windowing API (CreateWindow, SendMessage, ...)</li>
+</ul>
+</div>
+
+<p>The <strong>Win32 API</strong> is the primary programming interface for Windows
+applications. Key functions include
+<code class="code-inline">CreateWindow</code> (create a window),
+<code class="code-inline">ShowWindow</code> (display a window),
+<code class="code-inline">SendMessage</code> (send a message to a window),
+<code class="code-inline">GetMessage</code>/<code class="code-inline">DispatchMessage</code>
+(message loop), and
+<code class="code-inline">DefWindowProc</code> (default message handling). Windows uses a
+<em>message-driven</em> model: the OS sends messages (like
+<code class="code-inline">WM_PAINT</code>,
+<code class="code-inline">WM_KEYDOWN</code>,
+<code class="code-inline">WM_MOUSEMOVE</code>) to windows, and the application's
+<em>window procedure</em> handles them. This is different from the event-loop model in
+X11 but conceptually similar.</p>
+
+<div class="code-block"><span class="comment">/* Win32 message loop (simplified) */</span>
+
+<span class="comment">// WinMain: entry point for Windows GUI applications</span>
+<span class="keyword">int WINAPI</span> WinMain(...) {
+    <span class="comment">// 1. Register window class</span>
+    WNDCLASS wc = {0};
+    wc.lpfnWndProc = WndProc;  <span class="comment">// window procedure</span>
+    wc.lpszClassName = <span class="string">"MyWindow"</span>;
+    RegisterClass(&wc);
+
+    <span class="comment">// 2. Create window</span>
+    HWND hwnd = CreateWindow(<span class="string">"MyWindow"</span>, <span class="string">"Title"</span>, ...);
+    ShowWindow(hwnd, SW_SHOW);
+
+    <span class="comment">// 3. Message loop</span>
+    MSG msg;
+    <span class="keyword">while</span> (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);   <span class="comment">// translate keystrokes</span>
+        DispatchMessage(&msg);    <span class="comment">// dispatch to window procedure</span>
+    }
+    <span class="keyword">return</span> msg.wParam;
+}
+
+<span class="comment">// Window procedure: handles messages</span>
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    <span class="keyword">switch</span> (msg) {
+        <span class="keyword">case</span> WM_PAINT:  <span class="comment">// window needs repainting</span>
+            <span class="comment">// ... draw the window ...</span>
+            <span class="keyword">break</span>;
+        <span class="keyword">case</span> WM_DESTROY:  <span class="comment">// window being destroyed</span>
+            PostQuitMessage(0);
+            <span class="keyword">break</span>;
+        <span class="keyword">default</span>:
+            <span class="keyword">return</span> DefWindowProc(hwnd, msg, w, l);
+    }
+    <span class="keyword">return</span> 0;
+}</div>
+
+<p>The <strong>Windows shell</strong> (<code class="code-inline">explorer.exe</code>)
+provides the user-facing interface: the desktop, taskbar, Start menu, notification area,
+and file manager. The shell is a user-space process that uses the Win32 API to create
+windows and handle input. The shell can be customized or replaced (alternative shells
+exist), but most users use the default explorer.exe. The Start menu (introduced in
+Windows 95, removed in Windows 8, restored in Windows 10) is the primary application
+launcher.</p>
+
+<p><strong>Modern Windows UI</strong> has evolved through several frameworks:
+<strong>Win32</strong> (classic, C/C++), <strong>WPF</strong> (.NET, XAML, 2006),
+<strong>UWP</strong> (Universal Windows Platform, 2015, sandboxed apps), and
+<strong>WinUI 3</strong> (2021, decoupled from UWP). <strong>Windows 11</strong>
+introduced <strong>WinUI</strong> as the primary UI framework, with a redesigned
+interface (rounded corners, centered taskbar, new Start menu). The proliferation of UI
+frameworks reflects Microsoft's evolving strategy: from Win32 to .NET to UWP to WinUI,
+each attempting to modernize the development experience while maintaining backward
+compatibility.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Windows GUI vs. Linux GUI</div>
+<p>The Windows GUI is integrated into the kernel (win32k.sys), while the Linux GUI
+(X11/Wayland) is entirely in user space. This is a fundamental architectural
+difference:</p>
+<ul>
+<li><strong>Windows</strong>: kernel-mode window manager → faster (no context switch for
+window operations) but less secure (bugs in win32k.sys can compromise the kernel)</li>
+<li><strong>Linux</strong>: user-space window manager → slower (context switch for
+window operations) but more secure (GUI bugs don't compromise the kernel) and more
+flexible (can replace the entire GUI)</li>
+</ul>
+<p>Windows 10 has moved some GUI components to user space (UWP apps), but the core
+win32k.sys remains in the kernel for compatibility. This is a classic trade-off between
+performance and security/flexibility.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-21-7">21.7 Virtualization (WSL)</h2>
+
+<p>The <strong>Windows Subsystem for Linux (WSL)</strong> allows Linux binaries to run
+natively on Windows, without a virtual machine. WSL is a modern reimagining of the
+environment subsystem concept from Windows NT: it provides a Linux-compatible
+environment that translates Linux system calls into Windows NT system calls. This
+allows unmodified Linux binaries (compiled for x86-64) to run on Windows, providing the
+best of both worlds: Windows applications and Linux tools on the same system.</p>
+
+<p><strong>WSL1</strong> (2016) implemented Linux system calls in the Windows kernel.
+The <em>LXSS</em> subsystem translated Linux system calls (like
+<code class="code-inline">fork</code>,
+<code class="code-inline">open</code>,
+<code class="code-inline">read</code>) into equivalent NT system calls. WSL1 ran Linux
+binaries natively (no emulation), with the Windows kernel handling the system calls.
+This was fast (near-native performance) but had compatibility issues: not all Linux
+system calls had NT equivalents, and some Linux-specific behaviors (like
+<code class="code-inline">/proc</code>, signals) were imperfectly emulated.</p>
+
+<div class="code-block"><span class="comment">/* WSL1 architecture */</span>
+
+<span class="comment">// Linux binary calls: open("/home/user/file", O_RDONLY)</span>
+<span class="comment">// → Linux system call (int 0x80 or syscall instruction)</span>
+<span class="comment">// → WSL1 kernel driver (lxss.sys) intercepts</span>
+<span class="comment">// → Translates to: NtCreateFile("\\?\\...\\home\\user\\file")</span>
+<span class="comment">// → NT executive handles the file open</span>
+<span class="comment">// → Result translated back to Linux errno format</span>
+<span class="comment">// → Linux binary gets the file descriptor</span>
+
+<span class="comment">// No VM, no emulation — direct translation</span>
+<span class="comment">// Fast, but not 100% Linux-compatible</span></div>
+
+<p><strong>WSL2</strong> (2020) takes a different approach: it runs a real Linux kernel
+in a lightweight virtual machine, using Microsoft's Hyper-V technology. WSL2 runs a
+full Linux kernel (open-source, Microsoft-maintained) in a lightweight VM with fast
+startup (under 2 seconds). Linux binaries run in this VM, making real Linux system calls
+to the real Linux kernel. This provides 100% Linux compatibility (including
+<code class="code-inline">/proc</code>, <code class="code-inline">/sys</code>, Docker,
+systemd) at near-native performance. The trade-off is that WSL2 uses more memory (a full
+kernel) and has slightly more overhead than WSL1.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ WSL1 vs. WSL2</div>
+<table>
+<thead><tr><th>Feature</th><th>WSL1</th><th>WSL2</th></tr>
+</thead>
+<tbody>
+<tr><td>Architecture</td><td>System call translation</td><td>Real Linux kernel in VM</td></tr>
+<tr><td>Compatibility</td><td>~90% (some syscalls missing)</td><td>100% (real kernel)</td></tr>
+<tr><td>Performance (CPU)</td><td>Near-native</td><td>Near-native (slight VM overhead)</td></tr>
+<tr><td>Performance (file I/O)</td><td>Fast (NTFS directly)</td><td>Slow across FS boundary</td></tr>
+<tr><td>Memory</td><td>Low (no kernel)</td><td>Higher (full kernel)</td></tr>
+<tr><td>Startup</td><td>Instant</td><td>~2 seconds</td></tr>
+<tr><td>Docker</td><td>Limited</td><td>Full support</td></tr>
+<tr><td>systemd</td><td>No</td><td>Yes (with config)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>WSL2 uses <strong>Hyper-V</strong> lightweight VMs, which are optimized for fast
+startup and low overhead. Unlike full Hyper-V VMs (which take 30+ seconds to start and
+consume significant resources), WSL2 VMs start in seconds and share the host's network
+and file system. The Linux kernel in WSL2 is a real kernel (from kernel.org), patched by
+Microsoft for WSL-specific features. This means WSL2 can run any Linux software,
+including Docker (which requires kernel features like cgroups and namespaces).</p>
+
+<p><strong>File system integration</strong> is a key WSL feature. WSL can access Windows
+files via <code class="code-inline">/mnt/c</code> (the C: drive is mounted at
+<code class="code-inline">/mnt/c</code>), and Windows can access WSL files via
+<code class="code-inline">\\wsl$&lt;distro&gt;</code> (WSL file system is accessible as
+a network share). This allows seamless file sharing between Windows and Linux
+applications. However, cross-filesystem access (Linux accessing Windows files, or vice
+versa) is slower than native access, because it goes through a translation layer. For
+best performance, keep Linux files in the WSL file system and Windows files in the
+Windows file system.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ WSL2 File System Performance</div>
+<p>WSL2 stores its file system in a virtual disk (ext4.vhdx). Accessing files within
+this disk is fast (native ext4 performance). However, accessing Windows files (via
+<code class="code-inline">/mnt/c</code>) is slow because each operation crosses the
+VM boundary and is translated from ext4 semantics to NTFS semantics. For development,
+this means: keep your source code and build artifacts in the WSL file system (e.g.,
+<code class="code-inline">~/projects</code>), not in
+<code class="code-inline">/mnt/c/Users/...</code>. This can be 10–100× faster for
+file-intensive operations like <code class="code-inline">git</code>,
+<code class="code-inline">npm install</code>, or compilation.</p>
+</div>
+
+<p><strong>WSL and Docker</strong> are closely related. Docker Desktop on Windows uses
+WSL2 as its backend: Docker runs inside the WSL2 VM, using the Linux kernel's container
+features (cgroups, namespaces). This means Docker on Windows is essentially Docker on
+Linux, running in a lightweight VM. Before WSL2, Docker on Windows used Hyper-V VMs
+(Windows containers) or a Linux VM (Docker Machine), which were heavier. WSL2 makes
+Docker on Windows fast and lightweight.</p>
+
+<p><strong>WSLg (WSL GUI)</strong> (2021) extends WSL to support Linux GUI applications.
+WSLg runs a Wayland/X server inside the WSL VM and displays Linux GUI windows on the
+Windows desktop, integrated with the Windows window manager. This allows running Linux
+GUI applications (like GIMP, Firefox, or custom tools) on Windows without a separate X
+server. WSLg demonstrates the deep integration possible between Windows and Linux: GUI
+applications from both environments coexist on the same desktop.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 WSL and xv6</div>
+<p>WSL is a fascinating case study in OS design: it runs a real Linux kernel alongside
+the Windows kernel, with both coexisting on the same hardware. This is possible because
+of hardware virtualization (Hyper-V) and the environment subsystem concept from Windows
+NT. If you wanted to run xv6 on Windows, you would use a full VM (like VirtualBox or
+Hyper-V), because xv6 is not binary-compatible with either Windows or Linux. But the
+<em>concept</em> is the same: a guest OS running in a virtualized environment, with the
+host OS managing the hardware. WSL2 is essentially a highly optimized VM for running
+Linux; QEMU (which you use for xv6) is a general-purpose emulator. Both demonstrate the
+power of virtualization for running multiple OS environments on one machine.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-1">22.1 Early Systems</h2>
+
+<p>The history of operating systems begins in the 1940s with the first electronic
+computers: ENIAC, EDVAC, and the Manchester Mark 1. These early machines had no
+operating system—programmers operated the hardware directly, entering programs via
+switches or punched cards. Each program run was a manual process: load the program,
+start execution, monitor, and record results. There was no concept of a "job" or
+"scheduling"—one program ran at a time, and the programmer had exclusive use of the
+machine.</p>
+
+<p>The <strong>first operating systems</strong> appeared in the 1950s with the first
+commercial computers (IBM 701, 1952). These early OS were simple: they loaded programs
+from punched cards or tape, executed them, and printed results. The key innovation was
+the <strong>resident monitor</strong>: a small program that stayed in memory and loaded
+the next job automatically, reducing setup time. The resident monitor was the ancestor
+of the kernel: it managed job sequencing and I/O, freeing the operator from manual
+intervention.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Early OS Timeline</div>
+<ul>
+<li><strong>1940s</strong>: No OS. Direct hardware control via switches/cards.</li>
+<li><strong>1950s</strong>: Resident monitors. Job sequencing, simple I/O drivers.</li>
+<li><strong>1950s</strong>: Batch processing. Jobs queued on cards/tape, processed
+sequentially.</li>
+<li><strong>1960s</strong>: Multiprogramming. Multiple jobs in memory, CPU switches
+between them.</li>
+<li><strong>1960s</strong>: Time-sharing. Multiple interactive users, CPU time-sliced.</li>
+<li><strong>1970s</strong>: Personal computers. Single-user OS (CP/M, later MS-DOS).</li>
+<li><strong>1980s</strong>: GUIs. Macintosh (1984), Windows 1.0 (1985).</li>
+<li><strong>1990s</strong>: Open source. Linux (1991), FreeBSD.</li>
+<li><strong>2000s</strong>: Mobile. iOS (2007), Android (2008).</li>
+<li><strong>2010s</strong>: Cloud. AWS EC2 (2006), containers (Docker, 2013).</li>
+</ul>
+</div>
+
+<p><strong>Batch processing</strong> was the first major OS innovation. Instead of
+loading each job manually, operators stacked punched cards (or magnetic tape) with
+multiple jobs. The OS loaded and executed each job in sequence, automatically. This
+reduced <em>setup time</em> (the time between jobs) and improved throughput. The OS
+provided <em>job control language</em> (JCL) to specify job requirements (which
+compiler to use, which data sets to read). Batch processing was the dominant paradigm
+from the 1950s through the 1970s and is still used today for background processing
+(payroll, billing, data processing).</p>
+
+<p>The key problem with early batch systems was <strong>I/O wait</strong>: while a job
+was waiting for I/O (reading cards, printing results), the CPU was idle. With a single
+job in memory, CPU utilization could be as low as 10–20%. The solution was
+<strong>multiprogramming</strong>: keeping multiple jobs in memory simultaneously. When
+one job waits for I/O, the CPU switches to another job. This dramatically improved CPU
+utilization and throughput. Multiprogramming required <strong>memory protection</strong>
+(to prevent jobs from interfering with each other) and <strong>scheduling</strong> (to
+decide which job to run next)—the foundations of modern OS design.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ From Batch to Interactive</div>
+<p>Batch processing was efficient for the computer but terrible for programmers. A
+programmer submitted a job and waited hours (or overnight) for results. A single typo
+meant resubmitting and waiting again. <strong>Time-sharing</strong> solved this by
+giving each user an interactive terminal and time-slicing the CPU among them. The first
+time-sharing system was the <strong>Compatible Time-Sharing System (CTSS)</strong> at
+MIT (1961), followed by <strong>Multics</strong> (1965). Time-sharing made computing
+interactive and is the model for all modern multi-user systems, including Unix and
+Linux.</p>
+</div>
+
+<p>The evolution from no OS to batch to multiprogramming to time-sharing illustrates the
+key drivers of OS evolution: <strong>efficiency</strong> (use expensive hardware
+better), <strong>convenience</strong> (make computing easier for users), and
+<strong>security</strong> (protect users from each other). These same drivers continue
+today: cloud computing (efficiency), mobile OS (convenience), and zero-trust security
+all have roots in these early developments.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Early Systems and xv6</div>
+<p>xv6 is a time-sharing, multiprogramming operating system—concepts that were
+groundbreaking in the 1960s. When you run xv6, you're running a system that implements
+ideas from CTSS and Multics: multiple processes in memory, time-sliced CPU, memory
+protection, and interactive use. The difference is that xv6 runs on a modern RISC-V
+processor in QEMU, while CTSS ran on an IBM 7094 with 32K of magnetic-core memory. But
+the <em>concepts</em> are the same. Studying xv6 connects you to 60 years of OS
+evolution.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-2">22.2 Atlas</h2>
+
+<p>The <strong>Atlas computer</strong> (1962, University of Manchester) was one of the
+most influential early computers, pioneering several concepts that are now fundamental
+to operating systems. Atlas was designed by a team led by Tom Kilburn and was one of the
+fastest computers in the world at the time. Its operating system, the <strong>Atlas
+Supervisor</strong>, introduced concepts that are still in use today.</p>
+
+<p>Atlas's most important contribution was <strong>virtual memory</strong> using
+<strong>demand paging</strong>. Atlas had a drum (a rotating magnetic storage device)
+as secondary storage and magnetic-core memory as primary storage. The Supervisor used a
+technique called <em>one-level store</em>: it presented the programmer with a large,
+contiguous virtual address space, backed by the drum, with pages loaded into core
+memory on demand. When a program accessed a page not in memory, a <em>page fault</em>
+occurred, and the Supervisor loaded the page from the drum. This was the first
+implementation of demand paging, now universal in all modern operating systems.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Atlas Innovations</div>
+<ul>
+<li><strong>Virtual memory / demand paging</strong>: the one-level store (1962)</li>
+<li><strong>Page replacement</strong>: the learning algorithm (precursor to LRU)</li>
+<li><strong>Spooling</strong>: Simultaneous Peripheral Operation On-Line (coined by Atlas team)</li>
+<li><strong>Interrupt-driven I/O</strong>: hardware interrupts for I/O completion</li>
+<li><strong>Extracode</strong>: software-implemented instructions (precursor to system calls)</li>
+</ul>
+</div>
+
+<p>Atlas's <strong>page replacement algorithm</strong> was also pioneering. The
+<em>learning algorithm</em> attempted to predict which page would not be needed for the
+longest time, based on past access patterns. This was an early form of the
+<em>least-recently-used (LRU)</em> algorithm. The Atlas team recognized that optimal page
+replacement (Belady's MIN algorithm, 1966) requires future knowledge, which is
+impossible, so they approximated it with past behavior. This insight—that page
+replacement must be based on heuristics because the future is unknown—remains central to
+memory management.</p>
+
+<p><strong>Spooling</strong> (Simultaneous Peripheral Operation On-Line) was another
+Atlas innovation. Slow peripherals (card readers, printers) were buffered by writing
+data to magnetic tape or disk, allowing the CPU to proceed with other work while the
+peripheral operated. For example, card images were read to tape, then the tape was read
+by the computer at high speed. Output was written to tape, then printed later. This
+overlapped I/O with computation, improving throughput. The term "spool" is still used
+today (print spooler, <code class="code-inline">/var/spool</code>).</p>
+
+<p><strong>Extracode</strong> was Atlas's mechanism for software-implemented
+instructions. Some instructions (like division, which the hardware did not support
+directly) were implemented as subroutines invoked by a trap. When the CPU encountered an
+extracode instruction, it trapped to the Supervisor, which executed the corresponding
+subroutine. This is the direct ancestor of <strong>system calls</strong>: the idea that
+some operations are implemented in software (the OS) rather than hardware, invoked via a
+trap mechanism. xv6's <code class="code-inline">ecall</code> instruction is the
+modern RISC-V equivalent of Atlas's extracode.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Atlas and Modern OS</div>
+<p>Atlas introduced virtual memory, demand paging, page replacement, spooling, and
+software-implemented instructions—all in 1962. Every modern operating system (Linux,
+Windows, macOS, xv6) uses these concepts. When you study xv6's page fault handler
+(<code class="code-inline">usertrap</code> in <code class="code-inline">trap.c</code>),
+you're seeing the descendant of Atlas's page fault handler. When you study xv6's
+<code class="code-inline">syscalls</code>, you're seeing the descendant of Atlas's
+extracode. Atlas was truly ahead of its time.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-3">22.3 XDS-940</h2>
+
+<p>The <strong>XDS-940</strong> (1964, Scientific Data Systems) was a time-sharing
+operating system that pioneered several important concepts. It was developed at the
+University of California, Berkeley, by a team led by Butler Lampson and Peter Deutsch.
+The XDS-940 was one of the first commercially available time-sharing systems and
+demonstrated that interactive computing was practical.</p>
+
+<p>The XDS-940's key innovation was <strong>memory-mapped I/O and memory protection</strong>.
+The hardware supported a <em>relocation register</em> that mapped virtual addresses to
+physical addresses, providing each process with its own address space. This was an early
+form of <em>base and limit registers</em>: the base register specified where the
+process's memory started, and the limit register specified its size. Any access outside
+this range caused a trap. This is the simplest form of memory protection, still taught
+in OS courses as the foundation of virtual memory.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ XDS-940 Contributions</div>
+<ul>
+<li><strong>Time-sharing</strong>: interactive multi-user computing</li>
+<li><strong>Memory protection</strong>: base and limit registers per process</li>
+<li><strong>Dynamic relocation</strong>: virtual-to-physical address translation</li>
+<li><strong>Swapping</strong>: moving processes between memory and disk</li>
+<li><strong>Paged memory</strong>: early form of paging (not full demand paging)</li>
+</ul>
+</div>
+
+<p>The XDS-940 used <strong>swapping</strong> to multiprogram: when memory was full, a
+process was moved (swapped) to disk to make room for another. When the swapped process
+was needed again, it was swapped back in. Swapping is simpler than paging (whole
+processes are moved, not individual pages) but less efficient (a small process may be
+swapped out to make room, even if only a few pages are needed). Modern systems use
+paging (which swaps individual pages) rather than whole-process swapping, but the
+concept is the same: move inactive data to disk to free physical memory.</p>
+
+<p>The XDS-940 influenced later systems, particularly the <strong>SDS 940</strong>
+(commercial version) and the <strong>Berkeley Time-Sharing System</strong>. The concepts
+of memory protection, dynamic relocation, and swapping became standard in subsequent
+operating systems. The XDS-940 demonstrated that time-sharing with memory protection
+was practical, paving the way for Unix (1971), which combined these ideas with a
+hierarchical file system and a powerful command interface.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 XDS-940 and xv6</div>
+<p>xv6 uses <strong>page tables</strong> for memory protection, which is more
+sophisticated than the XDS-940's base and limit registers. But the <em>concept</em> is
+the same: each process has its own address space, and the hardware prevents a process
+from accessing another's memory. xv6's <code class="code-inline">proc_pagetable</code>
+function creates a page table that maps the process's virtual addresses to physical
+memory, with no access to other processes' memory or the kernel's memory (except the
+trampoline page). This is the modern descendant of the XDS-940's relocation and
+protection mechanism.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-4">22.4 THE</h2>
+
+<p><strong>THE</strong> (Technische Hogeschool Eindhoven) was an operating system
+designed by Edsger Dijkstra in 1965–1968. THE is famous for two contributions: the
+<strong>layered system structure</strong> and the <strong>semaphore</strong> as a
+synchronization primitive. Dijkstra designed THE to demonstrate that operating systems
+could be built in a structured, verifiable way, using layers and semaphores for
+synchronization.</p>
+
+<p>The <strong>layered structure</strong> of THE organized the OS into six layers,
+each built on the one below:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Layer</th><th>Function</th></tr>
+</thead>
+<tbody>
+<tr><td>5</td><td>User programs</td></tr>
+<tr><td>4</td><td>Input/Output management (device drivers)</td></tr>
+<tr><td>3</td><td>Operator-console device driver</td></tr>
+<tr><td>2</td><td>Memory management (segmentation)</td></tr>
+<tr><td>1</td><td>CPU scheduling</td></tr>
+<tr><td>0</td><td>Hardware</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The key property of the layered structure is that <strong>each layer can only use the
+services of the layers below it</strong>. Layer 2 (memory management) can use the CPU
+scheduler (layer 1) but not the I/O manager (layer 4). This creates a strict hierarchy
+that makes the system easier to understand and verify: you can reason about each layer
+independently, knowing it only depends on lower layers. This was a revolutionary idea in
+1968, when most OS were monolithic and unstructured.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ THE's Contributions</div>
+<ul>
+<li><strong>Layered system structure</strong>: strict layering, each layer uses only
+lower layers</li>
+<li><strong>Semaphores</strong>: Dijkstra's P (wait) and V (signal) operations for
+synchronization</li>
+<li><strong>Structured programming</strong>: THE demonstrated that complex systems can
+be built systematically</li>
+<li><strong>Deadlock avoidance</strong>: Dijkstra's work on deadlock (banker's
+algorithm) was related</li>
+</ul>
+</div>
+
+<p><strong>Semaphores</strong> were Dijkstra's most influential contribution. A
+semaphore is an integer with two atomic operations: <em>P</em> (proberen, "to test"—wait
+or decrement, block if zero) and <em>V</em> (verhogen, "to increment"—post or signal,
+wake a waiter). Semaphores can be used for <em>mutual exclusion</em> (binary semaphore,
+like a mutex) or <em>counting</em> (count available resources). Dijkstra showed that
+semaphores could solve all classic synchronization problems: mutual exclusion,
+producer-consumer, readers-writers, and dining philosophers. Semaphores are still a
+fundamental synchronization primitive in all operating systems.</p>
+
+<div class="code-block"><span class="comment">/* Dijkstra's semaphore operations */</span>
+
+<span class="comment">// P (wait): decrement, block if zero</span>
+P(semaphore s) {
+    <span class="keyword">if</span> (s.value <= 0) {
+        <span class="comment">// Add current process to s.wait_queue</span>
+        <span class="comment">// Block current process</span>
+    }
+    s.value--;
+}
+
+<span class="comment">// V (signal): increment, wake one waiter</span>
+V(semaphore s) {
+    s.value++;
+    <span class="keyword">if</span> (s.wait_queue not empty) {
+        <span class="comment">// Wake one process from s.wait_queue</span>
+    }
+}
+
+<span class="comment">// Mutual exclusion:</span>
+<span class="comment">// semaphore mutex = 1;</span>
+<span class="comment">// P(mutex);  // enter critical section</span>
+<span class="comment">// ... critical section ...</span>
+<span class="comment">// V(mutex);  // leave critical section</span></div>
+
+<p>The layered structure of THE influenced many subsequent operating systems. The
+<strong>THE multiprogramming system</strong> demonstrated that a complex OS could be
+built in a structured, layered way, making it easier to understand, verify, and
+maintain. This influenced the design of later systems, including <strong>THE's</strong>
+successor at Eindhoven and the <strong>Venus</strong> system. However, strict layering
+has limitations: it can be inefficient (layers must communicate through the hierarchy)
+and inflexible (a layer cannot use services from a higher layer). Modern systems use
+more flexible structures (microkernels, loadable modules) but retain the idea of
+layered abstraction.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Problem with Strict Layering</div>
+<p>While THE's layered structure was elegant, strict layering has practical problems:</p>
+<ul>
+<li><strong>Inefficiency</strong>: a request from layer 5 to layer 0 must pass through
+layers 4, 3, 2, 1—each adding overhead.</li>
+<li><strong>Inflexibility</strong>: if layer 2 needs a service from layer 4, it cannot
+get it (layers can only use lower layers). This forces awkward workarounds.</li>
+<li><strong>Abstraction mismatch</strong>: the layering may not match the natural
+structure of the system, forcing functionality into the "wrong" layer.</li>
+</ul>
+<p>Modern systems use <em>relaxed</em> layering: components are organized in layers but
+can communicate more flexibly. Linux, for example, is layered (hardware → kernel →
+system calls → user space) but allows direct communication within the kernel.</p>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 THE and xv6</div>
+<p>xv6 is not strictly layered, but it uses the concept of layered abstraction: the
+hardware (RISC-V) provides privilege levels; the kernel (xv6) provides system calls;
+user programs use the system call interface. xv6 also uses semaphores (via spinlocks
+and sleep/wakeup) for synchronization, directly descended from Dijkstra's work. When you
+study xv6's <code class="code-inline">sleep</code> and
+<code class="code-inline">wakeup</code> functions (in
+<code class="code-inline">sleeplock</code> and
+<code class="code-inline">condvar</code>), you're seeing the modern implementation of
+Dijkstra's P and V operations. THE's influence is everywhere in xv6.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-5">22.5 Multics</h2>
+
+<p><strong>Multics</strong> (Multiplexed Information and Computing Service, 1965–1970)
+was one of the most influential operating systems ever designed, despite being a
+commercial failure. Developed by MIT, Bell Labs, and General Electric (later Honeywell),
+Multics was an ambitious attempt to build a "computer utility"—a system that would
+provide computing power to a large community of users, like a power utility provides
+electricity. Multics introduced or refined many concepts that are now standard:
+hierarchical file systems, dynamic linking, memory-mapped files, a unified file
+abstraction, and security rings.</p>
+
+<p>The <strong>hierarchical file system</strong> is perhaps Multics's most visible
+legacy. Before Multics, file systems were typically flat (all files in one directory)
+or had limited nesting. Multics introduced the <em>tree-structured directory</em>:
+files are organized in directories, which can contain subdirectories, forming a tree.
+Paths like <code class="code-inline">/users/smith/project/main.pl</code> navigate the
+hierarchy. This is now universal: Unix, Linux, Windows, macOS all use hierarchical file
+systems. The concept was so successful that it's hard to imagine an alternative.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Multics Contributions</div>
+<ul>
+<li><strong>Hierarchical file system</strong>: tree-structured directories</li>
+<li><strong>Dynamic linking</strong>: shared libraries loaded at runtime</li>
+<li><strong>Memory-mapped files</strong>: files mapped into virtual memory</li>
+<li><strong>Unified file abstraction</strong>: devices as special files</li>
+<li><strong>Security rings</strong>: hierarchical privilege levels (ring 0–7)</li>
+<li><strong>Virtual memory</strong>: sophisticated paging</li>
+<li><strong>Access control lists</strong>: per-file access control</li>
+<li><strong>PL/I as system language</strong>: high-level language for OS</li>
+</ul>
+</div>
+
+<p><strong>Security rings</strong> were a Multics innovation (see Section 17.3). Multics
+defined 8 privilege rings (0–7), with ring 0 being the most privileged (the kernel) and
+ring 7 the least (user programs). Intermediate rings were intended for system services.
+This was more granular than the 2-ring (user/kernel) model that later became common, but
+in practice, most systems only use 2 rings (ring 0 and ring 3 on x86). The concept of
+hierarchical privilege levels, however, is universal.</p>
+
+<p><strong>Dynamic linking</strong> was another Multics innovation. Before Multics,
+libraries were statically linked: each program included a copy of all library code.
+Multics introduced <em>shared segments</em>: library code was loaded once and shared
+among all programs that used it. This saved memory (one copy of the library, not one per
+program) and allowed libraries to be updated without recompiling programs. Dynamic
+linking is now universal: <code class="code-inline">.so</code> (Linux),
+<code class="code-inline">.dll</code> (Windows), <code class="code-inline">.dylib</code>
+(macOS) are all shared libraries, descended from Multics's shared segments.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Multics: Commercial Failure, Conceptual Success</div>
+<p>Multics was too ambitious for its time. It was complex, slow, and over-budget. Bell
+Labs withdrew from the project in 1969, and Honeywell's commercial Multics systems were
+expensive and had limited success. The last Multics system was shut down in 2000.
+However, Multics's <em>ideas</em> were enormously influential. Two Bell Labs
+researchers who worked on Multics—Ken Thompson and Dennis Ritchie—went on to create
+<strong>Unix</strong> (1971), which simplified and popularized Multics's ideas. Unix's
+name is a pun on Multics: "Uni" (one) vs. "Multi" (many), reflecting Unix's simpler,
+single-purpose design. Unix inherited Multics's hierarchical file system, dynamic
+linking, and the concept of a unified file abstraction, but stripped away the complexity.</p>
+</div>
+
+<p><strong>Memory-mapped files</strong> were a Multics feature that allowed a file to be
+mapped into a process's virtual address space. The process could then read and write the
+file as memory, without explicit <code class="code-inline">read</code> and
+<code class="code-inline">write</code> calls. The OS loaded pages on demand (page
+faults) and wrote them back when evicted. This is now standard: Linux's
+<code class="code-inline">mmap</code> system call and Windows's
+<code class="code-inline">MapViewOfFile</code> both implement memory-mapped files,
+descended from Multics.</p>
+
+<p>The <strong>unified file abstraction</strong>—"everything is a file"—was refined by
+Multics and perfected by Unix. In Multics, devices, inter-process communication
+channels, and regular files were all accessed through the same file interface. Unix
+took this further: <code class="code-inline">/dev</code> contains device files,
+<code class="code-inline">/proc</code> contains process information, and network
+sockets use a file-descriptor-like interface. This abstraction makes Unix systems
+flexible and scriptable: you can redirect any input or output to any file or device,
+because they all use the same interface.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Multics and xv6</div>
+<p>xv6 is a direct descendant of Multics, via Unix. xv6's hierarchical file system
+(directories containing files and subdirectories), its file descriptor abstraction
+(everything is a file), and its system call interface (open, read, write, close) all
+trace back to Multics. When you create a directory in xv6 with
+<code class="code-inline">mkdir</code>, you're using a concept invented in Multics.
+When you redirect output with <code class="code-inline">echo hello > file.txt</code>,
+you're using the unified file abstraction from Multics. xv6 is, in a sense, a
+simplified Multics—just as Unix was. The lineage is direct: Multics → Unix → xv6.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-6">22.6 CP/M and MS-DOS</h2>
+
+<p><strong>CP/M</strong> (Control Program for Microcomputers, 1974) was the first
+popular operating system for personal computers, created by Gary Kildall at Digital
+Research. CP/M ran on 8-bit microprocessors (Intel 8080, Zilog Z80) and provided a
+simple file system, a command interpreter (CCP), and basic I/O (BIOS). CP/M dominated
+the early personal computer market (1970s–early 1980s) and established conventions that
+influenced later systems, including drive letters (A:, B:, C:) and file names (8.3
+format: 8 characters + 3-character extension).</p>
+
+<p><strong>MS-DOS</strong> (Microsoft Disk Operating System, 1981) was Microsoft's
+clone-successor to CP/M, created for the IBM PC. When IBM was looking for an OS for the
+IBM PC (1981), they approached Digital Research (for CP/M) and Microsoft (which had
+bought a CP/M clone called 86-DOS from Seattle Computer Products). Microsoft's MS-DOS
+won the IBM contract, and the rest is history. MS-DOS was essentially a CP/M-compatible
+OS for the Intel 8086/8088 processor, with the same 8.3 file names and drive letters.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ MS-DOS Characteristics</div>
+<ul>
+<li><strong>Single-tasking</strong>: one program at a time (no multiprogramming)</li>
+<li><strong>Single-user</strong>: no authentication, no access control</li>
+<li><strong>No memory protection</strong>: a program could access any memory</li>
+<li><strong>FAT file system</strong>: simple, no journaling, no security</li>
+<li><strong>BIOS</strong>: basic I/O system in ROM</li>
+<li><strong>Command line</strong>: <code class="code-inline">COMMAND.COM</code>
+interpreter</li>
+<li><strong>640 KB limit</strong>: the famous "640K ought to be enough" (apocryphal
+Gates quote)</li>
+</ul>
+</div>
+
+<p>MS-DOS was a <strong>single-tasking</strong> operating system: only one program ran
+at a time. There was no <em>multiprogramming</em> (no multiple programs in memory), no
+<em>memory protection</em> (a program could overwrite the OS), and no
+<em>preemptive scheduling</em> (the OS could not take control back from a program). A
+misbehaving program could crash the entire system. This was acceptable for early
+personal computers (which were single-user and single-tasking) but inadequate as
+computers became more powerful and connected.</p>
+
+<p>The <strong>FAT (File Allocation Table)</strong> file system was MS-DOS's file
+system and is still used today (on USB drives, SD cards, and for compatibility). FAT is
+simple: a file's data is stored in <em>clusters</em> (groups of sectors), and a
+<em>file allocation table</em> tracks which clusters belong to which file (as a linked
+list). FAT has no journaling (so it can be corrupted by crashes), no security (no
+permissions), and limited file sizes (FAT16: 2 GB; FAT32: 4 GB per file). exFAT and
+NTFS address these limitations. Despite its limitations, FAT's simplicity makes it
+universal: every OS can read FAT, making it the lingua franca of removable media.</p>
+
+<div class="code-block"><span class="comment">/* FAT file system (simplified) */</span>
+
+<span class="comment">// File Allocation Table: array of cluster pointers</span>
+<span class="comment">// Each entry: next cluster in file, or EOF marker</span>
+
+<span class="comment">// Directory entry (32 bytes):</span>
+<span class="comment">//   [name(8)][ext(3)][attr(1)][reserved(10)]</span>
+<span class="comment">//   [time(2)][date(2)][start_cluster(2)][size(4)]</span>
+
+<span class="comment">// Reading a file:</span>
+<span class="comment">// 1. Find directory entry → get start_cluster</span>
+<span class="comment">// 2. Read cluster at start_cluster</span>
+<span class="comment">// 3. FAT[start_cluster] → next_cluster</span>
+<span class="comment">// 4. Read next_cluster, repeat until EOF</span>
+
+<span class="comment">// No permissions, no journaling, no hard links</span>
+<span class="comment">// But: simple, portable, universally readable</span></div>
+
+<p>The <strong>640 KB limit</strong> was a famous constraint of MS-DOS. The IBM PC's
+address space was 1 MB (20-bit addresses), but the upper 384 KB was reserved for ROM
+(BIOS, video memory), leaving 640 KB for programs. This limit, combined with
+single-tasking, meant programs had to fit in 640 KB. Various workarounds were developed
+(<em>expanded memory</em> EMS, <em>extended memory</em> XMS), but the limit was a
+constant frustration. The transition to 32-bit (80386, 1985) and protected mode
+(Windows 3.x, 1990; Windows 95, 1995; Windows NT, 1993) eventually overcame this
+limit, but the "640K barrier" remains a symbol of early PC limitations.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ MS-DOS's Legacy</div>
+<p>MS-DOS's influence persists in surprising ways:</p>
+<ul>
+<li><strong>Drive letters</strong> (C:, D:) are still used in Windows, even though they
+are arbitrary (Unix uses mount points).</li>
+<li><strong>8.3 file names</strong> influenced Windows file naming (long filenames were
+added in Windows 95, but 8.3 is still generated for compatibility).</li>
+<li><strong>Backslash as path separator</strong> (<code class="code-inline">C:\Users\...</code>)
+comes from MS-DOS (Unix uses forward slash).</li>
+<li><strong>COMMAND.COM</strong> / <code class="code-inline">cmd.exe</code> syntax
+(<code class="code-inline">dir</code>, <code class="code-inline">copy</code>,
+<code class="code-inline">del</code>) is still used in Windows.</li>
+<li><strong>.exe, .com, .bat</strong> extensions are still used for executables.</li>
+</ul>
+<p>These conventions, inherited from CP/M via MS-DOS, are historical accidents that
+persist for compatibility. They illustrate how early design decisions can persist for
+decades.</p>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 MS-DOS vs. xv6</div>
+<p>MS-DOS was simpler than xv6 in some ways (single-tasking, no memory protection) but
+more complex in others (FAT file system, device drivers, BIOS). The key difference is
+that MS-DOS had <em>no protection</em>: a program could access any memory, including
+the OS. xv6, despite being a teaching OS, has <em>hardware-enforced protection</em>
+(user/kernel mode, page tables). This makes xv6 more like a "real" operating system
+than MS-DOS was. The evolution from MS-DOS (no protection) to Windows NT (full
+protection) mirrors the evolution from early batch systems (no protection) to modern
+OS (full protection). xv6 sits on the modern side of this divide.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-7">22.7 Macintosh and Windows</h2>
+
+<p>The <strong>Apple Macintosh</strong> (1984) brought the <strong>graphical user
+interface (GUI)</strong> to the mass market. While GUIs were invented at Xerox PARC
+(Alto, 1973) and commercialized by Apple (Lisa, 1983), the Macintosh made GUIs
+affordable and popular. The Macintosh OS (originally called "System", later "Mac OS")
+introduced the <em>desktop metaphor</em>: files and folders on a desktop, a mouse for
+pointing and clicking, menus, and windows. This was revolutionary: instead of typing
+commands, users could <em>see</em> and <em>manipulate</em> objects directly.</p>
+
+<p>The original Macintosh OS (1984–2001) was a single-tasking (later cooperative
+multitasking) OS with no memory protection and no command line. It was designed for a
+single user on a single machine with 128 KB of RAM. Over time, it gained multitasking
+(MultiFinder, 1987), color, networking (AppleTalk), and more memory. But its
+foundations—cooperative multitasking, no memory protection, no preemptive
+scheduling—were inadequate for modern computing. Apple eventually replaced it with
+<strong>Mac OS X</strong> (2001, now macOS), built on a Unix foundation (Darwin, a
+Mach-based microkernel with BSD user space).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ GUI History</div>
+<ul>
+<li><strong>1968</strong>: Douglas Engelbart's "Mother of All Demos" (mouse, hypertext,
+video conferencing)</li>
+<li><strong>1973</strong>: Xerox Alto (first GUI computer, at PARC)</li>
+<li><strong>1983</strong>: Apple Lisa (first commercial GUI computer, expensive)</li>
+<li><strong>1984</strong>: Apple Macintosh (affordable GUI, mass market)</li>
+<li><strong>1985</strong>: Windows 1.0 (Microsoft, GUI for MS-DOS)</li>
+<li><strong>1995</strong>: Windows 95 (mainstream GUI, 32-bit, preemptive multitasking)</li>
+<li><strong>2001</strong>: Mac OS X (Unix-based, modern Mac)</li>
+<li><strong>2007</strong>: iPhone (touch-based GUI, mobile computing)</li>
+<li><strong>2008</strong>: Android (open-source mobile OS)</li>
+</ul>
+</div>
+
+<p><strong>Microsoft Windows</strong> began as a GUI shell on top of MS-DOS. Windows 1.0
+(1985) and Windows 2.0 (1987) were graphical environments that ran MS-DOS programs in
+windows. Windows 3.0 (1990) and 3.1 (1992) were more successful, adding program
+manager, file manager, and improved graphics. But these were still 16-bit, cooperative
+multitasking environments on top of MS-DOS, with no memory protection.</p>
+
+<p><strong>Windows 95</strong> (1995) was a major milestone: it introduced 32-bit
+computing, preemptive multitasking, the Start menu, taskbar, and long filenames. Windows
+95 was still built on MS-DOS (it booted from DOS), but it provided a modern GUI and
+32-bit APIs (Win32). Windows 98 (1998) and Windows ME (2000) continued this line, but
+the DOS foundation was increasingly inadequate.</p>
+
+<p><strong>Windows NT</strong> (1993) was a separate, from-scratch operating system
+designed by Dave Cutler (see Section 21.1). NT was 32-bit, preemptive, multi-user, and
+secure, with full memory protection. NT was initially targeted at servers and
+workstations (it was expensive and required powerful hardware). Over time, as hardware
+improved, the NT line (NT 3.1, 3.5, 4.0, 2000, XP, Vista, 7, 8, 10, 11) replaced the
+DOS-based line (95, 98, ME). <strong>Windows XP</strong> (2001) was the first NT-based
+Windows for consumers, finally unifying the product line. All modern Windows (10, 11)
+are descendants of NT, not DOS.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Windows Version</th><th>Year</th><th>Kernel</th><th>Key Feature</th></tr>
+</thead>
+<tbody>
+<tr><td>Windows 1.0</td><td>1985</td><td>DOS</td><td>First GUI for PC</td></tr>
+<tr><td>Windows 3.1</td><td>1992</td><td>DOS</td><td>Widespread adoption</td></tr>
+<tr><td>Windows 95</td><td>1995</td><td>DOS + 32-bit</td><td>Start menu, Win32 API</td></tr>
+<tr><td>Windows NT 4.0</td><td>1996</td><td>NT</td><td>Server/workstation</td></tr>
+<tr><td>Windows 2000</td><td>2000</td><td>NT</td><td>Active Directory, stability</td></tr>
+<tr><td>Windows XP</td><td>2001</td><td>NT</td><td>Unified consumer/server</td></tr>
+<tr><td>Windows Vista</td><td>2006</td><td>NT</td><td>UAC, Aero GUI</td></tr>
+<tr><td>Windows 7</td><td>2009</td><td>NT</td><td>Refined, popular</td></tr>
+<tr><td>Windows 10</td><td>2015</td><td>NT</td><td>WSL, Windows as a service</td></tr>
+<tr><td>Windows 11</td><td>2021</td><td>NT</td><td>Redesigned UI, Android apps</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The <strong>Mac OS X / macOS</strong> transition (2001) is a remarkable case study.
+Apple's classic Mac OS had reached its limits (no memory protection, cooperative
+multitasking). After Steve Jobs returned to Apple (via the acquisition of NeXT, 1997),
+Apple replaced Mac OS with <strong>Mac OS X</strong>, built on
+<strong>Darwin</strong>—an open-source OS based on the <strong>Mach microkernel</strong>
+and <strong>BSD Unix</strong>. Mac OS X combined the Unix foundation (memory protection,
+preemptive multitasking, security) with the Mac GUI (Aqua). This gave Mac users the
+stability of Unix with the usability of Mac. macOS is, to this day, a certified Unix
+system: you can open Terminal and run the same commands as on Linux.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Unix Foundation of macOS</div>
+<p>macOS is a certified Unix system (Single UNIX Specification). Its kernel,
+<strong>XNU</strong> (X is Not Unix), is a hybrid kernel combining the
+<strong>Mach microkernel</strong> (for IPC, scheduling, memory management) with
+<strong>BSD</strong> (for the POSIX API, file system, networking). This is different
+from Linux (a monolithic kernel) and Windows NT (a layered kernel). The Mach component
+provides a microkernel-like message-passing infrastructure, while BSD provides the
+familiar Unix API. This hybrid design gives macOS the stability and security of Unix
+with the performance of a monolithic kernel. When you use Terminal on macOS, you're
+using a real Unix system—closer to Linux than to Windows.</p>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Mac/Windows and xv6</div>
+<p>xv6 is a Unix-like system, so it's more closely related to macOS (which is Unix-based)
+than to Windows (which is NT-based). The system calls in xv6
+(<code class="code-inline">fork</code>,
+<code class="code-inline">exec</code>,
+<code class="code-inline">open</code>,
+<code class="code-inline">read</code>) are the same as in macOS and Linux. Windows has
+different system calls (<code class="code-inline">CreateProcess</code> instead of
+<code class="code-inline">fork</code>+<code class="code-inline">exec</code>,
+<code class="code-inline">CreateFile</code> instead of
+<code class="code-inline">open</code>), reflecting its independent design. Studying xv6
+teaches you the Unix model, which applies to macOS, Linux, and other Unix systems.
+Windows is a different tradition, but the <em>concepts</em> (processes, memory
+management, file systems, scheduling) are the same—only the APIs and implementations
+differ.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-8">22.8 Mach</h2>
+
+<p><strong>Mach</strong> (1985, Carnegie Mellon University) was an influential
+<strong>microkernel</strong> operating system that demonstrated the microkernel
+architecture. Developed by Richard Rashid and Avie Tevanian (who later went to Apple
+and led the Mac OS X development), Mach was designed to address the complexity and
+fragility of monolithic kernels by moving OS services into user-space processes,
+communicating via message passing.</p>
+
+<p>The <strong>microkernel architecture</strong> puts only the essential services in the
+kernel: IPC (inter-process communication), memory management, and CPU scheduling. All
+other services—file systems, device drivers, network stacks, security—run as user-space
+processes called <em>servers</em>. The microkernel provides a <em>message-passing</em>
+facility: when a process needs a service (like reading a file), it sends a message to
+the file system server, which performs the operation and sends a reply. This is the
+<em>client-server</em> model applied to the operating system.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Mach Microkernel Architecture</div>
+<ul>
+<li><strong>Microkernel</strong>: IPC, memory management, scheduling (in kernel mode)</li>
+<li><strong>File system server</strong>: file system (user space)</li>
+<li><strong>Network server</strong>: network stack (user space)</li>
+<li><strong>Device driver servers</strong>: device drivers (user space)</li>
+<li><strong>Security server</strong>: access control (user space)</li>
+</ul>
+<p>Communication is via <strong>Mach messages</strong>: a process sends a message to a
+<em>port</em> (a communication endpoint), and the receiver gets the message. The
+microkernel delivers messages, handling all IPC. This is the foundation of the
+client-server OS model.</p>
+</div>
+
+<p>The key advantage of the microkernel is <strong>modularity and isolation</strong>.
+Each server runs in its own address space, so a bug in the file system server cannot
+crash the network server or the kernel. Servers can be started, stopped, and restarted
+without rebooting the system. New services can be added without modifying the kernel.
+This is more flexible and more robust than a monolithic kernel, where a bug in any
+component can crash the entire system.</p>
+
+<p>The key disadvantage is <strong>performance</strong>. In a monolithic kernel, a
+system call is a single trap into the kernel. In a microkernel, a "system call" may
+involve multiple message passes: the client sends a message to the server (trap into
+the kernel to send), the kernel delivers the message to the server (context switch),
+the server processes the request (another context switch), the server sends a reply
+(another trap), and the kernel delivers the reply (another context switch). This can be
+10–100× slower than a monolithic system call. Mach attempted to mitigate this with
+<em>optimized IPC</em>, but the overhead remained significant.</p>
+
+<div class="code-block"><span class="comment">/* Microkernel vs. monolithic system call */</span>
+
+<span class="comment">// Monolithic (Linux, xv6):</span>
+<span class="comment">// read(fd, buf, n)</span>
+<span class="comment">// → trap to kernel</span>
+<span class="comment">// → kernel reads file, copies to buf</span>
+<span class="comment">// → return to user</span>
+<span class="comment">// Total: 1 trap, 1 context switch</span>
+
+<span class="comment">// Microkernel (Mach):</span>
+<span class="comment">// read(fd, buf, n)</span>
+<span class="comment">// → send message to file system server (trap to kernel)</span>
+<span class="comment">// → kernel delivers message to FS server (context switch)</span>
+<span class="comment">// → FS server reads file, prepares reply</span>
+<span class="comment">// → FS server sends reply (trap to kernel)</span>
+<span class="comment">// → kernel delivers reply to client (context switch)</span>
+<span class="comment">// Total: 2 traps, 2+ context switches</span></div>
+
+<p>Mach influenced many systems. <strong>GNU Hurd</strong> (the GNU Project's kernel,
+still in development) is a Mach-based microkernel OS. <strong>NeXTSTEP</strong> (1989,
+NeXT Computer) used Mach as the basis for its OS; when Apple acquired NeXT (1997),
+NeXTSTEP became the foundation for Mac OS X. <strong>XNU</strong> (the macOS kernel) is
+a <em>hybrid</em>: it uses Mach for IPC and memory management but incorporates BSD
+code for the POSIX API and file system, running both in the kernel. This hybrid approach
+attempts to get the modularity of a microkernel with the performance of a monolithic
+kernel.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Microkernel Debate</div>
+<p>The microkernel vs. monolithic kernel debate was one of the most famous in OS
+history, epitomized by the <strong>Tanenbaum-Torvalds debate</strong> (1992).
+Tanenbaum argued that microkernels were the future (citing Mach); Torvalds defended
+Linux's monolithic design. The debate continues:</p>
+<ul>
+<li><strong>Microkernels</strong> (seL4, Fuchsia's Zircon, QNX): better isolation,
+security, and modularity, but historically slower.</li>
+<li><strong>Monolithic kernels</strong> (Linux, Windows NT): faster, simpler to
+implement, but a bug in any component can crash the system.</li>
+<li><strong>Hybrid kernels</strong> (XNU/macOS, Windows NT): attempt to combine both,
+with mixed success.</li>
+</ul>
+<p>Modern systems like <strong>seL4</strong> (formally verified microkernel) and
+<strong>Fuchsia</strong> (Google's new OS, Zircon microkernel) show that microkernels
+are still actively developed. The debate is not settled; it reflects fundamental
+trade-offs in OS design.</p>
+</div>
+
+<p><strong>seL4</strong> is a modern microkernel that addresses Mach's performance and
+reliability concerns. seL4 is <em>formally verified</em>: mathematical proofs guarantee
+that the implementation matches its specification, and that the specification enforces
+security properties (confidentiality, integrity, availability). seL4's IPC is much
+faster than Mach's, thanks to careful design and optimization. seL4 is used in
+safety-critical systems (automotive, defense, medical) where formal verification is
+required. It demonstrates that microkernels can be both fast and reliable, challenging
+the performance argument against microkernels.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Mach and xv6</div>
+<p>xv6 is a <em>monolithic</em> kernel: all OS services (file system, device drivers,
+scheduler, memory manager) run in the kernel. This is the opposite of Mach's
+microkernel design. But the <em>comparison</em> is instructive: xv6's simplicity comes
+from having everything in one address space (no message passing), while Mach's
+modularity comes from separating services (at the cost of message passing). If you
+wanted to turn xv6 into a microkernel, you would: (1) move the file system to a
+user-space server, (2) move device drivers to user-space servers, (3) implement an IPC
+mechanism in the kernel for communication, and (4) have user programs send messages to
+servers instead of making system calls. This would make xv6 more modular but slower—a
+classic OS design trade-off.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-9">22.9 Capabilities (Hydra/CAP)</h2>
+
+<p><strong>Capability-based operating systems</strong> use <em>capabilities</em> as the
+primary protection mechanism (see Section 17.10). A capability is a token that both
+names a resource and confers specific access rights. Two influential capability-based
+systems were <strong>Hydra</strong> (1970s, Carnegie Mellon University) and
+<strong>CAP</strong> (1970s, Cambridge University). These systems demonstrated that
+capability-based protection could provide fine-grained, flexible access control.</p>
+
+<p><strong>Hydra</strong> was designed by W. A. Wulf and colleagues as a
+capability-based, object-oriented operating system. In Hydra, <em>everything is an
+object</em>, and access to objects is mediated by capabilities. A capability is a
+token that identifies an object and specifies the operations (rights) the holder can
+perform on it. Capabilities are stored in <em>capability lists</em> associated with
+protection domains. A process can only access objects for which it holds capabilities,
+and only with the rights specified in those capabilities.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Hydra Concepts</div>
+<ul>
+<li><strong>Objects</strong>: all resources (files, processes, memory, devices) are
+objects with types and operations</li>
+<li><strong>Capabilities</strong>: tokens that name an object and specify access
+rights</li>
+<li><strong>Capability lists</strong>: each protection domain has a list of
+capabilities</li>
+<li><strong>Rights amplification</strong>: a procedure can be granted more rights than
+the caller, but only through a verified code path</li>
+<li><strong>Type extension</strong>: users can define new object types with new
+operations</li>
+</ul>
+</div>
+
+<p>Hydra's <strong>rights amplification</strong> was a novel feature. Normally, a
+procedure can only exercise the rights of its caller. But some procedures need more
+rights than the caller—for example, a compiler needs to write to a log file that the
+caller cannot access directly. Hydra allowed a procedure to be designated as
+<em>trusted</em> and granted <em>amplified rights</em>: when called, the procedure
+temporarily gains additional rights, but only for the duration of the call and only
+through the verified entry point. This is the <em>confused deputy</em> solution (Section
+17.2): the procedure can only use the rights it is explicitly given, not the caller's
+rights.</p>
+
+<p><strong>CAP</strong> (Cambridge CAP computer, 1976) implemented capabilities in
+hardware. The CAP (Capability Addressed Processor) had special capability registers, and
+memory access required a valid capability in a register. Capabilities were <em>tagged</em>
+in memory (using a tag bit) so that user programs could not forge them—only the hardware
+could create or modify capabilities. This hardware support made capability checking
+efficient and secure: every memory access was automatically checked against the
+capability, with no software overhead.</p>
+
+<div class="code-block"><span class="comment">/* CAP capability-based addressing */</span>
+
+<span class="comment">// CAP has capability registers (C-registers)</span>
+<span class="comment">// Each C-register holds a capability:</span>
+<span class="comment">//   [base address][size][access rights][tag]</span>
+
+<span class="comment">// To access memory, load a capability into a C-register:</span>
+<span class="comment">//   LOADC C1, capability_for_my_data</span>
+
+<span class="comment">// Then access memory relative to the capability:</span>
+<span class="comment">//   LOAD R1, C1+offset   ← hardware checks C1 rights</span>
+<span class="comment">//   If C1 doesn't have READ right → trap (access denied)</span>
+
+<span class="comment">// User code cannot forge capabilities:</span>
+<span class="comment">//   - Tag bit distinguishes capabilities from data</span>
+<span class="comment">//   - Only privileged instructions can create/modify capabilities</span>
+<span class="comment">//   - User code can copy capabilities but not create new ones</span></div>
+
+<p>The CAP system demonstrated that hardware-supported capabilities could provide
+fine-grained, efficient protection. However, the hardware was complex and expensive, and
+the system was never commercialized. The ideas influenced later systems: the
+<strong>Intel iAPX 432</strong> (1981) attempted a capability-based architecture but
+was too complex and slow. Modern systems use <em>software</em> capabilities (file
+descriptors, seL4 capabilities) rather than hardware capabilities, but the concept
+remains influential.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Why Didn't Capability Hardware Catch On?</div>
+<p>Despite their elegance, hardware capability systems like CAP and iAPX 432 did not
+succeed commercially. Reasons include:</p>
+<ul>
+<li><strong>Complexity</strong>: capability hardware is more complex than conventional
+hardware, increasing cost and development time.</li>
+<li><strong>Performance</strong>: checking capabilities on every memory access adds
+overhead, especially without specialized hardware.</li>
+<li><strong>Compatibility</strong>: capability systems are not compatible with existing
+software, requiring everything to be rewritten.</li>
+<li><strong>Market forces</strong>: the market favored cheaper, faster, compatible
+systems (x86) over elegant but expensive and incompatible ones.</li>
+</ul>
+<p>Instead, capability-like protection is implemented in software: file descriptors
+(Unix), seL4 capabilities, and WebAssembly capabilities. These provide the benefits of
+capabilities without requiring special hardware.</p>
+</div>
+
+<p><strong>Modern capability systems</strong> carry forward the ideas of Hydra and CAP.
+<strong>seL4</strong> (Section 17.10) is a formally verified microkernel that uses
+capabilities for all resource access. <strong>WebAssembly (WASM)</strong> uses
+capabilities for memory, tables, and functions: a WASM module can only access what it is
+explicitly given. <strong>File descriptors</strong> in Unix are capabilities: a process
+can only access files it has opened (received a descriptor for). The <em>confused
+deputy</em> problem, which motivated Hydra's rights amplification, is still relevant
+today: modern systems use <em>capability passing</em> (passing file descriptors between
+processes) to solve it.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Hydra/CAP and xv6</div>
+<p>xv6 does not use capabilities for protection—it uses hardware privilege levels
+(user/kernel mode) and page tables. But xv6's <em>file descriptors</em> are a form of
+capability: a process can only read or write a file if it has a file descriptor for it,
+and the descriptor specifies the access mode (read, write). When a process calls
+<code class="code-inline">open</code>, it receives a capability (file descriptor); when
+it calls <code class="code-inline">read(fd, ...)</code>, the kernel checks the
+capability. This is the same concept as Hydra's capabilities, just applied to files
+rather than all objects. If you extended xv6 to use capabilities for all resources
+(memory segments, devices, IPC channels), you would have a system like Hydra or seL4.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-22-10">22.10 Other Influential Operating Systems</h2>
+
+<p>Beyond the systems already discussed, many other operating systems have influenced
+the field. This section covers several that made important contributions.</p>
+
+<p><strong>MS-DOS</strong> (Section 22.6) brought computing to the masses but was
+technologically limited. <strong>Windows 9x</strong> (95, 98, ME) bridged the gap
+between DOS and NT, introducing 32-bit computing and preemptive multitasking to
+consumers, but retained DOS compatibility that caused instability. The transition to
+Windows NT (XP, 2001) finally gave consumers a modern, protected OS.</p>
+
+<p><strong>CP/M</strong> (Section 22.6) established conventions for personal computer
+OS that persist today. <strong>Apple DOS</strong> and <strong>ProDOS</strong> were
+Apple II operating systems that introduced similar concepts for Apple's early
+computers.</p>
+
+<p><strong>OS/360</strong> (1964, IBM) was the operating system for the IBM System/360,
+a family of mainframe computers. OS/360 introduced <strong>job scheduling</strong>,
+<strong>memory management</strong>, and <strong>I/O management</strong> for large-scale
+computing. OS/360's successor, <strong>MVS</strong> (Multiple Virtual Storage, 1974),
+introduced <strong>virtual storage</strong> (virtual memory) for mainframes. IBM's
+mainframe OS lineage continues today with <strong>z/OS</strong>, which runs on IBM Z
+mainframes and supports features like <strong>WLM</strong> (Workload Manager),
+<strong>RRS</strong> (Resource Recovery Services), and massive transaction processing.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Other Influential Systems</div>
+<ul>
+<li><strong>OS/360 / MVS / z/OS</strong> (IBM): mainframe OS, job scheduling, virtual
+storage</li>
+<li><strong>VMS</strong> (DEC VAX, 1977): influenced Windows NT (Dave Cutler)</li>
+<li><strong>TOPS-10 / TOPS-20</strong> (DEC): time-sharing for PDP-10</li>
+<li><strong>AmigaOS</strong> (1985): preemptive multitasking for home computers</li>
+<li><strong>BeOS</strong> (1995): media-optimized, later became Haiku</li>
+<li><strong>Palm OS</strong> (1996): early PDA OS</li>
+<li><strong>Symbian</strong> (1998): smartphone OS (Nokia)</li>
+<li><strong>QNX</strong> (1980s): real-time microkernel (used in cars, medical)</li>
+<li><strong>VxWorks</strong> (1980s): real-time OS (Mars rovers, aerospace)</li>
+<li><strong>FreeBSD / NetBSD / OpenBSD</strong>: open-source BSD Unix</li>
+<li><strong>Android</strong> (2008): Linux-based mobile OS</li>
+<li><strong>iOS</strong> (2007): macOS-based mobile OS</li>
+<li><strong>Chrome OS</strong> (2011): Linux-based, web-focused</li>
+<li><strong>Fuchsia</strong> (2016): Google's new microkernel OS (Zircon)</li>
+</ul>
+</div>
+
+<p><strong>VMS</strong> (Virtual Memory System, 1977, Digital Equipment Corporation) was
+the OS for the VAX minicomputer. VMS was designed by Dave Cutler, who later designed
+Windows NT. Many NT features trace to VMS: the layered architecture, the object manager,
+the IRP-based I/O system, and the security model. The name "NT" (New Technology)
+reflects Cutler's intent to bring VMS's design principles to a new platform. VMS was
+known for its stability and security and was widely used in enterprise environments.
+The VMS influence on Windows is a direct lineage: if you understand Windows NT, you
+understand much of VMS.</p>
+
+<p><strong>QNX</strong> (1980s, QNX Software Systems) is a <strong>real-time
+microkernel</strong> operating system used in embedded and safety-critical systems:
+automotive infotainment, medical devices, industrial control. QNX uses a microkernel
+architecture (like Mach) but is optimized for real-time performance (deterministic
+latency). QNX is POSIX-compliant, so Unix software can be ported. QNX demonstrates
+that microkernels can be practical for production systems, especially where reliability
+and real-time behavior are critical. QNX is used in millions of cars (BMW, Ford, GM)
+and medical devices.</p>
+
+<p><strong>BSD (Berkeley Software Distribution)</strong> is a family of Unix-like
+operating systems descended from BSD, the Berkeley version of Unix. <strong>FreeBSD</strong>
+is known for performance and is used by Netflix, WhatsApp, and Sony (PlayStation).
+<strong>NetBSD</strong> is designed for portability ("of course it runs NetBSD") and
+runs on dozens of architectures. <strong>OpenBSD</strong> is focused on security and
+correctness, with a famous "only two remote holes in the default install, in a heck of
+a long time" track record. BSD introduced or refined many features now standard in
+Linux: virtual memory, TCP/IP networking, sockets, vi, csh, and the
+<code class="code-inline">/dev/fd</code> filesystem. macOS's user space is largely
+derived from FreeBSD.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The BSD/Linux Split</div>
+<p>BSD and Linux are both Unix-like, but they have different lineages:</p>
+<ul>
+<li><strong>BSD</strong> descends from the original AT&amp;T Unix via Berkeley. BSD was
+a complete OS (kernel + user space) until the AT&amp;T lawsuit (1992–1994), which
+forced BSD to replace AT&amp;T code. The resulting <em>4.4BSD-Lite</em> was the basis
+for FreeBSD, NetBSD, and OpenBSD.</li>
+<li><strong>Linux</strong> was written from scratch by Linus Torvalds in 1991, with no
+AT&amp;T code. Linux is just a kernel; the user space comes from GNU and other
+sources.</li>
+</ul>
+<p>Both are POSIX-compliant and can run the same software, but they have different
+kernels, different development models, and different communities. macOS (XNU + BSD user
+space) is more closely related to BSD; Linux is its own lineage. The legal uncertainty
+around BSD in the early 1990s (the AT&amp;T lawsuit) was one reason Linux gained
+traction: Linux had no such legal cloud.</p>
+</div>
+
+<p><strong>Android</strong> (2008, Google) is a mobile operating system based on the
+Linux kernel. Android adds a <em>runtime</em> (ART, Android Runtime) that executes
+Dalvik bytecode, a <em>application framework</em> (Activity, Service, Content
+Provider, Broadcast Receiver), and a <em>permission system</em> (apps request
+permissions at install or runtime). Android's security model is <em>application
+sandboxing</em>: each app runs in its own sandbox (separate UID, separate file system
+namespace), and apps can only access resources they have permission for. This is a
+modern application of the <em>principle of least privilege</em> and capability-based
+access control.</p>
+
+<p><strong>iOS</strong> (2007, Apple) is the operating system for iPhone and iPad. iOS
+is based on macOS (Darwin/XNU kernel) but is heavily modified for mobile: no
+swap (to preserve flash storage), aggressive memory management (apps are killed when
+memory is low), and a strict sandboxing model (apps cannot access other apps' data).
+iOS introduced the <em>app store</em> model (curated, signed apps) and
+<em>permission-based access</em> to device features (camera, location, contacts). iOS
+and Android represent the modern mobile OS, where security and power efficiency are
+paramount.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 The Big Picture: OS Evolution</div>
+<p>Operating systems have evolved from no OS (1940s) through batch (1950s),
+multiprogramming (1960s), time-sharing (1970s), personal computing (1980s), GUIs
+(1990s), mobile (2000s), and cloud (2010s). Throughout this evolution, certain concepts
+have persisted and been refined:</p>
+<ul>
+<li><strong>Processes and threads</strong>: from single job to multiprogramming to
+threads to containers</li>
+<li><strong>Memory management</strong>: from no protection to base/limit to paging to
+virtual memory to demand paging</li>
+<li><strong>File systems</strong>: from flat to hierarchical to journaling to
+distributed</li>
+<li><strong>Protection and security</strong>: from no protection to privilege levels to
+ACLs to capabilities to sandboxing</li>
+<li><strong>I/O</strong>: from polling to interrupts to DMA to async I/O</li>
+</ul>
+<p>xv6 implements all of these concepts in a minimal form. When you study xv6, you're
+studying the distilled essence of 80 years of OS evolution. Every concept in xv6—page
+tables, file descriptors, system calls, scheduling—has a history that traces back to
+Atlas, Multics, Unix, and beyond. Understanding xv6 gives you the foundation to
+understand any operating system, past or future.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return; // skip links without data-target (e.g., part links)
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

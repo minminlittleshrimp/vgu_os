@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Process Management - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Process Management</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Process abstraction . proc struct . scheduler . fork/exec/exit/wait . context switch</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:780px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How does xv6 represent a process, how does the scheduler multiplex CPUs across processes, and how do fork, exit, wait, and the context switch actually work at the source-code level?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>The Process Abstraction</h2>
+<p>A process is the OS's fundamental unit of isolation and execution</p>
+</div>
+
+<!-- SLIDE 3: What is a Process? -->
+<div class="slide">
+<h2 class="st">What is a Process?</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<p>"A process is like a person at a desk. They have their own <strong>notebook</strong> (memory), their own <strong>desk drawer</strong> (open files), and their <strong>current task</strong> (PC). The OS is the office manager who decides who gets to work and when."</p>
+</div>
+<div class="block">
+<h4>What the OS tracks per process</h4>
+<ul>
+<li><strong>Memory</strong> - a private address space (page table)</li>
+<li><strong>Open files</strong> - file descriptors, current directory</li>
+<li><strong>Execution state</strong> - registers, program counter, stack</li>
+<li><strong>Kernel stack</strong> - for executing system calls</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>The illusion of exclusivity</h4>
+<p>Each process believes it has the entire machine to itself. The OS creates this illusion by <strong>time-sharing</strong> the CPU and <strong>space-sharing</strong> memory through virtual address spaces.</p>
+</div>
+<div class="block warn">
+<h4>Why this matters</h4>
+<p>Without the process abstraction, every program would need to cooperate with every other program. The process boundary is what makes <strong>isolation</strong> and <strong>protection</strong> possible - one buggy program cannot crash another.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: Process State Machine -->
+<div class="slide">
+<h2 class="st">Process State Machine</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 420" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar1" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+<marker id="ar1g" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#10b981"/></marker>
+<marker id="ar1r" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#ef4444"/></marker>
+<marker id="ar1o" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#f59e0b"/></marker>
+</defs>
+<!-- States -->
+<rect class="cl-box" x="30" y="160" width="130" height="70" rx="10"/><text class="cl-title" x="95" y="185">UNUSED</text><text class="cl-small" x="95" y="205">free slot</text>
+<rect class="cl-data" x="220" y="160" width="130" height="70" rx="10"/><text class="cl-title" x="285" y="185">USED</text><text class="cl-small" x="285" y="205">allocproc()</text>
+<rect class="cl-tag" x="410" y="160" width="130" height="70" rx="10"/><text class="cl-title" x="475" y="185">RUNNABLE</text><text class="cl-small" x="475" y="205">ready to run</text>
+<rect class="cl-key" x="600" y="160" width="130" height="70" rx="10"/><text class="cl-title" x="665" y="185">RUNNING</text><text class="cl-small" x="665" y="205">on a CPU</text>
+<rect class="cl-bad" x="790" y="160" width="130" height="70" rx="10"/><text class="cl-title" x="855" y="185">ZOMBIE</text><text class="cl-small" x="855" y="205">exited, not reaped</text>
+<!-- SLEEPING (below) -->
+<rect class="cl-aad" x="410" y="320" width="130" height="60" rx="10"/><text class="cl-title" x="475" y="345">SLEEPING</text><text class="cl-small" x="475" y="363">waiting on chan</text>
+<!-- Transitions -->
+<path class="cl-arr" d="M160 195 H220" marker-end="url(#ar1)"/>
+<text class="cl-small" style="text-anchor:middle;fill:#64748b" x="190" y="152">allocproc()</text>
+<path class="cl-arr" d="M350 195 H410" marker-end="url(#ar1g)"/>
+<text class="cl-small" style="text-anchor:middle;fill:#10b981" x="380" y="152">fork()</text>
+<path class="cl-arr" d="M540 195 H600" marker-end="url(#ar1)"/>
+<text class="cl-small" style="text-anchor:middle;fill:#64748b" x="570" y="152">scheduler picks</text>
+<path class="cl-arr" d="M665 160 V120 H475 V160" marker-end="url(#ar1)"/>
+<text class="cl-small" style="text-anchor:middle;fill:#64748b" x="570" y="112">yield() -> sched()</text>
+<path class="cl-arr" d="M730 195 H790" marker-end="url(#ar1r)"/>
+<text class="cl-small" style="text-anchor:middle;fill:#ef4444" x="760" y="152">exit()</text>
+<path class="cl-arr" d="M855 230 V270 H95 V230" marker-end="url(#ar1r)" stroke-dasharray="5 4"/>
+<text class="cl-small" style="text-anchor:middle;fill:#ef4444" x="475" y="288">freeproc() - parent calls wait()</text>
+<!-- Sleep transitions -->
+<path class="cl-arr" d="M475 230 V320" marker-end="url(#ar1o)"/>
+<text class="cl-small" style="text-anchor:start;fill:#f59e0b" x="490" y="278">sleep()</text>
+<path class="cl-arr" d="M410 350 H350 V195" marker-end="url(#ar1g)" stroke-dasharray="5 4"/>
+<text class="cl-small" style="text-anchor:middle;fill:#10b981" x="320" y="300">wakeup()</text>
+<!-- enum note -->
+<rect fill="#0f1e3c" x="30" y="30" width="890" height="36" rx="6"/>
+<text class="cl-title" style="fill:#fff;font-size:12px" x="475" y="48">enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE }  - from proc.h</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 5: struct proc -->
+<div class="slide">
+<h2 class="st">struct proc - from proc.h</h2>
+<div class="cols cols-2e">
+<div>
+<div class="code-label">xv6 kernel/proc.h</div>
+<pre><code class="language-c">struct proc {
+  struct spinlock lock;
+  enum procstate state;
+  void *chan;           // sleep channel
+  int killed;
+  int xstate;           // exit status
+  int pid;
+  struct proc *parent;  // (under wait_lock)
+  uint64 kstack;        // kernel stack VA
+  uint64 sz;            // process memory size
+  pagetable_t pagetable;
+  struct trapframe *trapframe;
+  struct context context;  // for swtch()
+  struct file *ofile[NOFILE]; // NOFILE=16
+  struct inode *cwd;
+  char name[16];
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Key fields</h4>
+<ul>
+<li><code>lock</code> - protects this proc's state fields</li>
+<li><code>state</code> - the current lifecycle state</li>
+<li><code>chan</code> - sleep channel for sleep/wakeup</li>
+<li><code>trapframe</code> - saved user registers on syscall/trap</li>
+<li><code>context</code> - saved callee-saved regs for swtch()</li>
+<li><code>pagetable</code> - this process's virtual address space</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Locking discipline</h4>
+<p><code>p->lock</code> protects individual process state. <code>wait_lock</code> protects the parent-child relationship. <code>ofile[]</code> and <code>cwd</code> are accessed under <code>p->lock</code>.</p>
+</div>
+<div class="block warn">
+<h4>Why kstack is a VA, not a pointer</h4>
+<p><code>kstack</code> stores the virtual address of the kernel stack, not a C pointer - the kernel stack is mapped in the process's <strong>kernel</strong> page table, not the user page table.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>Process Table and CPU State</h2>
+<p>How xv6 tracks all processes and per-CPU execution context</p>
+</div>
+
+<!-- SLIDE 7: Process Table -->
+<div class="slide">
+<h2 class="st">Process Table and CPU Array</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Global process table</h4>
+<p>From <code>proc.c</code>: <code>struct proc proc[NPROC]</code> where <code>NPROC = 64</code>. This is a fixed-size array - xv6 does not dynamically allocate process slots.</p>
+</div>
+<div class="block ok">
+<h4>Per-CPU array</h4>
+<p><code>struct cpu cpus[NCPU]</code> where <code>NCPU = 8</code>. Each CPU has its own scheduler context and a pointer to the currently-running process.</p>
+</div>
+<div class="block note">
+<h4>struct cpu fields</h4>
+<ul>
+<li><code>struct proc *proc</code> - the process currently running on this CPU</li>
+<li><code>struct context context</code> - the scheduler's own saved context</li>
+<li><code>int noff</code> - push_off nesting depth</li>
+<li><code>int intena</code> - interrupts enabled before first push_off</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">// proc.c - global arrays</span>
+struct proc proc[NPROC];  // NPROC = 64
+struct cpu  cpus[NCPU];  // NCPU = 8
+
+<span class="hl">// proc.h - struct cpu</span>
+struct cpu {
+  struct proc *proc;       // current process
+  struct context context;  // scheduler context
+  int noff;                // push_off nesting
+  int intena;              // interrupts before push_off
+};</div>
+<div class="block warn">
+<h4>Why a fixed-size array?</h4>
+<p>Simplicity. No dynamic allocation needed for the process table itself. The scheduler simply scans <code>proc[]</code> linearly looking for <code>RUNNABLE</code> processes - O(NPROC) per scheduling decision, fine for 64 entries.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: Per-CPU State -->
+<div class="slide">
+<h2 class="st">Per-CPU State - mycpu() and myproc()</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>mycpu()</h4>
+<p>Returns <code>&cpus[cpuid()]</code>. <code>cpuid()</code> reads the hardware thread ID from <code>tp</code> register (RISC-V). Must be called with interrupts disabled to avoid migration mid-call.</p>
+</div>
+<div class="block">
+<h4>myproc()</h4>
+<p>Returns <code>mycpu()->proc</code> - the process currently running on this CPU. This is how kernel code finds "the current process" without passing it as a parameter.</p>
+</div>
+<div class="block note">
+<h4>The scheduler runs in CPU context, not process context</h4>
+<p>Each CPU's <code>context</code> field is the scheduler's own saved context. When the scheduler calls <code>swtch()</code>, it switches <em>from</em> the scheduler context <em>to</em> a process context. When the process yields, it switches back.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">// mycpu - returns pointer to this CPU's struct</span>
+struct cpu*
+mycpu(void) {
+  int id = cpuid();
+  return &cpus[id];
+}
+
+<span class="hl">// myproc - returns the running process</span>
+struct proc*
+myproc(void) {
+  push_off();           // disable interrupts
+  struct cpu *c = mycpu();
+  struct proc *p = c->proc;
+  pop_off();            // restore interrupt state
+  return p;
+}</div>
+<div class="block warn">
+<h4>push_off / pop_off</h4>
+<p><code>myproc()</code> must disable interrupts (<code>push_off</code>) before reading <code>cpuid()</code>, because a timer interrupt could migrate us to another CPU mid-call. <code>pop_off</code> restores the previous interrupt state.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 9: Context Structure -->
+<div class="slide">
+<h2 class="st">Context Structure - what swtch() saves</h2>
+<div class="cols cols-2">
+<div>
+<div class="code-label">xv6 kernel/proc.h</div>
+<pre><code class="language-c">struct context {
+  uint64 ra;
+  uint64 sp;
+  uint64 s0;
+  uint64 s1;
+  uint64 s2;
+  uint64 s3;
+  uint64 s4;
+  uint64 s5;
+  uint64 s6;
+  uint64 s7;
+  uint64 s8;
+  uint64 s9;
+  uint64 s10;
+  uint64 s11;
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Only callee-saved registers</h4>
+<p><code>ra</code> (return address), <code>sp</code> (stack pointer), and <code>s0-s11</code> (callee-saved registers). Caller-saved registers (<code>a0-a7</code>, <code>t0-t6</code>) are already on the stack - the compiler guarantees they're saved at call sites.</p>
+</div>
+<div class="block">
+<h4>swtch.S - the actual switch</h4>
+<p><code>swtch(old, new)</code> saves the current context into <code>old</code>, loads <code>new</code> into the registers, then executes <code>ret</code> - which jumps to <code>new->ra</code>. The function never "returns" normally; it resumes wherever the target context left off.</p>
+</div>
+<div class="block note">
+<h4>Why not save all registers?</h4>
+<p>The RISC-V calling convention already guarantees caller-saved registers are spilled to the stack at every call. <code>swtch()</code> is just a function call - the compiler has already saved <code>a</code> and <code>t</code> registers. Only <code>s</code> registers (plus <code>ra</code> and <code>sp</code>) need explicit saving.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 10: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Process Lifecycle</h2>
+<p>allocproc . fork . exit . wait - the four pillars of process management</p>
+</div>
+
+<!-- SLIDE 11: allocproc() -->
+<div class="slide">
+<h2 class="st">allocproc() - creating a process slot</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Step 1: Find a free slot</h4>
+<p>Scans <code>proc[]</code> for a process with <code>state == UNUSED</code>. Acquires <code>p->lock</code> on the found slot.</p>
+</div>
+<div class="block">
+<h4>Step 2: Allocate PID</h4>
+<p>Calls <code>allocpid()</code> which atomically increments a global counter under a lock.</p>
+</div>
+<div class="block">
+<h4>Step 3: Allocate trapframe</h4>
+<p>Allocates a physical page via <code>kalloc()</code> for <code>p->trapframe</code>. This page holds saved user registers during syscalls and traps.</p>
+</div>
+<div class="block">
+<h4>Step 4: Create page table</h4>
+<p>Calls <code>proc_pagetable(p)</code> to create an empty user page table with the trampoline and trapframe pages mapped.</p>
+</div>
+<div class="block note">
+<h4>Step 5: Set up context</h4>
+<p>Sets <code>p->context.ra = forkret</code> (first function to run) and <code>p->context.sp = p->kstack + PGSIZE</code> (top of kernel stack). Sets <code>state = USED</code>.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">allocproc() - simplified flow</span>
+for (p = proc; p < &proc[NPROC]; p++) {
+  acquire(&p->lock);
+  if (p->state == UNUSED) goto found;
+  release(&p->lock);
+}
+return 0;
+
+found:
+  p->pid = allocpid();
+  p->trapframe = kalloc();       <span class="g">// alloc page</span>
+  p->pagetable = proc_pagetable(p);
+
+  <span class="hl">// set up scheduler return context</span>
+  p->context.ra = (uint64)forkret;
+  p->context.sp = p->kstack + PGSIZE;
+
+  p->state = USED;
+  return p;  <span class="g">// still locked!</span></div>
+<div class="block warn">
+<h4>Returns locked</h4>
+<p><code>allocproc()</code> returns the process with <code>p->lock</code> still held. The caller (typically <code>fork()</code>) finishes setup and then sets the state to <code>RUNNABLE</code> before releasing the lock.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: kfork() -->
+<div class="slide">
+<h2 class="st">kfork() - the fork implementation</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>1. Allocate a new proc</h4>
+<p>Calls <code>allocproc()</code> to get a new <code>USED</code> slot (locked).</p>
+</div>
+<div class="block">
+<h4>2. Copy user memory</h4>
+<p>Calls <code>uvmcopy(p->pagetable, np->pagetable, p->sz)</code> - a <strong>deep copy</strong> of all user pages. Each page is duplicated so parent and child are fully independent.</p>
+</div>
+<div class="block">
+<h4>3. Copy trapframe</h4>
+<p><code>*np->trapframe = *p->trapframe</code> - the child starts with the same register state as the parent.</p>
+</div>
+<div class="block note">
+<h4>4. Set fork return value</h4>
+<p><code>np->trapframe->a0 = 0</code> - the RISC-V calling convention returns values in <code>a0</code>. The child sees <code>fork()</code> return 0; the parent sees the child's PID.</p>
+</div>
+<div class="block">
+<h4>5. Duplicate files & set parent</h4>
+<p>Increments reference counts on all open files via <code>filedup()</code>. Sets <code>np->parent = p</code> under <code>wait_lock</code>. Sets <code>np->state = RUNNABLE</code> and releases lock.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">kfork() - key steps</span>
+np = allocproc();           <span class="g">// new slot, locked</span>
+
+<span class="hl">// deep copy user memory</span>
+uvmcopy(p->pagetable, np->pagetable, p->sz);
+np->sz = p->sz;
+
+<span class="hl">// copy register state</span>
+*np->trapframe = *p->trapframe;
+
+<span class="hl">// child returns 0 from fork()</span>
+np->trapframe->a0 = 0;
+
+<span class="hl">// duplicate open files</span>
+for (i = 0; i < NOFILE; i++)
+  if (p->ofile[i])
+    np->ofile[i] = filedup(p->ofile[i]);
+np->cwd = idup(p->cwd);
+
+<span class="hl">// set parent, make runnable</span>
+acquire(&wait_lock);
+np->parent = p;
+release(&wait_lock);
+
+np->state = RUNNABLE;
+release(&np->lock);
+
+return np->pid;  <span class="g">// parent gets child PID</span></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: kexit() -->
+<div class="slide">
+<h2 class="st">kexit() - the exit implementation</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>1. Close all open files</h4>
+<p>Iterates <code>ofile[]</code> and calls <code>fileclose()</code> on each. Releases the current directory via <code>iput(cwd)</code>.</p>
+</div>
+<div class="block">
+<h4>2. Reparent children to init</h4>
+<p>Scans <code>proc[]</code> under <code>wait_lock</code>. Any child whose parent is this process gets <code>parent = initproc</code>. This ensures no process is orphaned - <code>init</code> reaps them.</p>
+</div>
+<div class="block note">
+<h4>3. Set exit status</h4>
+<p><code>p->xstate = status</code> - stores the exit code so the parent can read it via <code>wait()</code>.</p>
+</div>
+<div class="block">
+<h4>4. Become zombie</h4>
+<p>Sets <code>p->state = ZOMBIE</code>. The process is now dead but its <code>proc</code> slot cannot be freed until the parent calls <code>wait()</code>.</p>
+</div>
+<div class="block ok">
+<h4>5. Wake parent & yield</h5>
+<p>Calls <code>wakeup(p->parent)</code> to unblock a parent sleeping in <code>wait()</code>. Then calls <code>sched()</code> to switch back to the scheduler - this call never returns.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">kexit(int status) - key steps</span>
+<span class="hl">// 1. release resources</span>
+for (i = 0; i < NOFILE; i++) {
+  if (p->ofile[i]) {
+    struct file *f = p->ofile[i];
+    p->ofile[i] = 0;
+    fileclose(f);
+  }
+}
+iput(p->cwd);
+
+<span class="hl">// 2. reparent children to init</span>
+acquire(&wait_lock);
+for (pp = proc; pp < &proc[NPROC]; pp++) {
+  if (pp != p && pp->parent == p) {
+    pp->parent = initproc;
+    if (pp->state == ZOMBIE)
+      wakeup(initproc);
+  }
+}
+
+<span class="hl">// 3-4. set exit status, become zombie</span>
+p->xstate = status;
+p->state = ZOMBIE;
+
+<span class="hl">// 5. wake parent, switch to scheduler</span>
+wakeup(p->parent);
+release(&wait_lock);
+sched();  <span class="r">// never returns</span></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: kwait() -->
+<div class="slide">
+<h2 class="st">kwait() - the wait implementation</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>1. Scan for zombie children</h4>
+<p>Under <code>wait_lock</code>, scans <code>proc[]</code> for any process whose <code>parent == p</code> and <code>state == ZOMBIE</code>.</p>
+</div>
+<div class="block ok">
+<h4>2. If found - reap the child</h4>
+<ul>
+<li>Copy <code>xstate</code> to user space via <code>copyout()</code></li>
+<li>Call <code>freeproc()</code> to free the child's trapframe, page table, and reset state to <code>UNUSED</code></li>
+<li>Return the child's PID</li>
+</ul>
+</div>
+<div class="block note">
+<h4>3. If no zombie children</h4>
+<p>If the scan finds children but none are <code>ZOMBIE</code>, the parent <strong>sleeps</strong> on itself (<code>sleep(p, &wait_lock)</code>) until a child exits and calls <code>wakeup(p->parent)</code>.</p>
+</div>
+<div class="block warn">
+<h4>4. If no children at all</h4>
+<p>If the scan finds <strong>no</strong> children, <code>wait()</code> returns <code>-1</code> immediately - there is nothing to wait for.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">kwait() - simplified flow</span>
+acquire(&wait_lock);
+for (;;) {
+  <span class="hl">// scan for zombie children</span>
+  for (pp = proc; pp < &proc[NPROC]; pp++) {
+    if (pp->parent == p) {
+      havekids = 1;
+      if (pp->state == ZOMBIE) {
+        <span class="hl">// found a zombie - reap it</span>
+        pid = pp->pid;
+        copyout(p->pagetable, addr,
+                (char*)&pp->xstate, sizeof(int));
+        freeproc(pp);
+        release(&wait_lock);
+        return pid;
+      }
+    }
+  }
+  if (!havekids) {
+    release(&wait_lock);
+    return -1;  <span class="r">// no children</span>
+  }
+  <span class="hl">// no zombie yet - sleep until child exits</span>
+  sleep(p, &wait_lock);
+}</div>
+<div class="block ok">
+<h4>freeproc() - the cleanup</h4>
+<p>Frees the trapframe page (<code>kfree</code>), frees the page table (<code>proc_freepagetable</code>), resets all fields to zero, and sets <code>state = UNUSED</code>. The slot is now available for <code>allocproc()</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 15: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>The Scheduler</h2>
+<p>How xv6 multiplexes CPUs across runnable processes</p>
+</div>
+
+<!-- SLIDE 16: scheduler() -->
+<div class="slide">
+<h2 class="st">scheduler() - the per-CPU infinite loop</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>The main loop</h4>
+<p>Each CPU's <code>scheduler()</code> is an infinite loop that scans <code>proc[]</code> for <code>RUNNABLE</code> processes and runs them one at a time.</p>
+</div>
+<div class="block">
+<h4>Step by step</h4>
+<ul>
+<li><code>intr_on()</code> - enable interrupts (allow timer preemption)</li>
+<li>For each <code>p</code> in <code>proc[]</code>: if <code>p->state == RUNNABLE</code>, acquire <code>p->lock</code></li>
+<li>Set <code>p->state = RUNNING</code>, set <code>c->proc = p</code></li>
+<li>Call <code>swtch(&c->context, &p->context)</code> - switch to process</li>
+<li>When control returns: <code>c->proc = 0</code>, release <code>p->lock</code></li>
+</ul>
+</div>
+<div class="block note">
+<h4>If nothing is runnable</h4>
+<p>If no <code>RUNNABLE</code> process is found, the CPU executes <code>wfi</code> (wait for interrupt) - it halts until a timer or device interrupt wakes it, then loops again.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">scheduler() - per-CPU loop</span>
+void
+scheduler(void) {
+  struct cpu *c = mycpu();
+  for (;;) {
+    intr_on();  <span class="g">// enable interrupts</span>
+
+    for (p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if (p->state != RUNNABLE) {
+        release(&p->lock);
+        continue;
+      }
+      <span class="hl">// run this process</span>
+      p->state = RUNNING;
+      c->proc = p;
+      swtch(&c->context, &p->context);
+
+      <span class="hl">// process yielded - back here</span>
+      c->proc = 0;
+      release(&p->lock);
+    }
+  }
+}</div>
+<div class="block warn">
+<h4>swtch returns to scheduler, not to the process</h4>
+<p>When a process calls <code>sched()</code>, <code>swtch</code> saves the process context and loads the <strong>scheduler's</strong> context. The scheduler resumes right after the <code>swtch()</code> call - it has no idea how long it slept.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 17: sched() -->
+<div class="slide">
+<h2 class="st">sched() - yielding back to the scheduler</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>What sched() does</h4>
+<p>Called by a process that wants to yield (due to <code>sleep()</code>, <code>exit()</code>, or timer interrupt). It switches from the process context back to the scheduler context.</p>
+</div>
+<div class="block warn">
+<h4>Preconditions - must hold p->lock</h4>
+<p>The caller must hold <code>myproc()->lock</code> and <strong>only</strong> that lock. If other locks are held, the scheduler may deadlock - another CPU spinning on the same lock will never get it.</p>
+</div>
+<div class="block">
+<h4>Must not be interruptible</h4>
+<p>Interrupts must be off when <code>sched()</code> is called (enforced via <code>push_off</code>). A context switch with interrupts on could corrupt the CPU state tracking.</p>
+</div>
+<div class="block note">
+<h4>The actual switch</h4>
+<p><code>swtch(&p->context, &mycpu()->context)</code> - saves the process's callee-saved registers into <code>p->context</code>, loads the scheduler's saved context from <code>c->context</code>, and <code>ret</code>s into the scheduler.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">sched() - the yield function</span>
+void
+sched(void) {
+  struct proc *p = myproc();
+
+  <span class="hl">// sanity checks</span>
+  if (!holding(&p->lock))
+    panic("sched p->lock");
+  if (mycpu()->noff != 1)
+    panic("sched locks");
+  if (p->state == RUNNING)
+    panic("sched running");
+  if (intr_get())
+    panic("sched interruptible");
+
+  <span class="hl">// switch to scheduler context</span>
+  swtch(&p->context, &mycpu()->context);
+}</div>
+<div class="block ok">
+<h4>Why the strict invariants?</h4>
+<p>These <code>panic()</code> checks catch bugs early. If a developer calls <code>sched()</code> while holding extra locks, or with interrupts on, the kernel halts immediately rather than silently corrupting state or deadlocking later.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: Context Switch Flow -->
+<div class="slide">
+<h2 class="st">Context Switch Flow</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 380" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar2" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- Process A -->
+<rect class="cl-key" x="20" y="40" width="160" height="60" rx="10"/><text class="cl-title" x="100" y="65">Process A</text><text class="cl-small" x="100" y="83">RUNNING</text>
+<!-- sched() -->
+<rect class="cl-box" x="240" y="40" width="140" height="60" rx="10"/><text class="cl-title" x="310" y="65">sched()</text><text class="cl-small" x="310" y="83">hold p->lock</text>
+<!-- swtch A->sched -->
+<rect class="cl-data" x="440" y="40" width="180" height="60" rx="10"/><text class="cl-title" x="530" y="65">swtch(A->scheduler)</text><text class="cl-small" x="530" y="83">save A's context</text>
+<!-- Scheduler -->
+<rect class="cl-tag" x="680" y="40" width="160" height="60" rx="10"/><text class="cl-title" x="760" y="65">Scheduler</text><text class="cl-small" x="760" y="83">scans proc[]</text>
+<!-- swtch sched->B -->
+<rect class="cl-data" x="680" y="160" width="180" height="60" rx="10"/><text class="cl-title" x="770" y="185">swtch(scheduler->B)</text><text class="cl-small" x="770" y="203">load B's context</text>
+<!-- Process B -->
+<rect class="cl-key" x="900" y="160" width="160" height="60" rx="10"/><text class="cl-title" x="980" y="185">Process B</text><text class="cl-small" x="980" y="203">RUNNING</text>
+<!-- Arrows top row -->
+<path class="cl-arr" d="M180 70 H240" marker-end="url(#ar2)"/>
+<path class="cl-arr" d="M380 70 H440" marker-end="url(#ar2)"/>
+<path class="cl-arr" d="M620 70 H680" marker-end="url(#ar2)"/>
+<!-- Down arrow -->
+<path class="cl-arr" d="M760 100 V160" marker-end="url(#ar2)"/>
+<!-- Arrow to B -->
+<path class="cl-arr" d="M860 190 H900" marker-end="url(#ar2)"/>
+<!-- Bottom: what swtch saves -->
+<rect fill="#0f1e3c" x="20" y="270" width="1040" height="80" rx="8"/>
+<text class="cl-title" style="fill:#fff;font-size:13px" x="540" y="295">swtch() saves and restores: ra (return address), sp (stack pointer), s0-s11 (callee-saved registers)</text>
+<text class="cl-small" style="fill:#94a3b8" x="540" y="315">Caller-saved registers (a0-a7, t0-t6) are already on the stack - the compiler saved them at the call site</text>
+<text class="cl-small" style="fill:#94a3b8" x="540" y="333">After swtch loads B's context, ret jumps to B->ra - resuming B wherever it left off</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 19: forkret() -->
+<div class="slide">
+<h2 class="st">forkret() - first function in a new process</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>What is forkret()?</h4>
+<p>The first function executed by a newly created process after <code>swtch()</code> switches to it from the scheduler. It is the <code>ra</code> value set by <code>allocproc()</code>.</p>
+</div>
+<div class="block">
+<h4>First call - bootstrapping init</h4>
+<p>On the very first process (the <code>init</code> process), <code>forkret()</code> performs one-time initialization: it initializes the filesystem and then <code>exec()</code>s <code>/init</code>. This is the kernel's transition from boot to user space.</p>
+</div>
+<div class="block note">
+<h4>Subsequent calls - just return</h4>
+<p>For all other processes, <code>forkret()</code> simply returns. Since it was called via <code>swtch()</code>'s <code>ret</code>, returning here means falling through to the trap return path - the process "returns" from the trap that brought it into the kernel, resuming user code.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">forkret() - simplified</span>
+void
+forkret(void) {
+  static int first = 1;
+
+  release(&myproc()->lock);
+
+  if (first) {
+    <span class="hl">// one-time init</span>
+    first = 0;
+    fsinit(ROOTDEV);
+    userinit_done = 1;
+  }
+
+  <span class="hl">// return to trap return path</span>
+  <span class="g">// -> usertrapret() -> sret to user</span>
+}</div>
+<div class="block warn">
+<h4>Why release the lock here?</h4>
+<p><code>allocproc()</code> returns with <code>p->lock</code> held. The scheduler acquires it, calls <code>swtch()</code>, and the new process wakes up in <code>forkret()</code>. The lock must be released <em>here</em> - not in the scheduler - because the scheduler has already moved on to scanning other processes.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>Sleep and Wakeup</h2>
+<p>How processes wait for events without burning CPU cycles</p>
+</div>
+
+<!-- SLIDE 21: sleep/wakeup -->
+<div class="slide">
+<h2 class="st">sleep() and wakeup() - the coordination primitives</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>sleep_prepare(chan)</h4>
+<p>Acquires <code>p->lock</code> and sets <code>p->chan = chan</code>. This links the process to the channel it's waiting on.</p>
+</div>
+<div class="block">
+<h4>sleep(chan, lk)</h4>
+<ul>
+<li>Releases <code>lk</code> (the caller's lock, e.g. <code>wait_lock</code>)</li>
+<li>Sets <code>p->state = SLEEPING</code></li>
+<li>Calls <code>sched()</code> -> switches to scheduler</li>
+<li>On wake: re-acquires <code>lk</code>, clears <code>p->chan</code></li>
+</ul>
+</div>
+<div class="block note">
+<h4>wakeup(chan)</h4>
+<p>Scans all processes in <code>proc[]</code>. For each with <code>p->chan == chan</code> and <code>state == SLEEPING</code>, acquires <code>p->lock</code> and sets <code>state = RUNNABLE</code>.</p>
+</div>
+</div>
+<div>
+<div class="mono-box"><span class="hl">sleep() - simplified</span>
+void
+sleep(void *chan, struct spinlock *lk) {
+  struct proc *p = myproc();
+
+  acquire(&p->lock);
+  release(lk);           <span class="g">// release caller's lock</span>
+
+  p->chan = chan;
+  p->state = SLEEPING;
+  sched();               <span class="g">// yield to scheduler</span>
+
+  <span class="hl">// woken up here</span>
+  p->chan = 0;
+  release(&p->lock);
+  acquire(lk);           <span class="g">// re-acquire caller's lock</span>
+}
+
+<span class="hl">wakeup() - simplified</span>
+void wakeup(void *chan) {
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == SLEEPING && p->chan == chan) {
+      p->state = RUNNABLE;
+    }
+    release(&p->lock);
+  }
+}</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 22: Lost Wakeup Problem -->
+<div class="slide">
+<h2 class="st">The Lost Wakeup Problem</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<p>"If you check the alarm clock, then go to sleep, but someone rings the alarm <strong>between</strong> your check and your sleep - you sleep forever. The alarm rang, but you weren't sleeping yet, so you missed it."</p>
+</div>
+<div class="block">
+<h4>The race condition</h4>
+<p>Without coordination, a process might: (1) check a condition, (2) decide to sleep, (3) <strong>but before it calls sleep()</strong>, another CPU calls <code>wakeup()</code>. The wakeup finds no sleeping process, does nothing. The process then sleeps - and never wakes up.</p>
+</div>
+<div class="block ok">
+<h4>The solution: atomic sleep</h4>
+<p><code>sleep()</code> <strong>atomically</strong> releases the caller's lock and goes to sleep. <code>wakeup()</code> acquires <code>p->lock</code> before checking the state. Because <code>sleep()</code> holds <code>p->lock</code> until after <code>state = SLEEPING</code>, a concurrent <code>wakeup()</code> either:</p>
+<ul>
+<li>Sees <code>RUNNABLE</code> (before sleep sets SLEEPING) -> no-op, process runs normally</li>
+<li>Sees <code>SLEEPING</code> -> sets <code>RUNNABLE</code>, process wakes up</li>
+</ul>
+<p>There is no window where the wakeup is "lost."</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar3" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- Without lock -->
+<text class="cl-label" x="20" y="20">WITHOUT lock - lost wakeup</text>
+<rect class="cl-box" x="20" y="35" width="200" height="30" rx="6"/><text class="cl-small" x="120" y="50">check condition -> false</text>
+<rect class="cl-bad" x="20" y="75" width="200" height="30" rx="6"/><text class="cl-small" style="fill:#7f1d1d" x="120" y="90">wakeup() fires here!</text>
+<rect class="cl-box" x="20" y="115" width="200" height="30" rx="6"/><text class="cl-small" x="120" y="130">sleep() -> SLEEPING</text>
+<rect class="cl-bad" x="20" y="155" width="200" height="30" rx="6"/><text class="cl-small" style="fill:#7f1d1d" x="120" y="170">stuck forever X</text>
+<!-- With lock -->
+<text class="cl-label" x="280" y="20">WITH p->lock - no lost wakeup</text>
+<rect class="cl-data" x="280" y="35" width="220" height="30" rx="6"/><text class="cl-small" x="390" y="50">acquire(lk); check -> false</text>
+<rect class="cl-tag" x="280" y="75" width="220" height="30" rx="6"/><text class="cl-small" style="fill:#065f46" x="390" y="90">sleep: release(lk), set SLEEPING</text>
+<rect class="cl-tag" x="280" y="115" width="220" height="30" rx="6"/><text class="cl-small" style="fill:#065f46" x="390" y="130">wakeup: acquire(p->lock)</text>
+<rect class="cl-tag" x="280" y="155" width="220" height="30" rx="6"/><text class="cl-small" style="fill:#065f46" x="390" y="170">-> sees SLEEPING -> RUNNABLE OK</text>
+<!-- Arrows -->
+<path class="cl-arr" d="M120 65 V75" marker-end="url(#ar3)"/>
+<path class="cl-arr" d="M120 105 V115" marker-end="url(#ar3)"/>
+<path class="cl-arr" d="M120 145 V155" marker-end="url(#ar3)"/>
+<path class="cl-arr" d="M390 65 V75" marker-end="url(#ar3)"/>
+<path class="cl-arr" d="M390 105 V115" marker-end="url(#ar3)"/>
+<path class="cl-arr" d="M390 145 V155" marker-end="url(#ar3)"/>
+<!-- Bottom note -->
+<rect fill="#0f1e3c" x="20" y="220" width="480" height="50" rx="8"/>
+<text class="cl-title" style="fill:#fff;font-size:12px" x="260" y="240">The lock makes "check condition" and "go to sleep" atomic</text>
+<text class="cl-small" style="fill:#94a3b8" x="260" y="258">wakeup() must acquire the same lock before changing state</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 23: Condition Variables in xv6 -->
+<div class="slide">
+<h2 class="st">sleep/wakeup as Condition Variables</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>The pattern</h4>
+<p><code>sleep_prepare(chan)</code> + <code>sleep(chan, lk)</code> + <code>wakeup(chan)</code> is xv6's equivalent of a condition variable. The channel is the "condition" being waited on; the lock protects the shared state.</p>
+</div>
+<div class="block">
+<h4>Where it's used in xv6</h4>
+<ul>
+<li><strong>Pipe</strong> - <code>pipewrite()</code> wakes <code>piperead()</code> when data is written; <code>piperead()</code> sleeps on <code>&pi->nread</code> when the pipe is empty</li>
+<li><strong>Console</strong> - <code>consoleread()</code> sleeps on <code>consoleread</code> channel until input arrives via keyboard interrupt</li>
+<li><strong>UART</strong> - <code>uartwrite()</code> sleeps on <code>uart_tx_r</code> when the transmit buffer is full</li>
+<li><strong>Sleeplock</strong> - <code>sleeplock</code> uses sleep/wakeup to implement a lock that can be held across long I/O operations without blocking the CPU</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>Why not just spin?</h4>
+<p>A spinlock burns CPU cycles while waiting. For short waits (a few instructions) this is fine. But for I/O - waiting for a disk read, a key press, or a pipe to fill - spinning would waste the entire CPU. <code>sleep()</code> lets the scheduler run other processes while waiting.</p>
+</div>
+<div class="block warn">
+<h4>The channel is just an address</h4>
+<p>The sleep channel is an arbitrary <code>void*</code> - it's never dereferenced. It's used purely as an identity token. Two processes sleeping on the same pointer are waiting for the same event. Common patterns: <code>&p->chan</code>, <code>&pi->nread</code>, or a global variable address.</p>
+</div>
+<div class="block ok">
+<h4>Mesa-style semantics</h4>
+<p>xv6's sleep/wakeup follows Mesa semantics: when <code>wakeup()</code> sets a process to <code>RUNNABLE</code>, the process does not run immediately. By the time it actually runs, the condition may no longer be true - so the caller must <strong>re-check</strong> the condition in a loop after <code>sleep()</code> returns.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: Summary -->
+<div class="slide">
+<h2 class="st">Summary - Key Takeaways</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="tiles tiles-2">
+<div class="tile b">
+<h4>Process = isolation unit</h4>
+<p>A process bundles a private address space, open files, and execution state. The <code>struct proc</code> in xv6 captures all of this, protected by <code>p->lock</code>.</p>
+</div>
+<div class="tile g">
+<h4>Lifecycle: alloc -> runnable -> running -> zombie -> free</h4>
+<p><code>allocproc()</code> creates the slot, <code>fork()</code> copies the parent, <code>exit()</code> marks zombie, <code>wait()</code> reaps and frees. Every transition is under <code>p->lock</code>.</p>
+</div>
+<div class="tile o">
+<h4>Context switch = save callee-saved regs</h4>
+<p><code>swtch()</code> saves only <code>ra</code>, <code>sp</code>, and <code>s0-s11</code>. Caller-saved registers are already on the stack. The switch is between process context and scheduler context.</p>
+</div>
+<div class="tile r">
+<h4>Sleep/wakeup = condition variables</h4>
+<p><code>sleep()</code> atomically releases a lock and sleeps; <code>wakeup()</code> acquires <code>p->lock</code> before setting <code>RUNNABLE</code>. This prevents lost wakeups - the core coordination problem.</p>
+</div>
+<div class="tile p">
+<h4>Scheduler = simple round-robin</h4>
+<p>Each CPU runs an infinite loop scanning <code>proc[]</code> for <code>RUNNABLE</code> processes. No priority, no preemption policy beyond timer interrupts. Simple and correct.</p>
+</div>
+<div class="tile">
+<h4>Locking discipline is critical</h4>
+<p><code>p->lock</code> protects process state. <code>wait_lock</code> protects parent-child relationships. <code>sched()</code> requires exactly one lock held and interrupts off. Violations cause <code>panic()</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 25: References -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-labs-2024 - kernel/proc.c</h4>
+<p>Source code for <code>allocproc()</code>, <code>fork()</code>, <code>exit()</code>, <code>wait()</code>, <code>scheduler()</code>, <code>sched()</code>, <code>sleep()</code>, <code>wakeup()</code>, <code>freeproc()</code>. All code examples in this deck are drawn from this file.</p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-labs-2024 - kernel/proc.h</h4>
+<p>Definitions for <code>struct proc</code>, <code>struct cpu</code>, <code>struct context</code>, <code>enum procstate</code>, and constants <code>NPROC</code>, <code>NCPU</code>, <code>NOFILE</code>.</p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-labs-2024 - kernel/swtch.S</h4>
+<p>The assembly context switch routine. Saves <code>ra</code>, <code>sp</code>, <code>s0-s11</code> from the old context, loads them from the new context, and <code>ret</code>s.</p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">MIT</div>
+<div>
+<h4>MIT 6.1810 Operating System Engineering (6.S081)</h4>
+<p>Robert Morris and Frans Kaashoek. Lecture notes on processes, system calls, and scheduling. The pedagogical foundation for xv6 and this lecture series.</p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">BOOK</div>
+<div>
+<h4>Operating Systems: Three Easy Pieces</h4>
+<p>Remzi and Andrea Arpaci-Dusseau. Chapters on virtualization (processes, CPU scheduling), concurrency (locks, condition variables). Free online at <code>pages.cs.wisc.edu/~remzi/OSTEP/</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 25</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L05 PROCESS MANAGEMENT</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

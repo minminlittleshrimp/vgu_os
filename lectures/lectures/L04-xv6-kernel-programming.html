@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>xv6 Kernel Programming - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- =========================================================== -->
+<!-- SLIDE 1: TITLE                                             -->
+<!-- =========================================================== -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">xv6 Kernel Programming</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Kernel architecture . Boot sequence . Kernel modules . Adding a syscall</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:780px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Understand the <strong>xv6 kernel structure</strong>, trace the <strong>boot path</strong> from QEMU to <code>scheduler()</code>, and add a <strong>new system call</strong> end-to-end - from user stub to kernel implementation.</p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . VGU Operating Systems</p>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 2: SECTION 1 BREAK                                   -->
+<!-- =========================================================== -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>xv6 Kernel Architecture</h2>
+<p>Source tree, memory layout, and the data structures that hold it all together</p>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 3: SOURCE TREE OVERVIEW                              -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Source Tree Overview</h2>
+<div class="cols cols-2">
+<div>
+<h3>Top-level directories</h3>
+<table class="tbl">
+<thead><tr><th>Directory</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>kernel/</code></td><td>Kernel source - all privileged-mode code</td></tr>
+<tr><td><code>user/</code></td><td>User-space programs and libraries</td></tr>
+<tr><td><code>mkfs/</code></td><td>Filesystem image builder</td></tr>
+</tbody>
+</table>
+<div class="block note" style="margin-top:10px">
+<h4>Build flow</h4>
+<p><code>make</code> compiles kernel + user programs, then <code>mkfs</code> packs the user binaries into <code>fs.img</code>. QEMU boots with both the kernel and the filesystem image.</p>
+</div>
+</div>
+<div>
+<h3>Key kernel source files</h3>
+<table class="tbl">
+<thead><tr><th>File</th><th>Responsibility</th></tr></thead>
+<tbody>
+<tr><td><code>proc.c</code></td><td>Process table, scheduling, fork/exec/exit</td></tr>
+<tr><td><code>vm.c</code></td><td>Virtual memory, page tables, copyin/copyout</td></tr>
+<tr><td><code>trap.c</code></td><td>Trap dispatch (syscalls, interrupts, faults)</td></tr>
+<tr><td><code>syscall.c</code></td><td>System call dispatch table</td></tr>
+<tr><td><code>fs.c</code></td><td>Filesystem (inodes, directories, logging)</td></tr>
+<tr><td><code>file.c</code></td><td>File descriptor layer</td></tr>
+<tr><td><code>spinlock.c</code></td><td>Spinlocks, push_off / pop_off</td></tr>
+<tr><td><code>console.c</code></td><td>Console input/output, line editing</td></tr>
+<tr><td><code>uart.c</code></td><td>16550A UART driver</td></tr>
+<tr><td><code>pipe.c</code></td><td>Pipe implementation</td></tr>
+<tr><td><code>kalloc.c</code></td><td>Page allocator (4 KB freelist)</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 4: KERNEL MEMORY LAYOUT (SVG)                        -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Kernel Memory Layout</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 980 460" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+
+<!-- Address axis -->
+<text class="cl-label" x="20" y="30">Virtual address (Sv39, RISC-V)</text>
+
+<!-- TRAMPOLINE -->
+<rect class="cl-bad" x="120" y="40" width="740" height="40" rx="6"/>
+<text class="cl-title" x="490" y="60">TRAMPOLINE  (MAXVA - PGSIZE)</text>
+<text class="cl-small" x="490" y="74">trampoline.S - user<->kernel transition stub</text>
+
+<!-- TRAPFRAME -->
+<rect class="cl-aad" x="120" y="90" width="740" height="40" rx="6"/>
+<text class="cl-title" x="490" y="110">TRAPFRAME  (TRAMPOLINE - PGSIZE)</text>
+<text class="cl-small" x="490" y="124">saved user registers - one page per process</text>
+
+<!-- gap -->
+<text class="cl-small" x="490" y="145">...  guard pages / free virtual space  ...</text>
+
+<!-- PHYSTOP -->
+<rect class="cl-key" x="120" y="160" width="740" height="40" rx="6"/>
+<text class="cl-title" x="490" y="180">PHYSTOP  (0x80800000 = KERNBASE + 128 MB)</text>
+<text class="cl-small" x="490" y="194">end of physical RAM managed by kalloc()</text>
+
+<!-- kernel data -->
+<rect class="cl-data" x="120" y="210" width="740" height="50" rx="6"/>
+<text class="cl-title" x="490" y="230">kernel data  (etext -> end)</text>
+<text class="cl-small" x="490" y="248">PTE_R | PTE_W  -  global, read-write</text>
+
+<!-- kernel text -->
+<rect class="cl-tag" x="120" y="270" width="740" height="50" rx="6"/>
+<text class="cl-title" x="490" y="290">kernel text  (KERNBASE -> etext)</text>
+<text class="cl-small" x="490" y="308">PTE_R | PTE_X  -  global, executable</text>
+
+<!-- KERNBASE -->
+<rect class="cl-box" x="120" y="330" width="740" height="40" rx="6"/>
+<text class="cl-title" x="490" y="350">KERNBASE  (0x80000000)</text>
+<text class="cl-small" x="490" y="364">start of physical RAM in QEMU (riscv virt)</text>
+
+<!-- Memory-mapped I/O -->
+<rect fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" x="120" y="390" width="340" height="40" rx="6"/>
+<text class="cl-title" x="290" y="410">UART0  0x10000000</text>
+<text class="cl-small" x="290" y="424">memory-mapped I/O</text>
+<rect fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" x="520" y="390" width="340" height="40" rx="6"/>
+<text class="cl-title" x="690" y="410">VIRTIO0  0x10001000</text>
+<text class="cl-small" x="690" y="424">disk interface</text>
+
+<!-- arrows -->
+<path class="cl-arr" d="M870 60 V90" marker-end="url(#ar)"/>
+<path class="cl-arr" d="M870 130 V155" marker-end="url(#ar)"/>
+<path class="cl-arr" d="M870 200 V210" marker-end="url(#ar)"/>
+<path class="cl-arr" d="M870 260 V270" marker-end="url(#ar)"/>
+<path class="cl-arr" d="M870 320 V330" marker-end="url(#ar)"/>
+</svg>
+</div>
+<div class="block note" style="margin-top:4px">
+<h4>From memlayout.h</h4>
+<p><code>UART0 = 0x10000000</code> . <code>VIRTIO0 = 0x10001000</code> . <code>KERNBASE = 0x80000000</code> . <code>PHYSTOP = KERNBASE + 128*1024*1024</code> . <code>TRAMPOLINE = MAXVA - PGSIZE</code> . <code>TRAPFRAME = TRAMPOLINE - PGSIZE</code></p>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 5: KEY DATA STRUCTURES                               -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Key Data Structures</h2>
+<table class="tbl">
+<thead><tr><th>Struct</th><th>Defined in</th><th>Key fields</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>struct proc</code></td><td>proc.h</td><td><code>enum procstate state</code>, <code>struct spinlock lock</code>, <code>pagetable_t pagetable</code>, <code>uint64 trapframe</code>, <code>struct context context</code>, <code>struct file *ofile[NOFILE]</code>, <code>struct inode *cwd</code>, <code>char name[16]</code>, <code>int pid</code>, <code>struct proc *parent</code></td><td>One per process - the central process record</td></tr>
+<tr><td><code>struct trapframe</code></td><td>proc.h</td><td><code>uint64 kernel_satp</code>, <code>uint64 kernel_sp</code>, <code>uint64 kernel_trap</code>, <code>int kernel_hartid</code>, <code>uint64 epctrap</code>, <code>uint64 a0..a7</code>, <code>uint64 ra, sp, gp, tp</code>, <code>uint64 t0..t6, s0..s11</code></td><td>Saved user registers on trap entry</td></tr>
+<tr><td><code>struct context</code></td><td>proc.h</td><td><code>uint64 ra</code>, <code>uint64 sp</code>, <code>uint64 s0..s11</code></td><td>Callee-saved registers for <code>swtch()</code></td></tr>
+<tr><td><code>struct cpu</code></td><td>proc.h</td><td><code>struct proc *proc</code>, <code>struct context context</code>, <code>int noff</code>, <code>int intena</code></td><td>Per-CPU state - current process, scheduler context, interrupt state</td></tr>
+<tr><td><code>struct spinlock</code></td><td>spinlock.h</td><td><code>uint8 locked</code>, <code>char *name</code>, <code>struct cpu *cpu</code></td><td>Spinlock - <code>amoswap</code>-based mutual exclusion</td></tr>
+<tr><td><code>struct file</code></td><td>file.h</td><td><code>enum { FD_INODE, FD_PIPE, FD_DEVICE } type</code>, <code>int ref</code>, <code>char readable, writable</code>, <code>struct pipe *pipe</code>, <code>struct inode *ip</code>, <code>uint64 off</code></td><td>File descriptor layer - wraps inode/pipe/device</td></tr>
+<tr><td><code>struct inode</code></td><td>file.h</td><td><code>uint dev</code>, <code>uint inum</code>, <code>int ref</code>, <code>struct sleeplock lock</code>, <code>int valid</code>, <code>short type</code>, <code>short major, minor</code>, <code>uint nlink</code>, <code>uint64 size</code></td><td>In-memory copy of an on-disk inode</td></tr>
+<tr><td><code>struct pipe</code></td><td>pipe.h</td><td><code>struct spinlock lock</code>, <code>char data[PIPESIZE]</code>, <code>uint nread, nwrite</code>, <code>int readopen, writeopen</code></td><td>Unidirectional pipe buffer</td></tr>
+</tbody>
+</table>
+<div class="block ok" style="margin-top:8px">
+<h4>Pattern</h4>
+<p>Every shared structure embeds its own lock. <code>struct proc</code> has a <code>spinlock</code>; <code>struct inode</code> has a <code>sleeplock</code> (because I/O can sleep). This is the foundation of xv6's concurrency discipline.</p>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 6: SECTION 2 BREAK                                   -->
+<!-- =========================================================== -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>Boot Sequence</h2>
+<p>From QEMU power-on to the scheduler - every step traced</p>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 7: BOOT PATH (SVG FLOW)                              -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Boot Path - QEMU to scheduler()</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 440" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ab" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+
+<!-- Row 1: QEMU -> entry.S -> start.c -> main() -->
+<rect class="cl-box" x="20" y="30" width="130" height="60" rx="8"/>
+<text class="cl-title" x="85" y="52">QEMU</text>
+<text class="cl-small" x="85" y="68">-kernel flag</text>
+<text class="cl-small" x="85" y="80">loads at 0x80000000</text>
+
+<path class="cl-arr" d="M150 60 H185" marker-end="url(#ab)"/>
+
+<rect class="cl-tag" x="185" y="30" width="130" height="60" rx="8"/>
+<text class="cl-title" x="250" y="52">entry.S</text>
+<text class="cl-small" x="250" y="68">M-mode entry</text>
+<text class="cl-small" x="250" y="80">sets sp, PMP</text>
+
+<path class="cl-arr" d="M315 60 H350" marker-end="url(#ab)"/>
+
+<rect class="cl-data" x="350" y="30" width="130" height="60" rx="8"/>
+<text class="cl-title" x="415" y="52">start.c</text>
+<text class="cl-small" x="415" y="68">M->S transition</text>
+<text class="cl-small" x="415" y="80">delegation, mret</text>
+
+<path class="cl-arr" d="M480 60 H515" marker-end="url(#ab)"/>
+
+<rect class="cl-key" x="515" y="30" width="130" height="60" rx="8"/>
+<text class="cl-title" x="580" y="52">main()</text>
+<text class="cl-small" x="580" y="68">S-mode entry</text>
+<text class="cl-small" x="580" y="80">init subsystems</text>
+
+<!-- Row 2: main() init calls -->
+<rect class="cl-lane" x="20" y="130" width="1040" height="120" rx="10"/>
+<text class="cl-label" x="36" y="150">main() - initialization sequence</text>
+
+<rect class="cl-box" x="40" y="165" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="100" y="185">consoleinit()</text>
+<text class="cl-small" x="100" y="200">console + UART</text>
+
+<rect class="cl-box" x="175" y="165" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="235" y="185">kvminit()</text>
+<text class="cl-small" x="235" y="200">kernel page table</text>
+
+<rect class="cl-box" x="310" y="165" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="370" y="185">kvmmake()</text>
+<text class="cl-small" x="370" y="200">install mappings</text>
+
+<rect class="cl-box" x="445" y="165" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="505" y="185">procinit()</text>
+<text class="cl-small" x="505" y="200">process table</text>
+
+<rect class="cl-box" x="580" y="165" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="640" y="185">trapinit()</text>
+<text class="cl-small" x="640" y="200">trap vectors</text>
+
+<rect class="cl-box" x="715" y="165" width="130" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="780" y="185">trapinithart()</text>
+<text class="cl-small" x="780" y="200">per-hart setup</text>
+
+<rect class="cl-box" x="860" y="165" width="130" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="925" y="185">userinit()</text>
+<text class="cl-small" x="925" y="200">first process</text>
+
+<!-- Row 3: scheduler -->
+<path class="cl-arr" d="M580 90 V130" marker-end="url(#ab)"/>
+
+<rect class="cl-final" x="380" y="290" width="320" height="70" rx="8"/>
+<text class="cl-title" style="fill:#fff" x="540" y="318">scheduler()</text>
+<text class="cl-small" style="fill:#cbd5e1" x="540" y="336">infinite loop - swtch to runnable process</text>
+<text class="cl-small" style="fill:#cbd5e1" x="540" y="350">never returns</text>
+
+<path class="cl-arr" d="M540 215 V290" marker-end="url(#ab)"/>
+
+<!-- Legend -->
+<g>
+<rect class="cl-box" x="40" y="390" width="14" height="14" rx="3"/>
+<text class="cl-legend-text" x="60" y="401">init function</text>
+<rect class="cl-tag" x="160" y="390" width="14" height="14" rx="3"/>
+<text class="cl-legend-text" x="180" y="401">M-mode</text>
+<rect class="cl-data" x="250" y="390" width="14" height="14" rx="3"/>
+<text class="cl-legend-text" x="270" y="401">M->S transition</text>
+<rect class="cl-key" x="380" y="390" width="14" height="14" rx="3"/>
+<text class="cl-legend-text" x="400" y="401">S-mode entry</text>
+<rect class="cl-final" x="490" y="390" width="14" height="14" rx="3"/>
+<text class="cl-legend-text" x="510" y="401">scheduler (never returns)</text>
+</g>
+</svg>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 8: entry.s                                           -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">entry.s - M-mode entry</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Runs before page tables exist</h4>
+<p><code>entry.S</code> is the very first code to execute. There are <strong>no page tables</strong> yet - all addresses are physical. The kernel is loaded at <code>0x80000000</code> by QEMU.</p>
+</div>
+<div class="block">
+<h4>What it does</h4>
+<ul>
+<li>Sets <code>tp = mhartid</code> (hardware thread ID)</li>
+<li>Sets <code>sp = stack0 + hartid x PGSIZE</code> (per-hart stack)</li>
+<li>Sets up PMP (physical memory protection) - allow all access</li>
+<li>Calls <code>start()</code> in <code>start.c</code></li>
+</ul>
+</div>
+<div class="block note">
+<h4>Why per-hart stacks</h4>
+<p>Each hardware thread (hart) gets its own stack, offset by <code>hartid x PGSIZE</code> from <code>stack0</code>. This prevents stack collisions when multiple harts boot simultaneously.</p>
+</div>
+</div>
+<div>
+<div class="code-label">kernel/entry.S (simplified)</div>
+<pre><code class="language-asm">.section .text
+.globl entry
+entry:
+    # set up per-hart stack
+    csrr  t0, mhartid        # read hart ID
+    la    sp, stack0
+    li    t1, 4096           # PGSIZE
+    mul   t0, t0, t1
+    add   sp, sp, t0         # sp = stack0 + hartid*PGSIZE
+
+    # call start.c (still in M-mode)
+    call  start
+
+    # should never get here
+spin:
+    wfi
+    j     spin</code></pre>
+<div class="block ok" style="margin-top:8px">
+<h4>Key point</h4>
+<p>At this stage the MMU is off. <code>la sp, stack0</code> resolves to a <strong>physical address</strong>. Paging is not enabled until <code>kvminithart()</code> runs later in <code>main()</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 9: start.c                                           -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">start.c - M-mode -> S-mode</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Purpose</h4>
+<p><code>start()</code> performs the one-time M-mode setup that must happen <em>before</em> dropping to S-mode, then executes <code>mret</code> to enter <code>main()</code> in S-mode.</p>
+</div>
+<div class="block note">
+<h4>Delegation</h4>
+<p>Sets <code>medeleg</code> and <code>mideleg</code> to forward exceptions and interrupts to S-mode. Without this, all traps stay in M-mode and the S-mode trap handler never runs.</p>
+</div>
+<div class="block">
+<h4>Timer</h4>
+<p>Configures the supervisor timer (<code>sbicall</code> to set timer clock) so <code>timervec</code> can generate periodic interrupts for preemption.</p>
+</div>
+<div class="block warn">
+<h4>The mret trick</h4>
+<p>Sets <code>sstatus.SPP = 1</code> (so <code>mret</code> returns to S-mode), sets <code>sepc = main</code> (so <code>mret</code> jumps to <code>main()</code>), then executes <code>mret</code>.</p>
+</div>
+</div>
+<div>
+<div class="code-label">kernel/start.c (simplified)</div>
+<pre><code class="language-c">void
+start()
+{
+    // delegate exceptions & interrupts to S-mode
+    unsigned long x = (1 &lt;&lt; 5) | (1 &lt;&lt; 7) | (1 &lt;&lt; 11);
+    asm volatile("csrw medeleg, %0" : : "r"(x));
+    asm volatile("csrw mideleg, %0" : : "r"(x));
+
+    // configure PMP - allow all access in S-mode
+    asm volatile("csrw pmpaddr0, %0" : : "r"(0x3fffffffffffff));
+    asm volatile("csrw pmpcfg0, %0" : : "r"(0xf));
+
+    // set S-mode return point
+    asm volatile("csrw mepc, %0" : : "r"(main));
+
+    // set SPP=1 so mret returns to S-mode
+    unsigned long y;
+    asm volatile("csrr %0, mstatus" : "=r"(y));
+    y |= (1 &lt;&lt; 11);   // MSTATUS_SPP
+    asm volatile("csrw mstatus, %0" : : "r"(y));
+
+    // drop to S-mode, jump to main()
+    asm volatile("mret");
+}</code></pre>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 10: main.c                                          -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">main.c - Initialization sequence</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Each init function sets up one subsystem</h4>
+<p><code>main()</code> calls a series of <code>*init()</code> functions in a strict order. Each one initializes exactly one kernel subsystem. The order matters - later inits depend on earlier ones.</p>
+</div>
+<table class="tbl" style="margin-top:8px">
+<thead><tr><th>Call</th><th>Sets up</th></tr></thead>
+<tbody>
+<tr><td><code>consoleinit()</code></td><td>Console + UART driver</td></tr>
+<tr><td><code>uartinit()</code></td><td>16550A UART registers</td></tr>
+<tr><td><code>kvminit()</code></td><td>Kernel page table (empty)</td></tr>
+<tr><td><code>kvmmake()</code></td><td>Install kernel mappings</td></tr>
+<tr><td><code>procinit()</code></td><td>Process table + per-proc locks</td></tr>
+<tr><td><code>trapinit()</code></td><td>Trap vector (<code>stvec</code>)</td></tr>
+<tr><td><code>trapinithart()</code></td><td>Per-hart trap setup</td></tr>
+<tr><td><code>binit()</code></td><td>Buffer cache</td></tr>
+<tr><td><code>iinit()</code></td><td>Inode cache</td></tr>
+<tr><td><code>fileinit()</code></td><td>File table</td></tr>
+<tr><td><code>virtio_disk_init()</code></td><td>VirtIO disk driver</td></tr>
+<tr><td><code>userinit()</code></td><td>First user process (initcode)</td></tr>
+<tr><td><code>scheduler()</code></td><td>Start scheduling - never returns</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="code-label">kernel/main.c (simplified)</div>
+<pre><code class="language-c">void
+main()
+{
+    if (cpuid() == 0) {
+        consoleinit();
+        uartinit();
+        printfinit();
+        kvminit();          // create kernel page table
+        kvmmake();           // map kernel segments
+        procinit();          // process table
+        trapinit();          // trap vectors
+        trapinithart();      // per-hart trap setup
+        binit();             // buffer cache
+        iinit();             // inode cache
+        fileinit();          // file table
+        virtio_disk_init();  // disk driver
+        userinit();          // first user process
+        __sync_synchronize();
+        started = 1;
+    } else {
+        // other harts wait, then set up traps
+        while (started == 0)
+            ;
+        __sync_synchronize();
+        trapinithart();
+    }
+    scheduler();  // &lt;-- never returns
+}</code></pre>
+<div class="block note" style="margin-top:8px">
+<h4>Multi-hart boot</h4>
+<p>Only hart 0 runs the full init sequence. Other harts spin on <code>started</code> until initialization is complete, then call <code>trapinithart()</code> and enter <code>scheduler()</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 11: SECTION 3 BREAK                                  -->
+<!-- =========================================================== -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Adding a System Call</h2>
+<p>The 5-step process - from user stub to kernel dispatch</p>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 12: THE 5-STEP PROCESS                               -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">The 5-Step Process</h2>
+<p style="margin-top:1vh">To add a new system call (e.g., <code>sys_getppid</code>), you touch <strong>five files</strong>. No more, no less.</p>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a5" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+
+<!-- Step 1 -->
+<rect class="cl-box" x="20" y="60" width="180" height="100" rx="8"/>
+<text class="cl-title" x="110" y="82">Step 1</text>
+<text class="cl-small" x="110" y="100">user/user.h</text>
+<text class="cl-small" x="110" y="118">Add prototype:</text>
+<text class="cl-small" style="font-family:'Roboto Mono',monospace" x="110" y="138">int getppid(void);</text>
+
+<path class="cl-arr" d="M200 110 H225" marker-end="url(#a5)"/>
+
+<!-- Step 2 -->
+<rect class="cl-data" x="225" y="60" width="180" height="100" rx="8"/>
+<text class="cl-title" x="315" y="82">Step 2</text>
+<text class="cl-small" x="315" y="100">user/usys.pl</text>
+<text class="cl-small" x="315" y="118">Add stub entry:</text>
+<text class="cl-small" style="font-family:'Roboto Mono',monospace" x="315" y="138">entry("getppid");</text>
+
+<path class="cl-arr" d="M405 110 H430" marker-end="url(#a5)"/>
+
+<!-- Step 3 -->
+<rect class="cl-tag" x="430" y="60" width="180" height="100" rx="8"/>
+<text class="cl-title" x="520" y="82">Step 3</text>
+<text class="cl-small" x="520" y="100">kernel/syscall.h</text>
+<text class="cl-small" x="520" y="118">Add syscall number:</text>
+<text class="cl-small" style="font-family:'Roboto Mono',monospace" x="520" y="138">#define SYS_getppid 23</text>
+
+<path class="cl-arr" d="M610 110 H635" marker-end="url(#a5)"/>
+
+<!-- Step 4 -->
+<rect class="cl-aad" x="635" y="60" width="180" height="100" rx="8"/>
+<text class="cl-title" x="725" y="82">Step 4</text>
+<text class="cl-small" x="725" y="100">kernel/syscall.c</text>
+<text class="cl-small" x="725" y="118">Add to dispatch array:</text>
+<text class="cl-small" style="font-family:'Roboto Mono',monospace" x="725" y="138">[SYS_getppid] sys_getppid</text>
+
+<path class="cl-arr" d="M815 110 H840" marker-end="url(#a5)"/>
+
+<!-- Step 5 -->
+<rect class="cl-key" x="840" y="60" width="220" height="100" rx="8"/>
+<text class="cl-title" x="950" y="82">Step 5</text>
+<text class="cl-small" x="950" y="100">kernel/sys_proc.c</text>
+<text class="cl-small" x="950" y="118">Implement function:</text>
+<text class="cl-small" style="font-family:'Roboto Mono',monospace" x="950" y="138">sys_getppid() { ... }</text>
+
+<!-- Bottom note -->
+<rect fill="#fffbeb" stroke="#f59e0b" x="20" y="200" width="1040" height="50" rx="8"/>
+<text class="cl-title" style="font-size:12px;fill:#92400e" x="540" y="222">Steps 1-2 are user-side. Steps 3-5 are kernel-side. The ecall instruction is the bridge.</text>
+<text class="cl-small" style="fill:#92400e" x="540" y="240">Forget any one step and the build fails or the call silently does nothing.</text>
+</svg>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 13: STEP 1-2 USER SIDE                              -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Steps 1-2: User Side</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Step 1 - user/user.h</h4>
+<p>Add the function prototype so user programs can call <code>getppid()</code> as if it were a normal C function.</p>
+</div>
+<div class="code-label">user/user.h</div>
+<pre><code class="language-c">// system calls
+int fork(void);
+int exit(int) __attribute__((noreturn));
+int wait(int*);
+int kill(int);
+int getpid();
+int getppid();          // &lt;-- ADD THIS
+int sleep(int);
+int exec(char*, char**);
+// ...</code></pre>
+<div class="block note" style="margin-top:8px">
+<h4>Why a header prototype is needed</h4>
+<p>The C compiler needs to know the return type and argument count. Without the prototype, the compiler generates incorrect calling code.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Step 2 - user/usys.pl</h4>
+<p><code>usys.pl</code> is a Perl script that generates <code>usys.S</code> - the actual assembly stubs. Each <code>entry()</code> call produces a small assembly function.</p>
+</div>
+<div class="code-label">user/usys.pl</div>
+<pre><code class="language-perl">sub entry {
+    my $name = shift;
+    print ".global $name\n";
+    print "${name}:\n";
+    print " li a7, SYS_${name}\n";
+    print " ecall\n";
+    print " ret\n";
+}
+
+entry("fork");
+entry("exit");
+entry("getppid");       # &lt;-- ADD THIS
+# ...</code></pre>
+<div class="block ok" style="margin-top:8px">
+<h4>Generated assembly</h4>
+<p>Each stub loads the syscall number into <code>a7</code>, executes <code>ecall</code> (trap to kernel), then returns. The kernel reads <code>a7</code> from the trapframe to dispatch.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 14: STEP 3-4 KERNEL DISPATCH                         -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Steps 3-4: Kernel Dispatch</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Step 3 - kernel/syscall.h</h4>
+<p>Assign a unique number to the new syscall. The number must not collide with existing entries.</p>
+</div>
+<div class="code-label">kernel/syscall.h</div>
+<pre><code class="language-c">// System call numbers
+#define SYS_fork    1
+#define SYS_exit    2
+#define SYS_wait    3
+#define SYS_kill    6
+#define SYS_getpid  11
+#define SYS_getppid 23    // &lt;-- ADD THIS
+// ...</code></pre>
+<div class="block warn" style="margin-top:8px">
+<h4>Number must be unique</h4>
+<p>The number is the key into the dispatch array. A duplicate silently routes calls to the wrong handler.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Step 4 - kernel/syscall.c</h4>
+<p>Add an entry to the <code>syscalls[]</code> array, mapping the number to the implementation function. Also add a function prototype.</p>
+</div>
+<div class="code-label">kernel/syscall.c</div>
+<pre><code class="language-c">static uint64 (*syscalls[])(void) = {
+[SYS_fork]    sys_fork,
+[SYS_exit]    sys_exit,
+[SYS_wait]    sys_wait,
+[SYS_getpid]  sys_getpid,
+[SYS_getppid] sys_getppid,   // &lt;-- ADD THIS
+// ...
+};
+
+void
+syscall(void)
+{
+    int num;
+    struct proc *p = myproc();
+
+    num = p->trapframe->a7;       // read syscall number
+    if (num &gt; 0 &amp;&amp; num &lt; NELEM(syscalls)
+        &amp;&amp; syscalls[num]) {
+        p->trapframe->a0 = syscalls[num]();  // call, store return in a0
+    } else {
+        p->trapframe->a0 = -1;    // unknown syscall
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 15: STEP 5 IMPLEMENTATION                           -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Step 5: Implementation</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Step 5 - kernel/sys_proc.c</h4>
+<p>Implement the actual logic. The function takes <strong>no arguments</strong> in C - arguments are fetched from the trapframe using <code>argraw()</code>, <code>argint()</code>, or <code>argaddr()</code>.</p>
+</div>
+<div class="code-label">kernel/sys_proc.c</div>
+<pre><code class="language-c">uint64
+sys_getppid(void)
+{
+    struct proc *p = myproc();
+    return p->parent->pid;
+}</code></pre>
+<div class="block note" style="margin-top:8px">
+<h4>Why no C arguments</h4>
+<p>The syscall stub in <code>usys.S</code> puts arguments in registers (<code>a0</code>-<code>a5</code>) before <code>ecall</code>. The kernel reads them from <code>p->trapframe->a0</code> etc. via the <code>arg*</code> helpers - not from the C calling convention.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Argument helpers</h4>
+<table class="tbl">
+<thead><tr><th>Function</th><th>Returns</th><th>Use for</th></tr></thead>
+<tbody>
+<tr><td><code>argraw(n)</code></td><td><code>uint64</code></td><td>Raw register value from trapframe</td></tr>
+<tr><td><code>argint(n, &amp;ip)</code></td><td><code>int</code> via pointer</td><td>Integer arguments</td></tr>
+<tr><td><code>argaddr(n, &amp;ip)</code></td><td><code>uint64</code> via pointer</td><td>Pointer/address arguments</td></tr>
+<tr><td><code>argstr(n, buf, max)</code></td><td><code>int</code> (length)</td><td>String arguments (via copyinstr)</td></tr>
+</tbody>
+</table>
+</div>
+<div class="block warn">
+<h4>Example: syscall with arguments</h4>
+<pre style="margin-top:4px"><code class="language-c">uint64
+sys_kill(void)
+{
+    int pid;
+    if (argint(0, &amp;pid) &lt; 0)
+        return -1;
+    return kill(pid);
+}</code></pre>
+<p style="margin-top:4px"><code>argint(0, ...)</code> reads <code>a0</code> from the trapframe. Argument index 0 = first argument, 1 = second, etc.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 16: SECTION 4 BREAK                                  -->
+<!-- =========================================================== -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>Kernel Coding Conventions</h2>
+<p>Locking, memory allocation, and the user/kernel boundary</p>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 17: LOCKING DISCIPLINE                              -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Locking Discipline</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Rule 1: Every shared structure has a lock</h4>
+<p><code>struct proc</code> has <code>lock</code>, <code>struct spinlock</code> guards <code>cpus[]</code>, <code>struct inode</code> has a <code>sleeplock</code>. If two cores can touch it, it needs a lock.</p>
+</div>
+<div class="block ok">
+<h4>Rule 2: Acquire before access, release after</h4>
+<p>Pattern: <code>acquire(&amp;lock)</code> -> read/write shared data -> <code>release(&amp;lock)</code>. Never access shared data outside a critical section.</p>
+</div>
+<div class="block note">
+<h4>Rule 3: push_off() / pop_off()</h4>
+<p><code>push_off()</code> disables interrupts and increments a per-CPU counter. <code>pop_off()</code> decrements and re-enables when the counter hits zero. This prevents deadlocks when a lock is acquired inside an interrupt handler.</p>
+</div>
+<div class="block warn">
+<h4>Rule 4: Never sleep holding a spinlock</h4>
+<p>If you need to sleep (wait for I/O), use a <code>sleeplock</code> instead. A spinlock held across <code>sleep()</code> would deadlock the scheduler.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>How spinlock works - spinlock.c</h4>
+<p><code>acquire()</code> uses <code>amoswap</code> (atomic swap) to test-and-set the <code>locked</code> field. If already locked, it spins (busy-waits) until the holder releases.</p>
+</div>
+<div class="code-label">kernel/spinlock.c (simplified)</div>
+<pre><code class="language-c">void
+acquire(struct spinlock *lk)
+{
+    push_off();          // disable interrupts
+    if (holding(lk))
+        panic("acquire");
+
+    // atomic test-and-set via amoswap
+    while (__sync_lock_test_and_set(
+               &amp;lk->locked, 1) != 0)
+        ;
+
+    __sync_synchronize();
+    lk->cpu = mycpu();
+}
+
+void
+release(struct spinlock *lk)
+{
+    lk->cpu = 0;
+    __sync_synchronize();
+    __sync_lock_release(&amp;lk->locked);
+    pop_off();           // re-enable interrupts
+}</code></pre>
+<div class="block ok" style="margin-top:8px">
+<h4>Two lock types</h4>
+<p><strong>Spinlock</strong>: CPU spins, interrupts off, for short critical sections. <strong>Sleeplock</strong>: process sleeps, interrupts on, for long waits (disk I/O).</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 18: MEMORY ALLOCATION                               -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Memory Allocation - kalloc.c</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>The allocator</h4>
+<p><code>kalloc()</code> allocates <strong>4 KB pages</strong> from a free list. <code>kfree()</code> returns pages to the free list. The free list is a linked list of <code>struct run</code>, one per free page.</p>
+</div>
+<div class="block note">
+<h4>Debugging aid: junk fill</h4>
+<p>When a page is allocated, <code>kalloc()</code> fills it with <code>0x05</code> (or similar). When freed, <code>kfree()</code> fills it with <code>0x01</code> (or junk). This catches <strong>dangling references</strong> - if you see <code>0x05</code> bytes, you're reading uninitialized memory; if you see <code>0x01</code>, you're reading freed memory.</p>
+</div>
+<div class="block warn">
+<h4>Locking</h4>
+<p>The free list is protected by <code>kmem.lock</code> - a single spinlock for the entire allocator. <code>kalloc()</code> and <code>kfree()</code> both acquire it.</p>
+</div>
+</div>
+<div>
+<div class="code-label">kernel/kalloc.c (simplified)</div>
+<pre><code class="language-c">struct run {
+    struct run *next;
+};
+
+struct {
+    struct spinlock lock;
+    struct run *freelist;
+} kmem;
+
+void *
+kalloc(void)
+{
+    struct run *r;
+
+    acquire(&amp;kmem.lock);
+    r = kmem.freelist;
+    if (r)
+        kmem.freelist = r->next;
+    release(&amp;kmem.lock);
+
+    if (r)
+        memset((char*)r, 5, PGSIZE); // fill with junk
+    return r;
+}
+
+void
+kfree(void *pa)
+{
+    struct run *r = (struct run*)pa;
+
+    // fill with junk to catch stale refs
+    memset((char*)pa, 1, PGSIZE);
+
+    acquire(&amp;kmem.lock);
+    r->next = kmem.freelist;
+    kmem.freelist = r;
+    release(&amp;kmem.lock);
+}</code></pre>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 19: USER/KERNEL COPY                                 -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">User / Kernel Copy - vm.c</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Never dereference user pointers directly</h4>
+<p>A user pointer (e.g., <code>char*</code> passed to <code>write()</code>) lives in the <strong>user's virtual address space</strong>. The kernel runs with a different page table. Direct dereference either faults or reads the wrong memory.</p>
+</div>
+<div class="block ok">
+<h4>Always use copyin / copyout</h4>
+<p>These functions walk the <strong>user's page table</strong> and safely copy bytes between user virtual addresses and kernel buffers. They handle page boundaries and invalid mappings gracefully.</p>
+</div>
+<table class="tbl" style="margin-top:8px">
+<thead><tr><th>Function</th><th>Direction</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>copyin(pagetable, dst, srcva, len)</code></td><td>user -> kernel</td><td>Copy <code>len</code> bytes from user va to kernel buf</td></tr>
+<tr><td><code>copyout(pagetable, dstva, src, len)</code></td><td>kernel -> user</td><td>Copy <code>len</code> bytes from kernel buf to user va</td></tr>
+<tr><td><code>copyinstr(pagetable, dst, srcva, max)</code></td><td>user -> kernel</td><td>Copy a null-terminated string from user space</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="block">
+<h4>How it works</h4>
+<p><code>copyin()</code> uses <code>walkaddr()</code> to translate each user virtual address to a physical address through the process's page table, then <code>memmove()</code>s the data. It handles the case where the range spans multiple pages.</p>
+</div>
+<div class="code-label">kernel/vm.c (simplified)</div>
+<pre><code class="language-c">int
+copyin(pagetable_t pagetable, char *dst,
+       uint64 srcva, uint64 len)
+{
+    uint64 n, va0, pa0;
+
+    while (len &gt; 0) {
+        va0 = PGROUNDDOWN(srcva);
+        pa0 = walkaddr(pagetable, va0);
+        if (pa0 == 0)
+            return -1;
+
+        n = PGSIZE - (srcva - va0);
+        if (n &gt; len)
+            n = len;
+
+        memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+
+        len -= n;
+        dst += n;
+        srcva = va0 + PGSIZE;
+    }
+    return 0;
+}</code></pre>
+<div class="block note" style="margin-top:8px">
+<h4>Why this matters</h4>
+<p>Without <code>copyin/copyout</code>, a malicious or buggy user program could pass a kernel address and read/write kernel memory. This is the <strong>security boundary</strong> between user and kernel space.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 20: SECTION 5 BREAK                                  -->
+<!-- =========================================================== -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>Console and Output</h2>
+<p>How printf works in the kernel, and how input flows from UART to user</p>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 21: PRINTK / CONSOLE OUTPUT                          -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">printk - How printf works in the kernel</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>The call chain</h4>
+<p><code>printf()</code> -> <code>consolewrite()</code> (if from user) or direct <code>uartputc()</code> (if from kernel). The console layer buffers output; the UART driver transmits bytes.</p>
+</div>
+<div class="block note">
+<h4>Two output paths</h4>
+<ul>
+<li><strong>Kernel printf</strong>: calls <code>uartputc_sync()</code> - spins until the UART transmit buffer is empty. Used during boot and panic, when interrupts may be off.</li>
+<li><strong>Console write</strong> (from user <code>write()</code>): <code>consolewrite()</code> copies bytes from user space via <code>copyin()</code>, then calls <code>uartwrite()</code> which buffers and uses interrupt-driven TX.</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>UART hardware</h4>
+<p>16550A UART at <code>0x10000000</code>. Registers: <code>THR</code> (transmit), <code>RHR</code> (receive), <code>LSR</code> (line status - TX ready, RX ready). Interrupt-driven for normal I/O; polled (spin) for panic.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ap" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+
+<rect class="cl-box" x="180" y="20" width="200" height="50" rx="8"/>
+<text class="cl-title" x="280" y="42">printf() / printk()</text>
+<text class="cl-small" x="280" y="58">kernel format + output</text>
+
+<path class="cl-arr" d="M280 70 V95" marker-end="url(#ap)"/>
+
+<rect class="cl-data" x="120" y="95" width="320" height="50" rx="8"/>
+<text class="cl-title" x="280" y="117">uartputc_sync()  OR  uartputc()</text>
+<text class="cl-small" x="280" y="133">spin (panic) / buffered (normal)</text>
+
+<path class="cl-arr" d="M280 145 V170" marker-end="url(#ap)"/>
+
+<rect class="cl-tag" x="120" y="170" width="320" height="50" rx="8"/>
+<text class="cl-title" x="280" y="192">UART 16550A  (0x10000000)</text>
+<text class="cl-small" x="280" y="208">write THR register -> TX</text>
+
+<!-- User path -->
+<rect class="cl-aad" x="120" y="260" width="320" height="50" rx="8"/>
+<text class="cl-title" x="280" y="282">consolewrite()</text>
+<text class="cl-small" x="280" y="298">copyin from user buf -> uartwrite()</text>
+
+<path class="cl-arr" d="M280 310 V335" marker-end="url(#ap)"/>
+
+<rect class="cl-key" x="120" y="335" width="320" height="40" rx="8"/>
+<text class="cl-title" x="280" y="357">uartwrite() -> uartputc() (buffered)</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 22: CONSOLE INPUT                                    -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Console Input</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Interrupt-driven RX</h4>
+<p>When the UART receives a byte, it raises an interrupt. <code>uartintr()</code> reads <code>RHR</code> and calls <code>consoleintr()</code> for each byte.</p>
+</div>
+<div class="block note">
+<h4>Line editing in consoleintr()</h4>
+<table class="tbl">
+<thead><tr><th>Key</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>Ctrl-P</td><td><code>procdump()</code> - print process table</td></tr>
+<tr><td>Ctrl-U</td><td>Kill line - erase entire input buffer</td></tr>
+<tr><td>Backspace</td><td>Erase last character</td></tr>
+<tr><td>Ctrl-D</td><td>EOF - end of input (if buffer empty)</td></tr>
+<tr><td>Enter</td><td>Wake <code>consoleread()</code>, deliver line</td></tr>
+<tr><td>Printable char</td><td>Append to <code>cons.buf</code>, echo</td></tr>
+</tbody>
+</table>
+</div>
+<div class="block warn">
+<h4>Input buffer</h4>
+<p>Input is buffered in <code>cons.buf[INPUT_BUF]</code> (128 bytes). <code>consoleread()</code> blocks on <code>sleep()</code> until a full line (Enter) is available, then copies to user space via <code>copyout()</code>.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ai" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+
+<rect class="cl-box" x="180" y="20" width="200" height="50" rx="8"/>
+<text class="cl-title" x="280" y="42">UART RX interrupt</text>
+<text class="cl-small" x="280" y="58">byte arrives at RHR</text>
+
+<path class="cl-arr" d="M280 70 V95" marker-end="url(#ai)"/>
+
+<rect class="cl-data" x="180" y="95" width="200" height="50" rx="8"/>
+<text class="cl-title" x="280" y="117">uartintr()</text>
+<text class="cl-small" x="280" y="133">reads RHR, calls consoleintr()</text>
+
+<path class="cl-arr" d="M280 145 V170" marker-end="url(#ai)"/>
+
+<rect class="cl-tag" x="120" y="170" width="320" height="60" rx="8"/>
+<text class="cl-title" x="280" y="192">consoleintr(c)</text>
+<text class="cl-small" x="280" y="210">Ctrl-P / Ctrl-U / Ctrl-D / BS / char</text>
+<text class="cl-small" x="280" y="224">appends to cons.buf[128]</text>
+
+<path class="cl-arr" d="M280 230 V255" marker-end="url(#ai)"/>
+
+<rect class="cl-aad" x="120" y="255" width="320" height="50" rx="8"/>
+<text class="cl-title" x="280" y="277">cons.buf[INPUT_BUF]</text>
+<text class="cl-small" x="280" y="293">line buffer - 128 bytes</text>
+
+<path class="cl-arr" d="M280 305 V330" marker-end="url(#ai)"/>
+
+<rect class="cl-key" x="120" y="330" width="320" height="60" rx="8"/>
+<text class="cl-title" x="280" y="352">consoleread()</text>
+<text class="cl-small" x="280" y="370">sleep() until newline</text>
+<text class="cl-small" x="280" y="384">copyout() to user space</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 23: SUMMARY                                          -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">Summary - Key Takeaways</h2>
+<div class="tiles tiles-3">
+<div class="tile b">
+<h4>1. Kernel = init functions + scheduler</h4>
+<p><code>main()</code> calls a sequence of <code>*init()</code> functions, each setting up one subsystem, then calls <code>scheduler()</code> which never returns. The boot path is: <code>entry.S</code> (M-mode) -> <code>start.c</code> (M->S) -> <code>main()</code> (S-mode).</p>
+</div>
+<div class="tile g">
+<h4>2. Syscalls are 5 steps</h4>
+<p><code>user.h</code> prototype -> <code>usys.pl</code> stub -> <code>syscall.h</code> number -> <code>syscall.c</code> dispatch -> <code>sys_*.c</code> implementation. The <code>ecall</code> instruction bridges user and kernel.</p>
+</div>
+<div class="tile o">
+<h4>3. Always use locks</h4>
+<p>Every shared structure has a lock. <code>acquire/release</code> for spinlocks, <code>sleeplock</code> for long waits. <code>push_off/pop_off</code> manage interrupt state. Never sleep holding a spinlock.</p>
+</div>
+<div class="tile r">
+<h4>4. Never dereference user pointers</h4>
+<p>Always use <code>copyin()</code> / <code>copyout()</code> / <code>copyinstr()</code> to move data across the user/kernel boundary. Direct dereference is a security hole and a crash waiting to happen.</p>
+</div>
+<div class="tile p">
+<h4>5. kalloc fills with junk</h4>
+<p><code>kalloc()</code> fills pages with <code>0x05</code>; <code>kfree()</code> fills with <code>0x01</code>. This catches dangling references and use-after-free bugs during development.</p>
+</div>
+<div class="tile">
+<h4>6. Console is layered</h4>
+<p>UART (hardware) -> <code>uartintr/uartputc</code> (driver) -> <code>consoleintr/consolewrite</code> (line discipline) -> <code>consoleread</code> (user-facing). Interrupt-driven for normal I/O, polled for panic.</p>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SLIDE 24: REFERENCES                                        -->
+<!-- =========================================================== -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;overflow-y:auto">
+<div class="ref-item">
+<span class="ref-badge">xv6</span>
+<div>
+<h4>xv6 Source Code (RISC-V)</h4>
+<p>MIT 6.1810 / 6.S081 course OS. <code>kernel/</code> directory: <code>entry.S</code>, <code>start.c</code>, <code>main.c</code>, <code>proc.c</code>, <code>vm.c</code>, <code>syscall.c</code>, <code>sys_proc.c</code>, <code>spinlock.c</code>, <code>kalloc.c</code>, <code>console.c</code>, <code>uart.c</code>.</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">MIT 6.1810</span>
+<div>
+<h4>MIT 6.1810 (6.S081) - Operating System Engineering</h4>
+<p>Course website: <code>pdos.csail.mit.edu/6.1810/</code>. Lecture notes on system calls, page tables, traps, and interrupts. xv6 book (xv6 a simple, Unix-like teaching operating system).</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">RISC-V</span>
+<div>
+<h4>RISC-V Privileged ISA Specification</h4>
+<p>M-mode, S-mode, <code>mret</code>, <code>medeleg/mideleg</code>, <code>stvec</code>, <code>sstatus.SPP</code>, <code>satp</code> (page table base). Sv39 three-level page table format.</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">memlayout.h</span>
+<div>
+<h4>xv6 kernel/memlayout.h</h4>
+<p>Defines <code>KERNBASE</code>, <code>PHYSTOP</code>, <code>TRAMPOLINE</code>, <code>TRAPFRAME</code>, <code>UART0</code>, <code>VIRTIO0</code>. The memory map constants referenced throughout this deck.</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">proc.h</span>
+<div>
+<h4>xv6 kernel/proc.h</h4>
+<p>Defines <code>struct proc</code>, <code>struct trapframe</code>, <code>struct context</code>, <code>struct cpu</code>. The core data structures of the process subsystem.</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">VGU</span>
+<div>
+<h4>VGU Operating Systems - Lecture 04</h4>
+<p>Course materials, Vietnamese-German University. Slides, lab assignments, and xv6 source walkthroughs.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =========================================================== -->
+<!-- FOOTER & NAVIGATION                                        -->
+<!-- =========================================================== -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 24</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . XV6 KERNEL PROGRAMMING</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

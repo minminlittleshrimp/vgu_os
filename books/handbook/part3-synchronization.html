@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 3: Synchronization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item active" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 6: Synchronization Tools</div>
+      <a class="nav-item" data-target="sec-6-1"><span class="nav-num">6.1</span>Background</a>
+      <a class="nav-item" data-target="sec-6-2"><span class="nav-num">6.2</span>Critical-Section Problem</a>
+      <a class="nav-item" data-target="sec-6-3"><span class="nav-num">6.3</span>Peterson's Solution</a>
+      <a class="nav-item" data-target="sec-6-4"><span class="nav-num">6.4</span>Hardware Support</a>
+      <a class="nav-item" data-target="sec-6-5"><span class="nav-num">6.5</span>Mutex Locks</a>
+      <a class="nav-item" data-target="sec-6-6"><span class="nav-num">6.6</span>Semaphores</a>
+      <a class="nav-item" data-target="sec-6-7"><span class="nav-num">6.7</span>Monitors</a>
+      <a class="nav-item" data-target="sec-6-8"><span class="nav-num">6.8</span>Liveness</a>
+      <a class="nav-item" data-target="sec-6-9"><span class="nav-num">6.9</span>Evaluation</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 7: Synchronization Examples</div>
+      <a class="nav-item" data-target="sec-7-1"><span class="nav-num">7.1</span>Classic Problems</a>
+      <a class="nav-item" data-target="sec-7-2"><span class="nav-num">7.2</span>Kernel Synchronization</a>
+      <a class="nav-item" data-target="sec-7-3"><span class="nav-num">7.3</span>POSIX Synchronization</a>
+      <a class="nav-item" data-target="sec-7-4"><span class="nav-num">7.4</span>Java Synchronization</a>
+      <a class="nav-item" data-target="sec-7-5"><span class="nav-num">7.5</span>Alternative Approaches</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 8: Deadlocks</div>
+      <a class="nav-item" data-target="sec-8-1"><span class="nav-num">8.1</span>System Model</a>
+      <a class="nav-item" data-target="sec-8-2"><span class="nav-num">8.2</span>Deadlock in Multithreaded Apps</a>
+      <a class="nav-item" data-target="sec-8-3"><span class="nav-num">8.3</span>Deadlock Characterization</a>
+      <a class="nav-item" data-target="sec-8-4"><span class="nav-num">8.4</span>Methods for Handling</a>
+      <a class="nav-item" data-target="sec-8-5"><span class="nav-num">8.5</span>Deadlock Prevention</a>
+      <a class="nav-item" data-target="sec-8-6"><span class="nav-num">8.6</span>Deadlock Avoidance</a>
+      <a class="nav-item" data-target="sec-8-7"><span class="nav-num">8.7</span>Deadlock Detection</a>
+      <a class="nav-item" data-target="sec-8-8"><span class="nav-num">8.8</span>Recovery from Deadlock</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 3: Synchronization</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 6–8 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers synchronization tools (mutexes,
+semaphores, monitors), classic synchronization problems, and deadlocks.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-6-1">6.1 Background</a></li>
+<li><a href="#sec-6-2">6.2 The Critical-Section Problem</a></li>
+<li><a href="#sec-6-3">6.3 Peterson's Solution</a></li>
+<li><a href="#sec-6-4">6.4 Hardware Support for Synchronization</a></li>
+<li><a href="#sec-6-5">6.5 Mutex Locks</a></li>
+<li><a href="#sec-6-6">6.6 Semaphores</a></li>
+<li><a href="#sec-6-7">6.7 Monitors</a></li>
+<li><a href="#sec-6-8">6.8 Liveness</a></li>
+<li><a href="#sec-6-9">6.9 Evaluation</a></li>
+<li><a href="#sec-7-1">7.1 Classic Problems of Synchronization</a></li>
+<li><a href="#sec-7-2">7.2 Synchronization within the Kernel</a></li>
+<li><a href="#sec-7-3">7.3 POSIX Synchronization</a></li>
+<li><a href="#sec-7-4">7.4 Java Synchronization</a></li>
+<li><a href="#sec-7-5">7.5 Alternative Approaches</a></li>
+<li><a href="#sec-8-1">8.1 System Model</a></li>
+<li><a href="#sec-8-2">8.2 Deadlock in Multithreaded Applications</a></li>
+<li><a href="#sec-8-3">8.3 Deadlock Characterization</a></li>
+<li><a href="#sec-8-4">8.4 Methods for Handling Deadlocks</a></li>
+<li><a href="#sec-8-5">8.5 Deadlock Prevention</a></li>
+<li><a href="#sec-8-6">8.6 Deadlock Avoidance</a></li>
+<li><a href="#sec-8-7">8.7 Deadlock Detection</a></li>
+<li><a href="#sec-8-8">8.8 Recovery from Deadlock</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-1">6.1 Background</h2>
+
+<p>When multiple threads or processes access shared data concurrently, the final result can
+depend on the order of execution. Without synchronization, this leads to
+<strong>race conditions</strong>—situations where the outcome depends on the timing of
+thread execution. Consider a simple counter increment: <code class="code-inline">counter++</code>
+looks like one operation, but it is actually three: (1) read <code class="code-inline">counter</code>
+into a register, (2) increment the register, (3) write the register back to
+<code class="code-inline">counter</code>. If two threads do this simultaneously, one
+thread's update can be lost.</p>
+
+<div class="code-block"><span class="comment">/* Race condition: counter++ is not atomic */</span>
+
+<span class="comment">// Thread 1 and Thread 2 both execute counter++</span>
+<span class="comment">// counter++ expands to three instructions:</span>
+
+<span class="comment">// Thread 1                          Thread 2</span>
+<span class="reg">ld</span>   <span class="reg">t0</span>, counter      |
+<span class="reg">addi</span> <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="number">1</span>       |
+<span class="reg">sd</span>   <span class="reg">t0</span>, counter      |
+       |                       <span class="reg">ld</span>   <span class="reg">t1</span>, counter   <span class="comment">// reads OLD value!</span>
+       |                       <span class="reg">addi</span> <span class="reg">t1</span>, <span class="reg">t1</span>, <span class="number">1</span>
+       |                       <span class="reg">sd</span>   <span class="reg">t1</span>, counter
+
+<span class="comment">// Result: counter incremented by 1, not 2!</span></div>
+
+<p>A <strong>race condition</strong> occurs when multiple threads access shared data and at
+least one is writing, and the result depends on the order of access. Race conditions are
+notoriously hard to debug because they are <strong>non-deterministic</strong>: the bug may
+appear only under specific timing conditions, and may not reproduce on every run. A program
+that passes all tests may still have a race condition that manifests only in production
+under load.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Race Conditions Are Dangerous</div>
+<p>Race conditions can cause: <strong>lost updates</strong> (one thread's write is
+overwritten), <strong>inconsistent reads</strong> (a read sees a partially-updated data
+structure), and <strong>data corruption</strong> (a data structure is left in an invalid
+state). They are among the hardest bugs to find because they may not reproduce reliably
+and may only appear under specific load or timing conditions.</p>
+</div>
+
+<p>To prevent race conditions, we need <strong>synchronization</strong>—mechanisms that
+ensure only one thread at a time can access shared data, or that coordinate access so the
+result is correct regardless of execution order. The fundamental concept is the
+<strong>critical section</strong>: a section of code that accesses shared data and must
+not be executed by more than one thread at a time. By protecting critical sections, we
+prevent races.</p>
+
+<p>In xv6, race conditions are a real concern because the kernel is multiprocessor-capable.
+Multiple CPUs can execute kernel code simultaneously, accessing shared data structures
+like the process table. xv6 uses <strong>spinlocks</strong> (in
+<code class="code-inline">spinlock.c</code>) to protect these structures. The
+<code class="code-inline">ptable.lock</code> protects the process table; the
+<code class="code-inline">kmem.lock</code> protects the memory allocator. Without these
+locks, concurrent access would corrupt the data structures.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-2">6.2 The Critical-Section Problem</h2>
+
+<p>The <strong>critical-section problem</strong> is: design a protocol that threads can
+use to coordinate access to shared data. Each thread has a <strong>critical section</strong>
+of code where it accesses shared data. The protocol must satisfy three requirements:</p>
+
+<ol>
+<li><strong>Mutual exclusion</strong>: If thread $T_i$ is executing in its critical
+section, no other thread can be executing in its critical section.</li>
+<li><strong>Progress</strong>: If no thread is in a critical section and some threads want
+to enter, the selection of which thread enters cannot be postponed indefinitely.</li>
+<li><strong>Bounded waiting</strong>: There must be a bound on how many times other
+threads can enter their critical sections after a thread has requested entry and before it
+is granted entry (prevents starvation).</li>
+</ol>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ The Three Requirements</div>
+<p><strong>Mutual exclusion</strong>: only one at a time.<br>
+<strong>Progress</strong>: if the critical section is free and someone wants in, someone
+gets in (no deadlock).<br>
+<strong>Bounded waiting</strong>: a waiting thread eventually gets in (no starvation).</p>
+</div>
+
+<p>A general structure for a solution is:</p>
+
+<div class="code-block"><span class="comment">/* Critical section structure */</span>
+
+<span class="keyword">do</span> {
+    <span class="comment">// entry section — request access</span>
+    acquire_lock();
+
+    <span class="comment">// critical section — access shared data</span>
+    shared_data++;
+
+    <span class="comment">// exit section — release access</span>
+    release_lock();
+
+    <span class="comment">// remainder section — other work</span>
+} <span class="keyword">while</span> (<span class="number">1</span>);</div>
+
+<p>The challenge is implementing <code class="code-inline">acquire_lock()</code> and
+<code class="code-inline">release_lock()</code> correctly. The solution must work on
+multiprocessor systems (where threads truly run in parallel) and must handle the case
+where a thread is preempted at any point. Solutions fall into two categories:
+<strong>software solutions</strong> (like Peterson's algorithm) that use only shared
+variables, and <strong>hardware solutions</strong> that use special CPU instructions.</p>
+
+<p>A key assumption is that shared variables are not reordered by the compiler or
+hardware. In practice, compilers and CPUs reorder instructions for performance, which can
+break software-only solutions. This is why modern solutions use <strong>memory barriers</strong>
+(or <strong>fences</strong>) and <strong>atomic operations</strong> provided by the
+hardware.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-3">6.3 Peterson's Solution</h2>
+
+<p><strong>Peterson's solution</strong> is a classic software-only solution to the
+critical-section problem for two threads. It uses two shared variables:
+<code class="code-inline">int flag[2]</code> (indicating each thread's interest in entering)
+and <code class="code-inline">int turn</code> (indicating whose turn it is). The algorithm
+is elegant and satisfies all three requirements—<em>assuming</em> that memory accesses
+are not reordered.</p>
+
+<div class="code-block"><span class="comment">/* Peterson's solution for two threads */</span>
+
+<span class="keyword">int</span> flag[<span class="number">2</span>] = {<span class="number">0</span>, <span class="number">0</span>};
+<span class="keyword">int</span> turn = <span class="number">0</span>;
+
+<span class="comment">// Thread 0 (i = 0, j = 1)</span>
+<span class="keyword">do</span> {
+    flag[<span class="number">0</span>] = <span class="number">1</span>;        <span class="comment">// I want to enter</span>
+    turn = <span class="number">1</span>;            <span class="comment">// but give priority to the other</span>
+    <span class="keyword">while</span> (flag[<span class="number">1</span>] &amp;&amp; turn == <span class="number">1</span>);  <span class="comment">// wait if other wants in and it's their turn</span>
+
+    <span class="comment">// critical section</span>
+
+    flag[<span class="number">0</span>] = <span class="number">0</span>;        <span class="comment">// I'm done</span>
+
+    <span class="comment">// remainder section</span>
+} <span class="keyword">while</span> (<span class="number">1</span>);</div>
+
+<p>The key insight is the <code class="code-inline">turn</code> variable: even if both
+threads set their flags simultaneously, only one can set <code class="code-inline">turn</code>
+last, and that determines who enters first. If thread 0 sets <code class="code-inline">turn = 1</code>
+last, then <code class="code-inline">turn == 1</code> is true, so thread 0 waits while
+thread 1 (for which <code class="code-inline">turn != 1</code> from its perspective) can
+enter. This guarantees mutual exclusion.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ How Peterson's Works</div>
+<p>Thread $i$ sets <code class="code-inline">flag[i] = 1</code> (I want in) and
+<code class="code-inline">turn = j</code> (but you go first). Then it waits while the other
+wants in <em>and</em> it's the other's turn. The <code class="code-inline">turn</code>
+variable breaks the tie when both want in: the last writer of
+<code class="code-inline">turn</code> defers to the other.</p>
+</div>
+
+<p><strong>Limitations:</strong> Peterson's solution assumes that loads and stores are
+<strong>atomic</strong> and <strong>not reordered</strong>. On modern CPUs, this is not
+guaranteed: compilers may reorder the <code class="code-inline">flag[i] = 1</code> and
+<code class="code-inline">turn = j</code> writes, or the CPU may reorder them at runtime.
+This can break the algorithm. To make it work on modern hardware, you need
+<strong>memory barriers</strong> after each write. In practice, Peterson's is mainly of
+historical and pedagogical interest; real systems use hardware-supported locks.</p>
+
+<p>Peterson's can be generalized to $n$ threads, but the generalization (the
+<strong>Bakery algorithm</strong> by Leslie Lamport) is more complex. The Bakery algorithm
+assigns each thread a "ticket number" (like a deli), and the thread with the lowest number
+enters first. Ties are broken by thread ID. This satisfies all three requirements for
+$n$ threads, but again assumes atomic, unordered memory access.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-4">6.4 Hardware Support for Synchronization</h2>
+
+<p>Software-only solutions like Peterson's are fragile on modern hardware. To provide
+robust synchronization, CPU designers include special <strong>atomic instructions</strong>
+that execute indivisibly. These are the foundation of all practical synchronization
+primitives.</p>
+
+<p>The most fundamental is <strong>test-and-set</strong> (or
+<code class="code-inline">tas</code>): it atomically reads a memory location, sets it to
+<code class="code-inline">true</code>, and returns the old value. Using
+<code class="code-inline">test-and-set</code>, we can implement a simple lock: acquire by
+looping until <code class="code-inline">test-and-set</code> returns
+<code class="code-inline">false</code> (meaning we set it to
+<code class="code-inline">true</code>); release by setting it to
+<code class="code-inline">false</code>.</p>
+
+<div class="code-block"><span class="comment">/* Lock using test-and-set */</span>
+
+<span class="keyword">boolean</span> lock = <span class="keyword">false</span>;
+
+<span class="comment">// Acquire lock (spin until we get it)</span>
+<span class="keyword">while</span> (test_and_set(&amp;lock))  <span class="comment">// returns old value</span>
+    ;  <span class="comment">// spin (busy-wait)</span>
+
+<span class="comment">// Critical section</span>
+
+<span class="comment">// Release lock</span>
+lock = <span class="keyword">false</span>;</div>
+
+<p>Another common instruction is <strong>compare-and-swap</strong> (CAS):
+<code class="code-inline">compare_and_swap(ptr, expected, new)</code> atomically compares
+<code class="code-inline">*ptr</code> to <code class="code-inline">expected</code>; if they
+match, it sets <code class="code-inline">*ptr = new</code> and returns
+<code class="code-inline">true</code>; otherwise it returns
+<code class="code-inline">false</code>. CAS is more powerful than test-and-set and is the
+basis for many <strong>lock-free</strong> data structures. On x86, it is the
+<code class="code-inline">cmpxchg</code> instruction; on RISC-V, it is the
+<code class="code-inline">lr</code> (load-reserved) / <code class="code-inline">sc</code>
+(store-conditional) pair.</p>
+
+<div class="code-block"><span class="comment">/* RISC-V atomic exchange: lr (load-reserved) + sc (store-conditional) */</span>
+
+<span class="comment">// Atomically: old = *addr; *addr = new; return old</span>
+<span class="label">atomic_swap:</span>
+    lr.w    <span class="reg">t0</span>, (<span class="reg">a0</span>)       <span class="comment">// load-reserved: t0 = *a0</span>
+    sc.w    <span class="reg">t1</span>, <span class="reg">a1</span>, (<span class="reg">a0</span>)  <span class="comment">// store-conditional: *a0 = a1, t1 = 0 if success</span>
+    bnez    <span class="reg">t1</span>, atomic_swap  <span class="comment">// retry if store failed</span>
+    mv      <span class="reg">a0</span>, <span class="reg">t0</span>          <span class="comment">// return old value</span>
+    ret</div>
+
+<p>Other atomic instructions include <strong>fetch-and-add</strong> (atomically add a value
+and return the old value) and <strong>atomic exchange</strong> (swap two values). Modern
+CPUs also provide <strong>memory barriers</strong> (or <strong>fences</strong>) to prevent
+instruction reordering: a <code class="code-inline">fence</code> instruction ensures that
+all memory operations before it complete before any after it. On x86, these are
+<code class="code-inline">mfence</code>, <code class="code-inline">lfence</code>, and
+<code class="code-inline">sfence</code>; on RISC-V, <code class="code-inline">fence</code>
+and <code class="code-inline">fence.i</code>.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 Spinlock Implementation</div>
+<p>xv6's <code class="code-inline">spinlock.c</code> uses RISC-V's
+<code class="code-inline">amoswap</code> (atomic swap) instruction to implement
+<code class="code-inline">acquire()</code> and <code class="code-inline">release()</code>.
+The <code class="code-inline">acquire()</code> function spins on
+<code class="code-inline">amoswap</code> until the lock is free. It also disables
+interrupts on the current CPU (via <code class="code-inline">push_off()</code>) to prevent
+a deadlock if a timer interrupt triggers while holding the lock.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-5">6.5 Mutex Locks</h2>
+
+<p>A <strong>mutex lock</strong> (short for <em>mutual exclusion</em>) is the simplest
+synchronization primitive. It has two states: <strong>locked</strong> and
+<strong>unlocked</strong>. A thread <strong>acquires</strong> the lock before entering a
+critical section and <strong>releases</strong> it after. Only one thread can hold the lock
+at a time; others must wait. The name "mutex" reflects its purpose: it ensures mutual
+exclusion.</p>
+
+<div class="code-block"><span class="comment">/* Mutex lock (using test-and-set) */</span>
+
+<span class="keyword">typedef</span> <span class="keyword">struct</span> {
+    <span class="keyword">boolean</span> locked;
+} mutex;
+
+<span class="keyword">void</span> mutex_acquire(mutex *m) {
+    <span class="keyword">while</span> (test_and_set(&amp;m->locked))  <span class="comment">// spin or block</span>
+        ;  <span class="comment">// busy-wait (spinlock) or sleep (blocking)</span>
+}
+
+<span class="keyword">void</span> mutex_release(mutex *m) {
+    m->locked = <span class="keyword">false</span>;  <span class="comment">// release</span>
+}
+
+<span class="comment">// Usage:</span>
+mutex_acquire(&amp;m);
+shared_counter++;   <span class="comment">// critical section</span>
+mutex_release(&amp;m);</div>
+
+<p>There are two ways to wait for a lock: <strong>spinning</strong> (busy-waiting in a
+loop, re-checking the lock) and <strong>blocking</strong> (putting the thread to sleep
+and waking it when the lock is free). A <strong>spinlock</strong> spins; a
+<strong>blocking mutex</strong> blocks. Spinning wastes CPU cycles but has low latency
+(no context switch); blocking saves CPU but has higher latency (context switch overhead).
+Spinlocks are used for <strong>short</strong> critical sections (where the wait is likely
+short); blocking mutexes are used for <strong>long</strong> critical sections (where
+spinning would waste too much CPU).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Spinlock</th><th>Blocking Mutex</th></tr>
+</thead>
+<tbody>
+<tr><td>Wait method</td><td>Busy-wait (spin)</td><td>Sleep (block)</td></tr>
+<tr><td>CPU usage</td><td>Wastes CPU while waiting</td><td>Frees CPU while waiting</td></tr>
+<tr><td>Latency</td><td>Low (no context switch)</td><td>Higher (context switch)</td></tr>
+<tr><td>Best for</td><td>Short critical sections</td><td>Long critical sections</td></tr>
+<tr><td>Used in</td><td>Kernel, low-level</td><td>User-space, high-level</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Contention and Fairness</div>
+<p>Under high <strong>contention</strong> (many threads trying to acquire the same lock),
+spinlocks waste CPU and blocking mutexes cause many context switches. Neither is fair: a
+thread that just released the lock may immediately re-acquire it, starving others. Some
+locks provide <strong>fairness</strong> (FIFO ordering) using a ticket lock, but this
+adds overhead. The xv6 spinlock is not fair; Linux's mutex can be configured for fairness.</p>
+</div>
+
+<p>In xv6, the <code class="code-inline">spinlock</code> structure (in
+<code class="code-inline">spinlock.h</code>) has a <code class="code-inline">locked</code>
+field and a <code class="code-inline">cpu</code> field (to track which CPU holds the lock,
+for debugging). The <code class="code-inline">acquire()</code> function uses
+<code class="code-inline">__sync_test_and_fetch</code> (a GCC builtin that compiles to
+<code class="code-inline">amoswap</code>) to atomically acquire the lock, and
+<code class="code-inline">release()</code> uses a simple store (with a memory barrier).
+The <code class="code-inline">push_off()</code>/<code class="code-inline">pop_off()</code>
+functions manage interrupt disabling to prevent deadlocks with interrupt handlers.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-6">6.6 Semaphores</h2>
+
+<p>A <strong>semaphore</strong> is a more general synchronization tool than a mutex.
+Invented by Edsger Dijkstra, a semaphore $S$ is an integer variable with two atomic
+operations: <code class="code-inline">wait(S)</code> (also called
+<code class="code-inline">P</code> or <code class="code-inline">down</code>) and
+<code class="code-inline">signal(S)</code> (also called <code class="code-inline">V</code>
+or <code class="code-inline">up</code>). <code class="code-inline">wait</code> decrements
+$S$ and blocks if $S$ becomes negative; <code class="code-inline">signal</code> increments
+$S$ and wakes a waiting thread if any.</p>
+
+<div class="code-block"><span class="comment">/* Semaphore operations */</span>
+
+<span class="keyword">typedef</span> <span class="keyword">struct</span> {
+    <span class="keyword">int</span> value;
+    <span class="keyword">struct</span> process *wait_queue;  <span class="comment">// blocked processes</span>
+} semaphore;
+
+<span class="keyword">void</span> wait(semaphore *S) {
+    S->value--;
+    <span class="keyword">if</span> (S->value &lt; <span class="number">0</span>) {
+        add_to_queue(current_process, S->wait_queue);
+        block();  <span class="comment">// sleep until signaled</span>
+    }
+}
+
+<span class="keyword">void</span> signal(semaphore *S) {
+    S->value++;
+    <span class="keyword">if</span> (S->value &lt;= <span class="number">0</span>) {
+        process *p = remove_from_queue(S->wait_queue);
+        wakeup(p);  <span class="comment">// wake one waiting process</span>
+    }
+}</div>
+
+<p>Semaphores come in two types. A <strong>counting semaphore</strong> can have any value
+and is used to control access to a resource with multiple instances (e.g., a pool of $N$
+printers: initialize to $N$, <code class="code-inline">wait</code> to acquire,
+<code class="code-inline">signal</code> to release). A <strong>binary semaphore</strong>
+has values 0 or 1 and is essentially a mutex (though without an "owner" concept). The
+key difference from a mutex is that a semaphore can be
+<strong>signaled by any thread</strong>, while a mutex should only be released by its
+owner.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Semaphore vs. Mutex</div>
+<p>A <strong>mutex</strong> is for <em>mutual exclusion</em>: one thread acquires, the
+same thread releases. It has an "owner."<br>
+A <strong>binary semaphore</strong> is similar but can be signaled by any thread (no
+owner).<br>
+A <strong>counting semaphore</strong> generalizes to $N$ resources. Use a mutex for
+protecting critical sections; use a counting semaphore for resource pools.</p>
+</div>
+
+<p>Semaphores are powerful but <strong>error-prone</strong>. A missed
+<code class="code-inline">signal</code> leads to deadlock; a missed
+<code class="code-inline">wait</code> leads to a race. A
+<code class="code-inline">signal</code> without a corresponding
+<code class="code-inline">wait</code> is a bug. Because semaphores are low-level, they
+require discipline. Higher-level constructs like <strong>monitors</strong> (Section 6.7)
+encapsulate synchronization to prevent these errors.</p>
+
+<p>A classic use of semaphores is the <strong>bounded-buffer</strong> (producer-consumer)
+problem. We use three semaphores: <code class="code-inline">empty</code> (counts empty
+slots, initialized to $N$), <code class="code-inline">full</code> (counts filled slots,
+initialized to 0), and <code class="code-inline">mutex</code> (protects the buffer,
+initialized to 1). The producer <code class="code-inline">wait</code>s on
+<code class="code-inline">empty</code> (wait for a free slot), then
+<code class="code-inline">wait</code>s on <code class="code-inline">mutex</code> (enter
+critical section), adds an item, <code class="code-inline">signal</code>s
+<code class="code-inline">mutex</code>, and <code class="code-inline">signal</code>s
+<code class="code-inline">full</code> (announce a new item). The consumer does the
+reverse.</p>
+
+<div class="code-block"><span class="comment">/* Bounded buffer with semaphores */</span>
+
+semaphore empty = N;   <span class="comment">// N empty slots</span>
+semaphore full  = <span class="number">0</span>;    <span class="comment">// 0 full slots</span>
+semaphore mutex = <span class="number">1</span>;    <span class="comment">// buffer lock</span>
+
+<span class="comment">// Producer</span>
+<span class="keyword">while</span> (<span class="number">1</span>) {
+    item = produce();
+    wait(&amp;empty);    <span class="comment">// wait for empty slot</span>
+    wait(&amp;mutex);    <span class="comment">// enter critical section</span>
+    add_item(buffer, item);
+    signal(&amp;mutex);  <span class="comment">// leave critical section</span>
+    signal(&amp;full);   <span class="comment">// announce item available</span>
+}
+
+<span class="comment">// Consumer</span>
+<span class="keyword">while</span> (<span class="number">1</span>) {
+    wait(&amp;full);     <span class="comment">// wait for item</span>
+    wait(&amp;mutex);    <span class="comment">// enter critical section</span>
+    item = remove_item(buffer);
+    signal(&amp;mutex);  <span class="comment">// leave critical section</span>
+    signal(&amp;empty);  <span class="comment">// announce slot free</span>
+    consume(item);
+}</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Deadlock with Semaphores</div>
+<p>If the producer (or consumer) acquires <code class="code-inline">mutex</code> before
+<code class="code-inline">empty</code> (or <code class="code-inline">full</code>), a
+deadlock can occur: the producer holds <code class="code-inline">mutex</code> and waits
+for <code class="code-inline">empty</code> (buffer full), while the consumer waits for
+<code class="code-inline">mutex</code> to consume. The rule: always acquire the resource
+semaphore (<code class="code-inline">empty</code>/<code class="code-inline">full</code>)
+before the mutex.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-7">6.7 Monitors</h2>
+
+<p>A <strong>monitor</strong> is a high-level synchronization construct that encapsulates
+shared data and the operations on it. A monitor is like a class: it has private data
+(accessible only through its methods) and public methods. Only one thread can be executing
+inside the monitor at a time, so the data is automatically protected. This prevents the
+errors that arise from manually using semaphores.</p>
+
+<div class="code-block"><span class="comment">/* Monitor example (pseudocode) */</span>
+
+<span class="keyword">monitor</span> BankAccount {
+    <span class="keyword">int</span> balance = <span class="number">0</span>;
+    condition sufficient_funds;
+
+    <span class="keyword">void</span> deposit(<span class="keyword">int</span> amount) {
+        balance += amount;
+        signal(sufficient_funds);  <span class="comment">// wake a waiter if any</span>
+    }
+
+    <span class="keyword">void</span> withdraw(<span class="keyword">int</span> amount) {
+        <span class="keyword">while</span> (balance &lt; amount)
+            wait(sufficient_funds);  <span class="comment">// release monitor, wait</span>
+        balance -= amount;
+    }
+}
+
+<span class="comment">// Only one thread in deposit() or withdraw() at a time.</span>
+<span class="comment">// No explicit lock needed — monitor enforces mutual exclusion.</span></div>
+
+<p>Monitors use <strong>condition variables</strong> for threads to wait for specific
+conditions. A condition variable has two operations: <code class="code-inline">wait()</code>
+(release the monitor lock, block until signaled, then re-acquire) and
+<code class="code-inline">signal()</code> (wake one waiting thread). A third operation,
+<code class="code-inline">broadcast()</code>, wakes all waiting threads. The key is that
+<code class="code-inline">wait()</code> atomically releases the lock and blocks, preventing
+a race where a signal is missed.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Condition Variables</div>
+<p>A <strong>condition variable</strong> is always associated with a lock. The pattern is:
+<code class="code-inline">lock(); while (!condition) wait(cv); /* do work */ signal(cv);
+unlock();</code>. The <code class="code-inline">while</code> (not
+<code class="code-inline">if</code>) is important: after waking, the condition may no
+longer be true (another thread may have changed it), so we must re-check. This is called
+a <strong>loop invariant</strong> check.</p>
+</div>
+
+<p>There are two semantics for <code class="code-inline">signal()</code>:
+<strong>signal-and-wait</strong> (the signaling thread waits until the signaled thread
+exits the monitor) and <strong>signal-and-continue</strong> (the signaling thread
+continues, and the signaled thread must wait to re-enter). Most implementations use
+signal-and-continue, which is more flexible. The choice affects how conditions must be
+checked (always use a <code class="code-inline">while</code> loop with
+signal-and-continue).</p>
+
+<p>Monitors are a language-level construct: they are supported by some languages (Java's
+<code class="code-inline">synchronized</code> is monitor-like; Mesa, Modula, and Java have
+native support). In C, monitors are simulated using mutexes and condition variables (the
+POSIX <code class="code-inline">pthread_mutex_t</code> and
+<code class="code-inline">pthread_cond_t</code>). The advantage of monitors is that the
+compiler or runtime enforces mutual exclusion, reducing the chance of programmer error.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Why Monitors?</div>
+<p>Monitors <strong>encapsulate</strong> synchronization: the lock is implicit, and
+condition variables are tied to the monitor. This makes code easier to write and
+maintain—you can't forget to acquire the lock, and you can't signal the wrong condition
+variable. The trade-off is less flexibility: you can't, for example, hold two locks at
+once (which is sometimes needed for complex data structures).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-8">6.8 Liveness</h2>
+
+<p><strong>Liveness</strong> refers to a set of properties that require a system to make
+progress. While <strong>safety</strong> properties (like mutual exclusion) ensure that
+"bad things don't happen," <strong>liveness</strong> properties ensure that "good things
+eventually happen." The main liveness failures are <strong>deadlock</strong>,
+<strong>starvation</strong>, and <strong>priority inversion</strong>.</p>
+
+<p><strong>Deadlock</strong> occurs when threads are waiting for each other indefinitely.
+For example, thread A holds lock 1 and waits for lock 2, while thread B holds lock 2 and
+waits for lock 1. Neither can proceed. Deadlocks are covered in detail in Chapter 8.
+The key is that deadlocks involve a <strong>cycle of waiting</strong>: each thread in the
+cycle holds a resource that the next thread needs.</p>
+
+<p><strong>Starvation</strong> occurs when a thread is indefinitely denied access to
+resources. For example, in priority scheduling without aging, a low-priority thread may
+never run if higher-priority threads keep arriving. Starvation is a liveness failure: the
+thread is not deadlocked (it could run if given the chance), but it never gets the chance.
+Solutions include <strong>aging</strong> (gradually increasing priority) and
+<strong>fair</strong> locking (FIFO order).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Priority Inversion</div>
+<p><strong>Priority inversion</strong> occurs when a high-priority thread is forced to
+wait for a low-priority thread that holds a resource it needs. If a medium-priority thread
+preempts the low-priority thread, the high-priority thread is effectively blocked by a
+lower-priority thread. The <strong>Mars Pathfinder</strong> mission (1997) experienced
+this: a low-priority data-gathering thread held a lock that a high-priority
+communications thread needed, and a medium-priority thread preempted the low-priority
+thread, causing the system to reset repeatedly. The fix was the <strong>priority
+inheritance protocol</strong>.</p>
+</div>
+
+<p>The <strong>priority inheritance protocol</strong> solves priority inversion: when a
+low-priority thread holds a lock that a high-priority thread needs, the low-priority
+thread temporarily <strong>inherits</strong> the high priority, preventing medium-priority
+threads from preempting it. Once it releases the lock, it returns to its original priority.
+This ensures that the high-priority thread gets the resource as soon as possible. Some
+systems also use the <strong>priority ceiling protocol</strong>, which assigns each lock
+a priority ceiling (the highest priority of any thread that may lock it), and a thread
+holding a lock runs at that ceiling priority.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-6-9">6.9 Evaluation</h2>
+
+<p>Choosing the right synchronization tool depends on the situation. The main options are
+<strong>spinlocks</strong>, <strong>blocking mutexes</strong>,
+<strong>semaphores</strong>, <strong>monitors</strong>, and
+<strong>lock-free</strong> (atomic) approaches. Each has trade-offs in performance,
+ease of use, and applicability.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Tool</th><th>Best for</th><th>Pros</th><th>Cons</th></tr>
+</thead>
+<tbody>
+<tr><td>Spinlock</td><td>Short critical sections, kernel</td><td>Low latency</td><td>Wastes CPU, no fairness</td></tr>
+<tr><td>Blocking mutex</td><td>Long critical sections</td><td>Frees CPU</td><td>Context switch overhead</td></tr>
+<tr><td>Semaphore</td><td>Resource counting, signaling</td><td>Flexible</td><td>Error-prone</td></tr>
+<tr><td>Monitor</td><td>Encapsulated data</td><td>Safe, easy</td><td>Less flexible</td></tr>
+<tr><td>Lock-free (CAS)</td><td>High-contention, low-latency</td><td>No blocking</td><td>Complex, ABA problem</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Under <strong>low contention</strong> (few threads competing), all approaches perform
+similarly—the lock is usually free, so acquire is fast. Under <strong>high contention</strong>,
+the choice matters: spinlocks waste CPU, blocking mutexes cause context switches, and
+lock-free approaches may have high retry rates. The optimal choice depends on the
+<strong>hold time</strong> (how long the lock is held) and the
+<strong>wait time</strong> (how long threads wait). For very short critical sections,
+spinlocks are best; for long ones, blocking mutexes; for simple operations (like a counter
+increment), lock-free atomics.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Adaptive Locks</div>
+<p>Some systems use <strong>adaptive locks</strong> (or <strong>hybrid locks</strong>)
+that spin for a short time and then block if the lock doesn't become free. This combines
+the low latency of spinlocks (for short waits) with the CPU efficiency of blocking mutexes
+(for long waits). Solaris and Linux use adaptive mutexes for kernel locks.</p>
+</div>
+
+<p><strong>Lock-free</strong> approaches use atomic operations (like CAS) to update data
+without locks. This avoids deadlocks and can be faster under low contention, but is
+harder to write correctly. The <strong>ABA problem</strong> is a classic pitfall: a thread
+reads value A, another thread changes it to B then back to A, and the first thread's CAS
+succeeds (it sees A), but the data structure may have changed in ways the CAS doesn't
+detect. Solutions include <strong>hazard pointers</strong>, <strong>epoch-based
+reclamation</strong>, and <strong>versioned pointers</strong> (using the high bits of a
+pointer for a version counter).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-7-1">7.1 Classic Problems of Synchronization</h2>
+
+<p>Several classic problems illustrate the challenges of synchronization and are used to
+evaluate synchronization mechanisms. The three most famous are the
+<strong>bounded-buffer</strong> (producer-consumer) problem, the
+<strong>readers-writers</strong> problem, and the <strong>dining-philosophers</strong>
+problem.</p>
+
+<p>The <strong>Bounded-Buffer Problem</strong> (Producer-Consumer): A set of producers
+generates items and places them in a buffer of size $N$; a set of consumers removes items.
+The buffer is shared, so access must be synchronized. Producers must wait if the buffer is
+full; consumers must wait if it is empty. The solution uses three semaphores (as shown in
+Section 6.6): <code class="code-inline">empty</code> (counts empty slots),
+<code class="code-inline">full</code> (counts filled slots), and
+<code class="code-inline">mutex</code> (protects the buffer). This is the basis for many
+real-world systems: message queues, logging (producer = application, consumer = logger),
+and streaming (producer = camera, consumer = encoder).</p>
+
+<p>The <strong>Readers-Writers Problem</strong> involves a shared data structure accessed
+by two types of processes: <strong>readers</strong> (which only read) and
+<strong>writers</strong> (which read and write). Multiple readers can read simultaneously
+(no conflict), but a writer needs exclusive access (no other readers or writers). There
+are three variants: (1) <strong>first readers-writers</strong> (no reader waits unless a
+writer has permission—can starve writers), (2) <strong>second readers-writers</strong>
+(writers have priority once they request—can starve readers), and (3) <strong>third
+readers-writers</strong> (fair—no starvation). The choice depends on the application:
+databases often favor readers (more reads than writes), while logging may favor writers
+(to ensure logs are written promptly).</p>
+
+<div class="code-block"><span class="comment">/* Readers-Writers (first variant, no writer starvation) */</span>
+
+<span class="comment">// Shared state</span>
+semaphore rw_mutex = <span class="number">1</span>;  <span class="comment">// for writers</span>
+semaphore mutex = <span class="number">1</span>;      <span class="comment">// protects read_count</span>
+<span class="keyword">int</span> read_count = <span class="number">0</span>;
+
+<span class="comment">// Writer</span>
+wait(&amp;rw_mutex);
+<span class="comment">// write data</span>
+signal(&amp;rw_mutex);
+
+<span class="comment">// Reader</span>
+wait(&amp;mutex);
+read_count++;
+<span class="keyword">if</span> (read_count == <span class="number">1</span>)
+    wait(&amp;rw_mutex);  <span class="comment">// first reader locks writers</span>
+signal(&amp;mutex);
+<span class="comment">// read data</span>
+wait(&amp;mutex);
+read_count--;
+<span class="keyword">if</span> (read_count == <span class="number">0</span>)
+    signal(&amp;rw_mutex);  <span class="comment">// last reader unlocks writers</span>
+signal(&amp;mutex);</div>
+
+<p>The <strong>Dining Philosophers Problem</strong> (Dijkstra, 1965): Five philosophers
+sit around a table with five chopsticks (one between each pair). Each philosopher needs
+two chopsticks to eat. If each philosopher picks up the left chopstick and waits for the
+right, they all deadlock (each holds one chopstick and waits for another). Solutions
+include: (1) allow at most 4 philosophers to sit simultaneously (breaks the cycle), (2)
+asymmetric: odd philosophers pick left first, even pick right first (breaks symmetry),
+(3) use a waiter (a monitor that grants permission), or (4) require both chopsticks to be
+picked up atomically (using a mutex). This problem models resource allocation where
+processes need multiple resources.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Dining Philosophers in Practice</div>
+<p>The dining philosophers problem models real situations: processes needing multiple
+resources (e.g., a transaction locking multiple database rows). The deadlock in the naive
+solution (all pick left first) is a <strong>circular wait</strong>, one of the four
+conditions for deadlock (Section 8.3). Breaking any of the four conditions prevents
+deadlock.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-7-2">7.2 Synchronization within the Kernel</h2>
+
+<p>Kernel synchronization is more complex than user-space synchronization because the
+kernel runs on multiple CPUs, handles interrupts, and must not block in certain contexts.
+Different operating systems use different strategies.</p>
+
+<p>In <strong>Linux</strong>, the kernel is fully preemptive (since 2.6), so kernel code
+can be interrupted at almost any point. Linux uses several synchronization primitives:
+<strong>spinlocks</strong> (for short critical sections, especially on multiprocessors),
+<strong>mutexes</strong> (for longer critical sections, can sleep),
+<strong>semaphores</strong> (counting, can sleep), <strong>RCU</strong> (Read-Copy-Update,
+for read-mostly data), and <strong>per-CPU variables</strong> (data that is per-CPU, so no
+locking needed). The choice depends on whether the critical section can sleep (if so, use
+mutex/semaphore; if not, use spinlock) and the contention level.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Sleeping in the Kernel</div>
+<p>In the kernel, some contexts <strong>cannot sleep</strong> (block): interrupt handlers
+and atomic contexts (holding a spinlock). If you sleep while holding a spinlock, you can
+deadlock (another CPU spinning on the lock will spin forever, and if that CPU is the one
+that would wake you, you're stuck). This is why interrupt handlers use spinlocks, not
+mutexes, and do minimal work (often just queuing work for a "bottom half" that can
+sleep).</p>
+</div>
+
+<p><strong>Windows</strong> uses <strong>spinlocks</strong> for multiprocessor
+synchronization and <strong>dispatcher objects</strong> (events, semaphores, mutexes,
+timers) for higher-level synchronization. Windows uses <strong>IRQLs</strong> (Interrupt
+Request Levels) to manage interrupt priority: code at a higher IRQL cannot be preempted by
+a lower IRQL. Spinlocks raise the IRQL to <code class="code-inline">DISPATCH_LEVEL</code>,
+preventing preemption by most interrupts.</p>
+
+<p>In <strong>xv6</strong>, synchronization is simple: <strong>spinlocks</strong> are the
+only primitive. The <code class="code-inline">acquire()</code> function disables
+interrupts on the current CPU (via <code class="code-inline">push_off()</code>) and then
+spins on the lock. This prevents deadlocks with interrupt handlers on the same CPU (if an
+interrupt fired while holding a lock, and the handler tried to acquire the same lock, it
+would deadlock). The <code class="code-inline">sleep()</code> and
+<code class="code-inline">wakeup()</code> functions in
+<code class="code-inline">proc.c</code> provide a condition-variable-like mechanism for
+processes to wait for events.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 sleep()/wakeup()</div>
+<p>xv6's <code class="code-inline">sleep(chan, lock)</code> atomically releases
+<code class="code-inline">lock</code>, puts the process to sleep on channel
+<code class="code-inline">chan</code>, and reacquires <code class="code-inline">lock</code>
+when woken. <code class="code-inline">wakeup(chan)</code> wakes all processes sleeping on
+<code class="code-inline">chan</code>. The atomic release-sleep prevents the
+<strong>lost wakeup</strong> problem: if <code class="code-inline">wakeup</code> is called
+between the release and the sleep, the wakeup would be lost. By holding the lock,
+<code class="code-inline">sleep</code> ensures that
+<code class="code-inline">wakeup</code> cannot run in between.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-7-3">7.3 POSIX Synchronization</h2>
+
+<p>The <strong>POSIX</strong> standard (IEEE 1003.1) defines a set of synchronization
+primitives for C programs, provided by the <code class="code-inline">pthread</code>
+library. These are the standard synchronization tools on UNIX-like systems.</p>
+
+<p><strong>POSIX mutexes</strong> (<code class="code-inline">pthread_mutex_t</code>) provide
+mutual exclusion. <code class="code-inline">pthread_mutex_lock()</code> acquires the lock
+(blocks if held), <code class="code-inline">pthread_mutex_unlock()</code> releases it, and
+<code class="code-inline">pthread_mutex_trylock()</code> attempts to acquire without
+blocking. Mutexes can have attributes: <strong>type</strong> (normal, error-check,
+recursive), <strong>protocol</strong> (priority inheritance, priority ceiling), and
+<strong>robustness</strong> (what happens if the holder dies).</p>
+
+<div class="code-block"><span class="comment">/* POSIX mutex example */</span>
+
+<span class="preprocessor">#include</span> <span class="string">&lt;pthread.h&gt;</span>
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+<span class="keyword">int</span> counter = <span class="number">0</span>;
+
+<span class="keyword">void</span> *increment(<span class="keyword">void</span> *arg) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) {
+        pthread_mutex_lock(&amp;lock);
+        counter++;  <span class="comment">// protected</span>
+        pthread_mutex_unlock(&amp;lock);
+    }
+    <span class="keyword">return</span> NULL;
+}</div>
+
+<p><strong>POSIX semaphores</strong> come in two types: <strong>named semaphores</strong>
+(<code class="code-inline">sem_open</code>, identified by a name like a file, usable across
+processes) and <strong>unnamed semaphores</strong> (<code class="code-inline">sem_init</code>,
+in memory, usable within a process or shared memory). Operations are
+<code class="code-inline">sem_wait()</code> (decrement, block if negative) and
+<code class="code-inline">sem_post()</code> (increment, wake a waiter).
+<code class="code-inline">sem_trywait()</code> is non-blocking.</p>
+
+<p><strong>POSIX condition variables</strong> (<code class="code-inline">pthread_cond_t</code>)
+allow threads to wait for a condition. They are always used with a mutex. The pattern is:
+lock the mutex, check the condition in a <code class="code-inline">while</code> loop,
+<code class="code-inline">pthread_cond_wait()</code> if not met (atomically unlocks and
+waits), and <code class="code-inline">pthread_cond_signal()</code> or
+<code class="code-inline">pthread_cond_broadcast()</code> to wake waiters. The
+<code class="code-inline">while</code> loop handles <strong>spurious wakeups</strong>
+(waking without a signal) and races (another thread may change the condition between the
+signal and the wake).</p>
+
+<div class="code-block"><span class="comment">/* POSIX condition variable */</span>
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+<span class="keyword">int</span> ready = <span class="number">0</span>;
+
+<span class="comment">// Waiter</span>
+pthread_mutex_lock(&amp;mutex);
+<span class="keyword">while</span> (!ready)  <span class="comment">// MUST use while, not if</span>
+    pthread_cond_wait(&amp;cond, &amp;mutex);  <span class="comment">// atomically unlock + wait</span>
+<span class="comment">// ready is true, do work</span>
+pthread_mutex_unlock(&amp;mutex);
+
+<span class="comment">// Signaler</span>
+pthread_mutex_lock(&amp;mutex);
+ready = <span class="number">1</span>;
+pthread_cond_signal(&amp;cond);  <span class="comment">// wake one waiter</span>
+pthread_mutex_unlock(&amp;mutex);</div>
+
+<p>POSIX also provides <strong>read-write locks</strong>
+(<code class="code-inline">pthread_rwlock_t</code>) that allow multiple readers or one
+writer, and <strong>barriers</strong> (<code class="code-inline">pthread_barrier_t</code>)
+that cause threads to wait until a set of threads reach a point. These higher-level
+primitives simplify common patterns.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-7-4">7.4 Java Synchronization</h2>
+
+<p>Java provides built-in synchronization at the language level, making it easier to write
+correct concurrent code than in C. Every Java object has an intrinsic lock (also called a
+monitor lock), and the <code class="code-inline">synchronized</code> keyword uses it.</p>
+
+<p>A <strong>synchronized method</strong> acquires the object's lock before executing and
+releases it after. Only one thread can execute a synchronized method on the same object at
+a time. A <strong>synchronized block</strong> (<code class="code-inline">synchronized(obj)
+{ ... }</code>) is more fine-grained: it locks a specific object, allowing different
+methods to use different locks for less contention.</p>
+
+<div class="code-block"><span class="comment">/* Java synchronization */</span>
+
+<span class="keyword">class</span> Counter {
+    <span class="keyword">private int</span> count = <span class="number">0</span>;
+    <span class="keyword">private final</span> Object lock = <span class="keyword">new</span> Object();
+
+    <span class="comment">// Synchronized method: locks 'this'</span>
+    <span class="keyword">public synchronized void</span> increment() {
+        count++;
+    }
+
+    <span class="comment">// Synchronized block: locks 'lock'</span>
+    <span class="keyword">public void</span> decrement() {
+        <span class="keyword">synchronized</span> (lock) {
+            count--;
+        }
+    }
+
+    <span class="keyword">public int</span> get() {
+        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) {
+            <span class="keyword">return</span> count;
+        }
+    }
+}</div>
+
+<p>Java also provides <strong>wait()</strong>, <strong>notify()</strong>, and
+<strong>notifyAll()</strong> methods (on <code class="code-inline">Object</code>) for
+condition synchronization, used within synchronized blocks. <code class="code-inline">wait()</code>
+releases the lock and blocks; <code class="code-inline">notify()</code> wakes one waiting
+thread; <code class="code-inline">notifyAll()</code> wakes all. As with POSIX, the
+<code class="code-inline">while</code> loop pattern is essential to handle spurious
+wakeups and races.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Java's java.util.concurrent</div>
+<p>Modern Java (since 5.0) provides the <code class="code-inline">java.util.concurrent</code>
+package with higher-level tools: <code class="code-inline">ReentrantLock</code> (a more
+flexible lock with <code class="code-inline">tryLock()</code> and fairness),
+<code class="code-inline">Semaphore</code>, <code class="code-inline">CountDownLatch</code>,
+<code class="code-inline">CyclicBarrier</code>,
+<code class="code-inline">ConcurrentHashMap</code> (a thread-safe map),
+<code class="code-inline">BlockingQueue</code> (a thread-safe queue for producer-consumer),
+and <code class="code-inline">AtomicInteger</code>/<code class="code-inline">AtomicReference</code>
+(lock-free atomics). These are preferred over raw <code class="code-inline">synchronized</code>
+for new code.</p>
+</div>
+
+<p>Java's <strong>volatile</strong> keyword ensures that reads and writes to a variable are
+visible to all threads (prevents caching in registers or per-CPU caches) and prevents
+reordering. However, <code class="code-inline">volatile</code> does <em>not</em> make
+compound operations (like <code class="code-inline">++</code>) atomic. For atomic
+operations, use the <code class="code-inline">Atomic*</code> classes, which use
+hardware CAS instructions internally.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-7-5">7.5 Alternative Approaches</h2>
+
+<p>Beyond traditional locks, several alternative approaches to synchronization have been
+developed to address their limitations (deadlocks, contention, complexity).</p>
+
+<p><strong>Transactional memory</strong> applies the concept of database transactions to
+memory access. A thread executes a block of code <em>speculatively</em>: the runtime
+tracks all reads and writes. If no conflict occurs (no other thread modified the same
+data), the transaction <strong>commits</strong> (changes become visible). If a conflict
+occurs, the transaction <strong>aborts</strong> and retries. This avoids the need for
+explicit locks and can be more composable (transactions can nest). Hardware transactional
+memory (HTM) is supported by some CPUs (Intel TSX, IBM POWER); software transactional
+memory (STM) is implemented in software. The <code class="code-inline">std::experimental::atomic</code>
+in C++ and Haskell's STM are examples.</p>
+
+<div class="code-block"><span class="comment">/* Transactional memory (pseudocode) */</span>
+
+<span class="keyword">atomic</span> {
+    <span class="comment">// All reads and writes are tracked</span>
+    <span class="keyword">if</span> (account.balance &gt;= amount) {
+        account.balance -= amount;
+        target.balance += amount;
+    }
+    <span class="comment">// If another thread touched account or target,</span>
+    <span class="comment">// this whole block aborts and retries.</span>
+}</div>
+
+<p><strong>OpenMP</strong> provides compiler directives for parallelism, including
+synchronization: <code class="code-inline">#pragma omp critical</code> (a critical
+section), <code class="code-inline">#pragma omp barrier</code> (a barrier),
+<code class="code-inline">#pragma omp atomic</code> (an atomic operation), and
+<code class="code-inline">#pragma omp single</code> (only one thread executes a block).
+These are higher-level than explicit locks and integrate with the compiler's parallelization.</p>
+
+<p><strong>Functional programming</strong> offers a different approach: avoid shared
+mutable state entirely. In functional languages (Haskell, Erlang, Clojure) or functional
+styles (immutable data in Rust, Scala), data is immutable, so there are no races. When
+state must change, it is done through controlled mechanisms (software transactional memory,
+actors, or single-threaded event loops). The <strong>actor model</strong> (used in Erlang
+and Akka) has independent actors that communicate only by message passing, with no shared
+memory—eliminating the need for locks.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Choose the Right Tool</div>
+<p>For simple mutual exclusion: use a mutex or <code class="code-inline">synchronized</code>.
+For producer-consumer: use a blocking queue or semaphores. For read-heavy data: use a
+read-write lock or RCU. For simple counters: use atomic operations. For complex data
+structures with high contention: consider lock-free or transactional memory. For
+distributed systems: use message passing (actors). The best approach depends on the
+specific problem.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-1">8.1 System Model</h2>
+
+<p>A <strong>deadlock</strong> occurs when a set of processes are blocked, each holding a
+resource and waiting for a resource held by another process in the set. None can proceed,
+and none can release its resource until it gets the one it's waiting for. To understand
+deadlocks, we model a system as having <strong>resources</strong> (of various types) and
+<strong>processes</strong> that <strong>request</strong>, <strong>use</strong>, and
+<strong>release</strong> resources.</p>
+
+<p>A resource type $R_i$ has $W_i$ <strong>instances</strong>. For example, if a system has
+3 printers, the resource type "printer" has 3 instances. A process requests instances of a
+resource type; if available, the OS grants them; if not, the process waits. A process can
+request more than it holds (e.g., hold 1 printer, request another). The
+<strong>resource-allocation graph</strong> visualizes this: processes are circles,
+resources are rectangles with dots for instances, request edges point from process to
+resource, assignment edges from resource instance to process.</p>
+
+<div class="code-block"><span class="comment">/* Resource-allocation graph example */</span>
+
+<span class="comment">// Processes: P1, P2, P3</span>
+<span class="comment">// Resources: R1 (1 instance), R2 (2 instances), R3 (1 instance)</span>
+
+<span class="comment">// Current allocations:</span>
+<span class="comment">//   P1 holds R1, requests R2</span>
+<span class="comment">//   P2 holds R2 (one instance), requests R3</span>
+<span class="comment">//   P3 holds R3, requests R1</span>
+
+<span class="comment">// Graph: P1 → R2 → P2 → R3 → P3 → R1 → P1  (a cycle!)</span>
+<span class="comment">// This is a deadlock: each waits for the next.</span></div>
+
+<p>A key theorem: <strong>if the resource-allocation graph has no cycles, the system is
+not deadlocked</strong>. The converse is not always true: if each resource type has only
+one instance, a cycle implies deadlock; but if a resource type has multiple instances, a
+cycle does not necessarily mean deadlock (a process outside the cycle might release an
+instance). However, cycles are a useful indicator—most deadlocks involve cycles.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Deadlock vs. Starvation</div>
+<p><strong>Deadlock</strong>: processes are blocked forever, each waiting for a resource
+held by another in the set. No process can make progress.<br>
+<strong>Starvation</strong>: a process is indefinitely denied resources but could proceed
+if given them. Other processes make progress; the starved one does not. Deadlock implies
+starvation (for all in the cycle), but starvation can occur without deadlock.</p>
+</div>
+
+<p>Resources can be <strong>preemptable</strong> (can be taken away—e.g., memory, via
+swapping) or <strong>non-preemptable</strong> (cannot—e.g., a printer mid-print). Deadlock
+mainly concerns non-preemptable resources. For preemptable resources, the OS can resolve
+deadlock by preempting and reallocating. The classic deadlock scenarios involve
+non-preemptable resources like locks, file locks, and I/O devices.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-2">8.2 Deadlock in Multithreaded Applications</h2>
+
+<p>Deadlocks are common in multithreaded programs that use multiple locks. The classic
+scenario is the <strong>lock ordering deadlock</strong>: thread 1 acquires lock A then
+lock B, while thread 2 acquires lock B then lock A. If thread 1 gets A and thread 2 gets
+B, both wait for the other—deadlock.</p>
+
+<div class="code-block"><span class="comment">/* Deadlock from lock ordering */</span>
+
+<span class="comment">// Thread 1                    Thread 2</span>
+lock(&amp;A);                lock(&amp;B);
+lock(&amp;B);                lock(&amp;A);  <span class="comment">// deadlock!</span>
+<span class="comment">// ...                        ...</span>
+unlock(&amp;B);             unlock(&amp;A);
+unlock(&amp;A);             unlock(&amp;B);
+
+<span class="comment">// Thread 1 holds A, waits for B</span>
+<span class="comment">// Thread 2 holds B, waits for A</span>
+<span class="comment">// Neither can proceed.</span></div>
+
+<p>The standard solution is a <strong>lock ordering protocol</strong>: all threads acquire
+locks in the same global order. If both threads acquire A before B, no deadlock can occur.
+This is simple but can be hard to enforce in large codebases: a function may not know what
+locks its caller holds, leading to violations. Tools like <strong>lock linters</strong>
+(Clang's Thread Safety Analysis) can help enforce ordering at compile time.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Lock Ordering Is Hard</div>
+<p>Enforcing a global lock order is difficult in practice: (1) the order may not be obvious
+(what if A and B are in different modules?), (2) the order may conflict with other
+constraints (e.g., you need B to check a condition before acquiring A), (3) the codebase
+may be too large to audit. Alternative: use <code class="code-inline">trylock</code> with
+back-off (try to acquire, if fail, release all and retry), or use a single lock (simpler
+but less concurrent).</p>
+</div>
+
+<p>Another common deadlock is the <strong>lock-with-sleep deadlock</strong>: a thread
+holds a lock and then calls a function that sleeps (e.g., I/O, or another lock that
+blocks). If the sleep waits for a thread that needs the lock, deadlock. This is why kernel
+code must be careful not to sleep while holding a spinlock. The rule: <strong>never sleep
+while holding a spinlock</strong>.</p>
+
+<p>Deadlocks can also occur with <strong>non-lock resources</strong>: file locks, database
+locks, network connections. A database transaction that locks rows in different orders can
+deadlock with another transaction. Databases detect this and abort one transaction (a
+<strong>victim</strong>), which the application must retry. This is an example of
+<strong>deadlock detection and recovery</strong> (Section 8.7–8.8).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-3">8.3 Deadlock Characterization</h2>
+
+<p>A deadlock can only occur if <strong>all four</strong> of the following conditions hold
+simultaneously. This is the <strong>Coffman conditions</strong> (1971):</p>
+
+<ol>
+<li><strong>Mutual exclusion</strong>: At least one resource is held in non-shareable mode
+(only one process can use it at a time).</li>
+<li><strong>Hold and wait</strong>: A process holding at least one resource is waiting to
+acquire additional resources held by other processes.</li>
+<li><strong>No preemption</strong>: Resources cannot be preempted (taken away); they must
+be released voluntarily by the holding process.</li>
+<li><strong>Circular wait</strong>: There exists a set $\{P_0, P_1, ..., P_n\}$ such that
+$P_0$ waits for a resource held by $P_1$, $P_1$ waits for $P_2$, ..., $P_n$ waits for
+$P_0$.</li>
+</ol>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ The Four Conditions</div>
+<p>For deadlock to occur, <strong>all four</strong> must hold. <strong>Breaking any
+one</strong> prevents deadlock. This is the basis for deadlock prevention (Section 8.5):
+design the system so that at least one condition cannot hold.</p>
+</div>
+
+<p>The <strong>resource-allocation graph</strong> is a tool for analyzing deadlocks. Nodes
+are processes (circles) and resources (rectangles with dots for instances). Edges are
+<strong>request</strong> (process → resource) and <strong>assignment</strong> (resource
+instance → process). A cycle in the graph is <strong>necessary</strong> for deadlock (if
+each resource has one instance, it is also <strong>sufficient</strong>). If there is no
+cycle, there is no deadlock. If there is a cycle and each resource has one instance, there
+is deadlock. If there is a cycle but some resources have multiple instances, there
+<em>may</em> be deadlock (need further analysis).</p>
+
+<div class="code-block"><span class="comment">/* Detecting a cycle in the resource-allocation graph */</span>
+
+<span class="comment">// If all resource types have 1 instance:</span>
+<span class="comment">//   cycle  ⟺  deadlock</span>
+
+<span class="comment">// If some resource types have multiple instances:</span>
+<span class="comment">//   cycle  ⟹  possible deadlock (not certain)</span>
+<span class="comment">//   no cycle  ⟹  no deadlock (certain)</span>
+
+<span class="comment">// Algorithm (for single-instance resources):</span>
+<span class="comment">//   1. Build a wait-for graph: P_i → P_j if P_i waits for a resource held by P_j</span>
+<span class="comment">//   2. Check for a cycle (DFS)</span>
+<span class="comment">//   3. If cycle found, deadlock exists</span></div>
+
+<p>Understanding the four conditions helps in designing deadlock-free systems. For example,
+<strong>spooling</strong> (using a shared spool directory for printers) breaks mutual
+exclusion (multiple processes can write to the spool; only the printer daemon uses the
+printer exclusively). <strong>Acquiring all locks at once</strong> breaks hold-and-wait.
+<strong>Allowing preemption</strong> (e.g., rollback) breaks no-preemption.
+<strong>Lock ordering</strong> breaks circular wait. Each prevention strategy has costs,
+which is why most systems do not prevent deadlocks but instead detect and recover (or
+ignore them).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-4">8.4 Methods for Handling Deadlocks</h2>
+
+<p>There are three main approaches to dealing with deadlocks: (1) <strong>prevention</strong>
+(ensure the system can never enter a deadlock state), (2) <strong>avoidance</strong> (allow
+the possibility of deadlock but avoid it by careful allocation), and (3) <strong>detection
+and recovery</strong> (let deadlocks occur, detect them, and recover). A fourth approach,
+common in practice, is to <strong>ignore</strong> deadlocks (pretend they don't happen
+and let the user deal with them if they do).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Approach</th><th>Strategy</th><th>Cost</th><th>Used by</th></tr>
+</thead>
+<tbody>
+<tr><td>Prevention</td><td>Break one of the 4 conditions</td><td>Low resource utilization</td><td>Some RTOS</td></tr>
+<tr><td>Avoidance</td><td>Banker's Algorithm</td><td>Overhead, needs max needs</td><td>Rare (some DBs)</td></tr>
+<tr><td>Detection &amp; Recovery</td><td>Periodic check, abort</td><td>Recovery cost</td><td>Databases</td></tr>
+<tr><td>Ignore</td><td>Do nothing</td><td>Manual recovery</td><td>Most desktop OSes</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Deadlock prevention</strong> ensures that at least one of the four conditions
+cannot hold. This is done by system design: for example, requiring all resources to be
+acquired at once (breaks hold-and-wait), imposing a lock order (breaks circular wait), or
+making resources preemptable (breaks no-preemption). Prevention is simple but can be
+inefficient: acquiring all resources at once may hold them longer than needed, reducing
+concurrency.</p>
+
+<p><strong>Deadlock avoidance</strong> is more flexible: the system allows the possibility
+of deadlock but checks each resource request to ensure it cannot lead to deadlock. The
+classic algorithm is <strong>Dijkstra's Banker's Algorithm</strong> (Section 8.6), which
+requires knowing each process's maximum resource needs in advance. The system only grants
+a request if the resulting state is <strong>safe</strong> (there exists a sequence in which
+all processes can complete). Avoidance is more efficient than prevention but requires
+advance knowledge of needs, which is often unavailable.</p>
+
+<p><strong>Deadlock detection and recovery</strong> lets deadlocks occur but periodically
+checks for them (using the resource-allocation graph or an algorithm). When a deadlock is
+detected, the system recovers by aborting one or more processes (victims) or preempting
+resources. This is used in database systems (which detect transaction deadlocks and abort
+a victim) and some operating systems. The cost is the detection overhead and the recovery
+(aborting a process loses work).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ The Ostrich Algorithm</div>
+<p>Most general-purpose operating systems (Windows, Linux, macOS) <strong>ignore</strong>
+deadlocks. This is humorously called the <strong>ostrich algorithm</strong> (stick your
+head in the sand). The rationale: deadlocks are rare in practice, prevention/avoidance is
+expensive, and the user can kill a deadlocked process. This is acceptable for desktop and
+server systems where occasional deadlocks are tolerable, but not for critical systems
+(medical, aerospace) where deadlock prevention is mandatory.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-5">8.5 Deadlock Prevention</h2>
+
+<p>Deadlock prevention ensures that at least one of the four Coffman conditions cannot
+hold. Each strategy breaks one condition, with associated costs.</p>
+
+<p><strong>Breaking mutual exclusion</strong>: Make resources shareable. For some resources,
+this is possible: read-only files can be shared by multiple readers. A printer can be
+shared via <strong>spooling</strong> (processes write to a spool directory; a daemon
+prints sequentially). But some resources are inherently non-shareable (a printer mid-print,
+a writable file being modified). For these, mutual exclusion is unavoidable.</p>
+
+<p><strong>Breaking hold-and-wait</strong>: Require a process to request all resources at
+once, before it begins. If it gets all, it proceeds; if not, it waits (holding nothing).
+This prevents hold-and-wait (a process either holds all or none). The cost: a process may
+hold resources it doesn't yet need, reducing availability for others. Also, a process may
+not know all its needs in advance. A variant: require a process to release all held
+resources before requesting new ones.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Cost of Breaking Hold-and-Wait</div>
+<p>Acquiring all resources upfront can cause <strong>starvation</strong>: a process that
+needs many popular resources may wait forever while others acquire and release them one at
+a time. It also reduces <strong>concurrency</strong>: resources are held longer than
+necessary. This is why most systems don't use this strategy.</p>
+</div>
+
+<p><strong>Breaking no-preemption</strong>: Allow resources to be preempted. If a process
+holding resources requests another and cannot get it, it must release all its held
+resources (and later request them again). This is practical for some resources (e.g., a
+database transaction can roll back) but not others (a printer mid-print cannot be
+preempted without wasting paper). For locks, this means: if you can't get a lock, release
+all locks you hold and retry. This is the <code class="code-inline">trylock</code>-with-back-off
+approach.</p>
+
+<p><strong>Breaking circular wait</strong>: Impose a <strong>total ordering</strong> on
+resource types and require processes to request resources in increasing order. If all
+processes acquire resources in the same order, no cycle can form. For example, if locks
+are numbered 1, 2, 3, and all code acquires them in ascending order, a process holding
+lock 2 can only request lock 3 (not lock 1), so no cycle. This is the most practical
+prevention strategy and is widely used (e.g., in the Linux kernel, lock ordering is
+documented and enforced by tools).</p>
+
+<div class="code-block"><span class="comment">/* Breaking circular wait with lock ordering */</span>
+
+<span class="comment">// Assign each lock a global order: A=1, B=2, C=3</span>
+<span class="comment">// Always acquire in ascending order.</span>
+
+<span class="comment">// Correct: A then B</span>
+lock(&amp;A);  <span class="comment">// order 1</span>
+lock(&amp;B);  <span class="comment">// order 2</span>
+<span class="comment">// ...</span>
+unlock(&amp;B);
+unlock(&amp;A);
+
+<span class="comment">// WRONG: B then A — violates ordering, may deadlock</span>
+<span class="comment">// lock(&amp;B);  // order 2</span>
+<span class="comment">// lock(&amp;A);  // order 1 — VIOLATION</span></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Lock Ordering in Practice</div>
+<p>Lock ordering is the most practical deadlock prevention. The Linux kernel documents
+lock ordering in comments and uses tools (like <code class="code-inline">lockdep</code>)
+to detect violations at runtime. The rule: if you hold lock A and need lock B, and A's
+order is higher than B's, you must release A first. This requires discipline but is
+effective.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-6">8.6 Deadlock Avoidance</h2>
+
+<p>Deadlock avoidance allows the system to be in a state where deadlock is possible but
+ensures it never reaches a deadlock state. The key concept is the <strong>safe state</strong>:
+a state is safe if there exists a sequence of all processes such that each can get its
+resources, complete, and release them, even if all request their maximum needs. An
+<strong>unsafe state</strong> is not necessarily deadlocked, but a deadlock is possible.
+The system only grants requests that lead to safe states.</p>
+
+<p>The <strong>Banker's Algorithm</strong> (Dijkstra) is the classic avoidance algorithm.
+It models the system like a bank: the bank has a certain amount of money (resources), and
+each customer (process) has a credit limit (maximum need). The bank grants loans (resources)
+as long as the remaining money is enough to satisfy at least one customer's maximum need
+(that customer can complete and repay, freeing money for others). The algorithm requires
+knowing each process's <strong>maximum</strong> resource needs in advance.</p>
+
+<div class="code-block"><span class="comment">/* Banker's Algorithm data structures */</span>
+
+<span class="comment">// n = number of processes, m = number of resource types</span>
+
+<span class="keyword">int</span> Available[m];      <span class="comment">// available instances of each resource</span>
+<span class="keyword">int</span> Max[n][m];          <span class="comment">// max demand of each process</span>
+<span class="keyword">int</span> Allocation[n][m];   <span class="comment">// currently allocated to each process</span>
+<span class="keyword">int</span> Need[n][m];         <span class="comment">// remaining need = Max - Allocation</span>
+
+<span class="comment">// Safety check: is there a sequence where all can finish?</span>
+<span class="keyword">boolean</span> is_safe() {
+    <span class="keyword">int</span> Work[m] = Available;  <span class="comment">// copy</span>
+    <span class="keyword">boolean</span> Finish[n] = {<span class="keyword">false</span>};
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="comment">// Find a process i where Finish[i]=false and Need[i] &lt;= Work</span>
+        <span class="keyword">int</span> i = find(Finish, Need, Work);
+        <span class="keyword">if</span> (i == -<span class="number">1</span>) <span class="keyword">break</span>;  <span class="comment">// no such process</span>
+        Work += Allocation[i];  <span class="comment">// process i finishes, releases resources</span>
+        Finish[i] = <span class="keyword">true</span>;
+    }
+    <span class="keyword">return</span> all(Finish);  <span class="comment">// safe if all finished</span>
+}</div>
+
+<p>When a process requests resources, the Banker's Algorithm <strong>pretends</strong> to
+grant the request, checks if the resulting state is safe, and only actually grants if it
+is. If unsafe, the process must wait. This ensures the system never enters an unsafe
+state, hence never deadlocks. The algorithm is $O(m \times n^2)$ per check, which is
+expensive for large systems.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Safe vs. Unsafe vs. Deadlock</div>
+<p><strong>Safe state</strong>: the system can definitely avoid deadlock (there's a
+sequence to finish all processes).<br>
+<strong>Unsafe state</strong>: deadlock is <em>possible</em> (not certain)—the system
+might still avoid it, but can't guarantee it.<br>
+<strong>Deadlock state</strong>: no process can proceed.<br>
+Safe ⟹ not deadlocked. Unsafe ⟏ deadlock (but may not be). Avoidance keeps the system
+in safe states.</p>
+</div>
+
+<p>The <strong>resource-allocation graph algorithm</strong> is a simpler avoidance method
+for single-instance resources. It adds a <strong>claim edge</strong> (dashed, from process
+to resource it may request) in addition to request and assignment edges. A request is
+granted only if the edge can be converted to an assignment without creating a cycle. This
+is $O(n^2)$ and works only for single-instance resources. For multiple instances, the
+Banker's Algorithm is needed.</p>
+
+<p>The main limitation of avoidance is the requirement to know <strong>maximum needs</strong>
+in advance. In interactive systems, users don't know how much memory, disk, or CPU a
+process will need. This is why avoidance is rarely used in general-purpose systems but is
+used in some database systems (where transactions declare their resource needs) and
+real-time systems.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-7">8.7 Deadlock Detection</h2>
+
+<p>Instead of preventing or avoiding deadlocks, a system can let them occur and
+<strong>detect</strong> them, then recover. Detection is practical when deadlocks are rare
+and the cost of detection is lower than the cost of prevention. The detection algorithm
+runs periodically (or when resources are low) and checks if a deadlock exists.</p>
+
+<p>For <strong>single-instance resources</strong>, detection uses a <strong>wait-for
+graph</strong>: a graph where nodes are processes, and an edge $P_i \to P_j$ means $P_i$ is
+waiting for a resource held by $P_j$. A <strong>cycle</strong> in this graph indicates a
+deadlock. The algorithm runs a cycle-detection (DFS) on the wait-for graph, which is
+$O(n^2)$ where $n$ is the number of processes.</p>
+
+<div class="code-block"><span class="comment">/* Deadlock detection (single-instance resources) */</span>
+
+<span class="comment">// Build wait-for graph from current state</span>
+<span class="comment">// Edge: P_i → P_j if P_i waits for a resource held by P_j</span>
+
+<span class="keyword">boolean</span> detect_deadlock() {
+    <span class="comment">// Run cycle detection (DFS with coloring)</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (dfs_find_cycle(i))  <span class="comment">// DFS from each node</span>
+            <span class="keyword">return true</span>;  <span class="comment">// deadlock found</span>
+    }
+    <span class="keyword">return false</span>;
+}</div>
+
+<p>For <strong>multiple-instance resources</strong>, the detection algorithm is similar to
+the Banker's safety check, but instead of checking against maximum needs, it checks against
+<strong>current requests</strong>. The algorithm: let <code class="code-inline">Work =
+Available</code> and <code class="code-inline">Finish[i] = (Allocation[i] == 0)</code> for
+all $i$. Repeatedly find a process $i$ with <code class="code-inline">Finish[i] == false</code>
+and <code class="code-inline">Request[i] &lt;= Work</code>; if found, set
+<code class="code-inline">Work += Allocation[i]</code> and
+<code class="code-inline">Finish[i] = true</code>. If no such process exists and some
+<code class="code-inline">Finish[i]</code> is still false, those processes are deadlocked.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ When to Run Detection</div>
+<p>Detection can run: (1) <strong>periodically</strong> (e.g., every hour), (2) when
+resource utilization is low (a sign of deadlock), or (3) when a process waits too long.
+The trade-off: frequent detection catches deadlocks sooner but uses more CPU; infrequent
+detection saves CPU but lets deadlocks persist. Databases typically detect on each wait
+(since transactions are short).</p>
+</div>
+
+<p>Once a deadlock is detected, the system must <strong>recover</strong>. The detection
+algorithm identifies the deadlocked processes; recovery involves breaking the deadlock by
+aborting processes or preempting resources. The challenge is choosing which process(es) to
+abort (the <strong>victim selection</strong> problem) and how to recover the system state.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-8-8">8.8 Recovery from Deadlock</h2>
+
+<p>Once a deadlock is detected, the system must recover. There are three main approaches:
+<strong>aborting processes</strong>, <strong>resource preemption</strong>, and
+<strong>manual intervention</strong>.</p>
+
+<p><strong>Aborting processes</strong> is the simplest: terminate one or more deadlocked
+processes, releasing their resources. There are two variants: (1) <strong>abort all
+deadlocked processes</strong> (drastic but guaranteed to work—the cost is all the work
+done by those processes is lost), or (2) <strong>abort one at a time</strong> until the
+deadlock is resolved (less wasteful but requires re-running the detection algorithm after
+each abort). The challenge is <strong>victim selection</strong>: which process to abort?</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Victim Selection</div>
+<p>Choosing a victim involves trade-offs. Factors: (1) <strong>process priority</strong>
+(abort low-priority), (2) <strong>work done</strong> (abort the one that has done the
+least, to minimize lost work), (3) <strong>resources used</strong> (abort the one holding
+the most resources, to free them), (4) <strong>restartability</strong> (abort a process
+that can be safely restarted). The goal is to minimize total cost, but the "right" choice
+is often unclear.</p>
+</div>
+
+<p><strong>Resource preemption</strong> takes resources away from processes (rather than
+killing them). This is only possible for <strong>preemptable</strong> resources (or
+resources that can be rolled back). The process losing a resource must <strong>roll back</strong>
+to a safe state and retry. This is used in database systems (transactions can be rolled
+back) but is hard for general computation (how do you "roll back" a process that has sent
+network packets or printed pages?). Preemption also raises <strong>starvation</strong>
+concerns: if the same process is always chosen as the victim, it starves. Solutions include
+tracking how many times a process has been a victim and limiting it.</p>
+
+<p><strong>Rollback</strong> requires saving enough state to restore a process to a previous
+point. <strong>Checkpoints</strong> are periodic saves of process state; on rollback, the
+process resumes from the last checkpoint. This is expensive (saving state takes time and
+space) and is mainly used in database transactions (which have built-in rollback) and
+long-running computations (scientific simulations). For general processes, rollback is
+impractical, so abort-and-restart (from the beginning) is more common.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Database Deadlock Recovery</div>
+<p>Databases are the prime example of deadlock detection and recovery. When a transaction
+waits for a lock, the database may detect a deadlock (via wait-for graph cycle) and
+<strong>abort</strong> one transaction (the victim). The aborted transaction's changes are
+<strong>rolled back</strong> (using the undo log), and the application can retry. This is
+transparent to the user (the transaction just seems slow). This is why databases can handle
+deadlocks gracefully while general-purpose OSes often ignore them.</p>
+</div>
+
+<p>In practice, most general-purpose operating systems do <strong>not</strong> implement
+deadlock detection or recovery for general resources. They rely on: (1) careful programming
+(lock ordering), (2) timeouts (a lock request that times out is aborted), (3) user
+intervention (the user kills a hung process), and (4) the rarity of deadlocks. For
+critical resources (like database locks), the application (database) handles detection and
+recovery. For kernel resources, the kernel uses lock ordering and
+<code class="code-inline">lockdep</code> (Linux) to prevent deadlocks at development time.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return;
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

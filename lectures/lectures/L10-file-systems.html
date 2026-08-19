@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>File Systems - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">File Systems</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Inodes . file table . directory structure . logging . device files</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:820px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How does the xv6 file system work - from on-disk inodes and directory entries to the in-memory file table, system calls, crash-safe logging, and device files?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>File System Overview</h2>
+<p>The Unix file model . disk layout . superblock</p>
+</div>
+
+<!-- SLIDE 3: THE UNIX FILE MODEL -->
+<div class="slide">
+<h2 class="st">The Unix File Model</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"In Unix, everything is a file. Your keyboard is a file. Your screen is a file. The disk is a file. Even the list of files is a file (directory)."</p>
+</div>
+<div class="block ok">
+<h4>One unified interface</h4>
+<p>The same four operations work on <strong>all</strong> of them:</p>
+<ul>
+<li><code>open</code> - get a handle (file descriptor)</li>
+<li><code>read</code> - pull bytes from the file</li>
+<li><code>write</code> - push bytes into the file</li>
+<li><code>close</code> - release the handle</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>Why this matters</h4>
+<p>You don't need separate APIs for the keyboard, the screen, the disk, and directories. One set of system calls handles everything. This is the <strong>core design principle</strong> of Unix - and xv6 inherits it.</p>
+</div>
+<div class="block">
+<h4>Examples in xv6</h4>
+<table class="tbl">
+<tr><th>File</th><th>What it really is</th></tr>
+<tr><td><code>console</code></td><td>Keyboard input + screen output</td></tr>
+<tr><td><code>/</code></td><td>Root directory (list of entries)</td></tr>
+<tr><td><code>cat README</code></td><td>Regular file on disk</td></tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: XV6 FILE SYSTEM LAYOUT -->
+<div class="slide">
+<h2 class="st">xv6 File System Layout</h2>
+<p>The disk is divided into contiguous regions. Each has a fixed purpose defined in <code>fs.h</code> and <code>param.h</code>.</p>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 960 280" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ard4" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- Boot block -->
+<rect class="cl-key" height="80" rx="8" width="80" x="30" y="80"/>
+<text class="cl-title" x="70" y="110">Boot</text>
+<text class="cl-small" x="70" y="128">block 0</text>
+<!-- Super block -->
+<rect class="cl-aad" height="80" rx="8" width="80" x="120" y="80"/>
+<text class="cl-title" x="160" y="110">Super</text>
+<text class="cl-small" x="160" y="128">block 1</text>
+<!-- Log -->
+<rect class="cl-bad" height="80" rx="8" width="120" x="210" y="80"/>
+<text class="cl-title" x="270" y="110">Log</text>
+<text class="cl-small" x="270" y="128">nlog blocks</text>
+<!-- Inode blocks -->
+<rect class="cl-data" height="80" rx="8" width="140" x="340" y="80"/>
+<text class="cl-title" x="410" y="110">Inode</text>
+<text class="cl-small" x="410" y="128">blocks</text>
+<!-- Bitmap -->
+<rect class="cl-tag" height="80" rx="8" width="100" x="490" y="80"/>
+<text class="cl-title" x="540" y="110">Bitmap</text>
+<text class="cl-small" x="540" y="128">free map</text>
+<!-- Data blocks -->
+<rect class="cl-box" height="80" rx="8" width="200" x="600" y="80"/>
+<text class="cl-title" x="700" y="110">Data blocks</text>
+<text class="cl-small" x="700" y="128">file &amp; dir content</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M810 120 H860" marker-end="url(#ard4)"/>
+<text class="cl-small" x="880" y="120">...</text>
+<!-- Labels below -->
+<text class="cl-label" x="30" y="190">From fs.h:</text>
+<text class="cl-small" style="text-anchor:start" x="30" y="208">BSIZE = 1024 bytes per block</text>
+<text class="cl-small" style="text-anchor:start" x="30" y="224">ROOTINO = 1 (root directory inode)</text>
+<text class="cl-small" style="text-anchor:start" x="30" y="240">FSMAGIC = 0x10203040</text>
+<text class="cl-label" x="490" y="190">From param.h:</text>
+<text class="cl-small" style="text-anchor:start" x="490" y="208">FSSIZE = 2000 blocks (total disk)</text>
+<text class="cl-small" style="text-anchor:start" x="490" y="224">NINODE = 50 (max inodes)</text>
+</svg>
+</div>
+<div class="block note" style="margin-top:4px">
+<h4>Layout order on disk</h4>
+<p>Block 0 is unused (reserved for boot). Block 1 is the superblock. Then log, inode blocks, bitmap, and data blocks - in that order. The superblock records where each region starts.</p>
+</div>
+</div>
+
+<!-- SLIDE 5: STRUCT SUPERBLOCK -->
+<div class="slide">
+<h2 class="st">struct superblock (fs.h)</h2>
+<p>The superblock is the <strong>master header</strong> of the file system. It records the magic number, total size, and the starting block of every region.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct superblock {
+  uint magic;      // FSMAGIC = 0x10203040
+  uint size;       // total blocks (FSSIZE)
+  uint nblocks;    // number of data blocks
+  uint ninodes;    // number of inodes
+  uint nlog;       // number of log blocks
+  uint logstart;   // first log block number
+  uint inodestart; // first inode block number
+  uint bmapstart;  // first bitmap block number
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What each field does</h4>
+<ul>
+<li><strong>magic</strong> - sanity check: is this really an xv6 FS?</li>
+<li><strong>size</strong> - total blocks on the disk (2000)</li>
+<li><strong>nblocks</strong> - data blocks available for files</li>
+<li><strong>ninodes</strong> - max number of files/dirs (50)</li>
+<li><strong>nlog</strong> - blocks reserved for the log</li>
+<li><strong>logstart / inodestart / bmapstart</strong> - offsets to each region</li>
+</ul>
+</div>
+<div class="block warn">
+<h4>Read once, used everywhere</h4>
+<p><code>readsb()</code> reads the superblock from disk into memory at boot. Every other FS routine uses these values to locate inodes, the bitmap, and the log.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>Inodes</h2>
+<p>On-disk structure . block addressing . in-memory cache . operations</p>
+</div>
+
+<!-- SLIDE 7: ON-DISK INODE -->
+<div class="slide">
+<h2 class="st">On-Disk Inode - struct dinode (fs.h)</h2>
+<p>An inode is the <strong>metadata</strong> of a file: its type, size, link count, and where its data blocks live. The file name is <em>not</em> stored here - it lives in directory entries.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct dinode {
+  short type;   // file type
+  short major;  // major device no.
+  short minor;  // minor device no.
+  short nlink;  // hard link count
+  uint size;    // file size in bytes
+  uint addrs[NDIRECT + 1];
+    // 12 direct + 1 indirect
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>type values</h4>
+<table class="tbl">
+<tr><th>Value</th><th>Constant</th><th>Meaning</th></tr>
+<tr><td>0</td><td><code>0</code></td><td>free (unused)</td></tr>
+<tr><td>1</td><td><code>T_DIR</code></td><td>directory</td></tr>
+<tr><td>2</td><td><code>T_FILE</code></td><td>regular file</td></tr>
+<tr><td>3</td><td><code>T_DEVICE</code></td><td>device file</td></tr>
+</table>
+</div>
+<div class="block note">
+<h4>Key constants</h4>
+<ul>
+<li><code>NDIRECT = 12</code> - direct block pointers</li>
+<li><code>NINDIRECT = BSIZE / sizeof(uint) = 256</code> - indirect pointers</li>
+<li><code>MAXFILE = NDIRECT + NINDIRECT = 268</code> - max blocks per file</li>
+<li>Max file size = 268 x 1024 = <strong>274,432 bytes</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: INODE BLOCK ADDRESSING -->
+<div class="slide">
+<h2 class="st">Inode Block Addressing</h2>
+<p>An inode stores <code>NDIRECT + 1 = 13</code> block addresses. The first 12 point directly to data blocks. The 13th points to an <strong>indirect block</strong> containing 256 more pointers.</p>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ard8" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- Inode box -->
+<rect class="cl-aad" height="280" rx="10" width="160" x="30" y="60"/>
+<text class="cl-title" x="110" y="80">struct dinode</text>
+<text class="cl-small" x="110" y="96">type, size, nlink...</text>
+<!-- Direct pointers -->
+<text class="cl-label" x="50" y="120">addrs[0]</text>
+<text class="cl-label" x="50" y="140">addrs[1]</text>
+<text class="cl-label" x="50" y="160">addrs[2]</text>
+<text class="cl-small" x="110" y="180">...</text>
+<text class="cl-label" x="50" y="200">addrs[11]</text>
+<!-- Indirect pointer -->
+<rect class="cl-key" height="24" rx="4" width="120" x="50" y="210"/>
+<text class="cl-label" style="fill:#92400e" x="110" y="222">addrs[12] (indirect)</text>
+<!-- Arrows to direct data blocks -->
+<path class="cl-arr" d="M190 120 H280" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="60" x="280" y="108"/>
+<text class="cl-small" x="310" y="120">data 0</text>
+<path class="cl-arr" d="M190 140 H280" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="60" x="280" y="128"/>
+<text class="cl-small" x="310" y="140">data 1</text>
+<path class="cl-arr" d="M190 160 H280" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="60" x="280" y="148"/>
+<text class="cl-small" x="310" y="160">data 2</text>
+<path class="cl-arr" d="M190 200 H280" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="60" x="280" y="188"/>
+<text class="cl-small" x="310" y="200">data 11</text>
+<!-- Arrow to indirect block -->
+<path class="cl-arr" d="M170 222 H400" marker-end="url(#ard8)"/>
+<rect class="cl-key" height="200" rx="8" width="120" x="400" y="130"/>
+<text class="cl-title" style="fill:#92400e" x="460" y="150">Indirect block</text>
+<text class="cl-small" style="fill:#92400e" x="460" y="166">256 pointers</text>
+<text class="cl-label" x="420" y="190">ptr[0]</text>
+<text class="cl-label" x="420" y="210">ptr[1]</text>
+<text class="cl-small" x="460" y="230">...</text>
+<text class="cl-label" x="420" y="260">ptr[255]</text>
+<!-- Arrows from indirect to data blocks -->
+<path class="cl-arr" d="M520 190 H640" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="70" x="640" y="178"/>
+<text class="cl-small" x="675" y="190">data 12</text>
+<path class="cl-arr" d="M520 210 H640" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="70" x="640" y="198"/>
+<text class="cl-small" x="675" y="210">data 13</text>
+<path class="cl-arr" d="M520 260 H640" marker-end="url(#ard8)"/>
+<rect class="cl-data" height="24" rx="4" width="70" x="640" y="248"/>
+<text class="cl-small" x="675" y="260">data 267</text>
+<!-- Summary box -->
+<rect fill="#f0fff8" height="50" rx="8" stroke="#10b981" stroke-width="1.5" width="500" x="400" y="350"/>
+<text class="cl-title" style="font-size:12px;fill:#065f46" x="650" y="370">Total: 12 direct + 256 indirect = 268 blocks</text>
+<text class="cl-small" style="fill:#065f46" x="650" y="388">268 x 1024 = 274,432 bytes max file size</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 9: IN-MEMORY INODE -->
+<div class="slide">
+<h2 class="st">In-Memory Inode - struct inode (file.h)</h2>
+<p>The kernel keeps a cache of inodes in memory. The in-memory <code>struct inode</code> wraps the on-disk <code>dinode</code> with extra fields for locking and reference counting.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct inode {
+  uint dev;           // device number
+  uint inum;          // inode number
+  int ref;            // reference count
+  struct sleeplock lock;
+  int valid;           // has it been read from disk?
+
+  short type;          // copy of dinode fields
+  short major;
+  short minor;
+  short nlink;
+  uint size;
+  uint addrs[NDIRECT + 1];
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Extra fields vs dinode</h4>
+<ul>
+<li><strong>dev / inum</strong> - identifies which inode on which device</li>
+<li><strong>ref</strong> - how many file descriptors point to this inode</li>
+<li><strong>lock</strong> - sleeplock for safe concurrent access</li>
+<li><strong>valid</strong> - lazy read: load from disk only when first accessed</li>
+</ul>
+</div>
+<div class="block note">
+<h4>The itable</h4>
+<p>The kernel maintains a fixed-size array: <code>struct inode itable[NINODE]</code> with <code>NINODE = 50</code>. This is the <strong>inode cache</strong> - recently used inodes stay in memory.</p>
+</div>
+<div class="block warn">
+<h4>Key functions</h4>
+<ul>
+<li><code>iget(dev, inum)</code> - find or create in-memory inode, increment <code>ref</code></li>
+<li><code>iput(ip)</code> - decrement <code>ref</code>; if 0, may evict from cache</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 10: INODE OPERATIONS -->
+<div class="slide">
+<h2 class="st">Inode Operations</h2>
+<p>The kernel provides a set of functions to manage inodes. Each operates on <code>struct inode *</code> and handles disk I/O transparently.</p>
+<table class="tbl">
+<tr><th>Function</th><th>Purpose</th><th>Key detail</th></tr>
+<tr><td><code>ialloc(dev, type)</code></td><td>Allocate a new inode</td><td>Scans bitmap for free inode, sets type, writes to disk</td></tr>
+<tr><td><code>iget(dev, inum)</code></td><td>Get in-memory inode</td><td>Returns cached or newly loaded inode; increments <code>ref</code></td></tr>
+<tr><td><code>ilock(ip) / iunlock(ip)</code></td><td>Lock / unlock for access</td><td>Sleeplock; <code>ilock</code> also reads from disk if <code>!valid</code></td></tr>
+<tr><td><code>iput(ip)</code></td><td>Release inode</td><td>Decrements <code>ref</code>; if 0 and <code>nlink == 0</code>, frees blocks + inode</td></tr>
+<tr><td><code>readi(ip, dst, off, n)</code></td><td>Read data from inode</td><td>Translates offset -> block number -> <code>bread</code> -> copy</td></tr>
+<tr><td><code>writei(ip, src, off, n)</code></td><td>Write data to inode</td><td>Allocates blocks as needed via <code>bmap</code>, updates <code>size</code></td></tr>
+<tr><td><code>itrunc(ip)</code></td><td>Truncate to zero length</td><td>Frees all data blocks, resets <code>size = 0</code></td></tr>
+<tr><td><code>dirlookup(dp, name, &amp;poff)</code></td><td>Find entry in directory</td><td>Returns inode pointer for <code>name</code>; <code>poff</code> = offset in dir</td></tr>
+<tr><td><code>dirlink(dp, name, inum)</code></td><td>Add entry to directory</td><td>Creates a new <code>dirent</code> with given name and inode number</td></tr>
+</table>
+<div class="block note" style="margin-top:8px">
+<h4>Pattern: lock before use</h4>
+<p>Most operations require <code>ilock(ip)</code> first, then <code>readi</code>/<code>writei</code>/<code>dirlookup</code>, then <code>iunlock(ip)</code>. The lock ensures no other thread modifies the inode mid-operation.</p>
+</div>
+</div>
+
+<!-- SLIDE 11: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Directories</h2>
+<p>Directory entries . path resolution</p>
+</div>
+
+<!-- SLIDE 12: DIRECTORY STRUCTURE -->
+<div class="slide">
+<h2 class="st">Directory Structure</h2>
+<p>A directory is just a file whose content is an array of <code>dirent</code> entries. Each entry maps a name to an inode number.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition (fs.h)</h4>
+</div>
+<pre><code class="language-c">#define DIRSIZ 14
+
+struct dirent {
+  ushort inum;           // inode number
+  char   name[DIRSIZ];  // name (null-padded)
+};</code></pre>
+<div class="block ok">
+<h4>Key facts</h4>
+<ul>
+<li><code>DIRSIZ = 14</code> - max file name length</li>
+<li><code>inum = 0</code> means the entry is <strong>free</strong> (deleted)</li>
+<li><code>ROOTINO = 1</code> - the root directory's inode number</li>
+<li>Each entry is 16 bytes: 2 (<code>inum</code>) + 14 (<code>name</code>)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>Directories are files</h4>
+<p>Because a directory is just a file, you read it with <code>readi</code> and write it with <code>writei</code>. The only difference is that the data is interpreted as <code>dirent</code> entries.</p>
+</div>
+<div class="diag-wrap" style="min-height:200px">
+<svg class="clean-svg" viewBox="0 0 460 240" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="10" y="20">Directory file content (root inode 1)</text>
+<rect class="cl-data" height="36" rx="6" width="420" x="20" y="30"/>
+<text class="cl-title" x="230" y="48">inum=1, name="."</text>
+<rect class="cl-data" height="36" rx="6" width="420" x="20" y="70"/>
+<text class="cl-title" x="230" y="88">inum=1, name=".."</text>
+<rect class="cl-data" height="36" rx="6" width="420" x="20" y="110"/>
+<text class="cl-title" x="230" y="128">inum=3, name="README"</text>
+<rect class="cl-data" height="36" rx="6" width="420" x="20" y="150"/>
+<text class="cl-title" x="230" y="168">inum=4, name="cat"</text>
+<rect class="cl-lane" height="36" rx="6" width="420" x="20" y="190"/>
+<text class="cl-small" x="230" y="208">inum=0 (free entry)</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: PATH RESOLUTION -->
+<div class="slide">
+<h2 class="st">Path Resolution</h2>
+<p>Resolving a path like <code>/home/user/file.txt</code> means walking directory entries one component at a time, starting from the root.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Two key functions</h4>
+<ul>
+<li><strong><code>namei(path)</code></strong> - resolves a full path to an <code>inode *</code></li>
+<li><strong><code>nameiparent(path)</code></strong> - returns the <em>parent</em> inode + the last component name (for creating/deleting entries)</li>
+</ul>
+</div>
+<div class="block note">
+<h4>How it works</h4>
+<ol>
+<li>Start at root inode (<code>ROOTINO = 1</code>) if path begins with <code>/</code></li>
+<li>For each component (e.g. <code>home</code>, <code>user</code>, <code>file.txt</code>):</li>
+<li>Call <code>dirlookup(parent, component)</code> -> next inode</li>
+<li>Repeat until the last component</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Each step is a disk read</h4>
+<p>Each <code>dirlookup</code> reads directory data blocks from disk (or cache). Deep paths = more I/O. This is why path resolution is expensive.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="min-height:320px">
+<svg class="clean-svg" viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ard13" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<text class="cl-label" x="10" y="20">Path: /home/user/file.txt</text>
+<!-- Root -->
+<rect class="cl-aad" height="44" rx="8" width="140" x="170" y="30"/>
+<text class="cl-title" x="240" y="52">root inode (1)</text>
+<!-- Arrow + label -->
+<path class="cl-arr" d="M240 74 V100" marker-end="url(#ard13)"/>
+<text class="cl-small" x="280" y="90">dirlookup("home")</text>
+<!-- Home -->
+<rect class="cl-data" height="44" rx="8" width="140" x="170" y="100"/>
+<text class="cl-title" x="240" y="122">home inode (5)</text>
+<!-- Arrow + label -->
+<path class="cl-arr" d="M240 144 V170" marker-end="url(#ard13)"/>
+<text class="cl-small" x="280" y="160">dirlookup("user")</text>
+<!-- User -->
+<rect class="cl-data" height="44" rx="8" width="140" x="170" y="170"/>
+<text class="cl-title" x="240" y="192">user inode (12)</text>
+<!-- Arrow + label -->
+<path class="cl-arr" d="M240 214 V240" marker-end="url(#ard13)"/>
+<text class="cl-small" x="280" y="230">dirlookup("file.txt")</text>
+<!-- File -->
+<rect class="cl-tag" height="44" rx="8" width="140" x="170" y="240"/>
+<text class="cl-title" x="240" y="262">file inode (27)</text>
+<!-- Result -->
+<rect fill="#f0fff8" height="40" rx="8" stroke="#10b981" stroke-width="1.5" width="300" x="90" y="310"/>
+<text class="cl-title" style="font-size:12px;fill:#065f46" x="240" y="332">namei returns inode 27</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>File Table</h2>
+<p>struct file . file descriptors . read/write dispatch</p>
+</div>
+
+<!-- SLIDE 15: STRUCT FILE -->
+<div class="slide">
+<h2 class="st">struct file (file.h)</h2>
+<p>A <code>struct file</code> is the kernel's representation of an <strong>open file</strong>. It wraps an inode (or pipe or device) with a current offset and access mode.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct file {
+  enum { FD_NONE, FD_PIPE,
+         FD_INODE, FD_DEVICE } type;
+  int ref;            // reference count
+  char readable;      // opened for read?
+  char writable;      // opened for write?
+  struct pipe *pipe;  // FD_PIPE
+  struct inode *ip;   // FD_INODE / FD_DEVICE
+  uint off;            // FD_INODE (offset)
+  short major;         // FD_DEVICE
+};</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Why a separate struct?</h4>
+<p>Two processes opening the same file get <strong>different</strong> <code>struct file</code> entries - each with its own offset. But they share the same <code>inode</code>. This is why <code>fork()</code> children share the offset but <code>open()</code> does not.</p>
+</div>
+<div class="block note">
+<h4>The ftable</h4>
+<p>The kernel has a fixed array: <code>struct file ftable[NFILE]</code> with <code>NFILE = 100</code>. This is the <strong>file table</strong> - a system-wide pool of open file objects.</p>
+</div>
+<div class="block warn">
+<h4>File table functions</h4>
+<ul>
+<li><code>filealloc()</code> - find a free entry, set <code>ref = 1</code></li>
+<li><code>filedup(f)</code> - increment <code>ref</code> (used by <code>fork</code>, <code>dup</code>)</li>
+<li><code>fileclose(f)</code> - decrement <code>ref</code>; if 0, release inode and free entry</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: FILE DESCRIPTOR TABLE -->
+<div class="slide">
+<h2 class="st">File Descriptor Table</h2>
+<p>Each process has its own array of file descriptors. A <strong>file descriptor (FD)</strong> is simply an index into this array.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Per-process structure</h4>
+<p>From <code>proc.h</code>, each <code>struct proc</code> has:</p>
+<pre><code class="language-c">struct file *ofile[NOFILE];
+  // NOFILE = 16</code></pre>
+<p>FD 0, 1, 2 are conventionally <strong>stdin</strong>, <strong>stdout</strong>, <strong>stderr</strong>.</p>
+</div>
+<div class="block note">
+<h4>How FDs work</h4>
+<ul>
+<li><code>open()</code> -> finds lowest free slot in <code>ofile[]</code> -> stores <code>struct file *</code> -> returns the index</li>
+<li><code>read(fd, ...)</code> -> looks up <code>ofile[fd]</code> -> calls <code>fileread</code></li>
+<li><code>close(fd)</code> -> calls <code>fileclose(ofile[fd])</code> -> sets <code>ofile[fd] = 0</code></li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>fork() and exec()</h4>
+<ul>
+<li><strong><code>fork()</code></strong> - child gets a <em>copy</em> of the parent's <code>ofile[]</code>. Each entry gets <code>filedup()</code> - so parent and child <strong>share</strong> the same <code>struct file</code> (and thus the same offset).</li>
+<li><strong><code>exec()</code></strong> - preserves <code>ofile[]</code> across the exec. Open files survive program replacement.</li>
+</ul>
+</div>
+<div class="diag-wrap" style="min-height:200px">
+<svg class="clean-svg" viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="10" y="20">proc-&gt;ofile[NOFILE]</text>
+<rect class="cl-data" height="28" rx="5" width="200" x="120" y="30"/>
+<text class="cl-title" x="220" y="44">fd 0 -> stdin (console)</text>
+<rect class="cl-data" height="28" rx="5" width="200" x="120" y="62"/>
+<text class="cl-title" x="220" y="76">fd 1 -> stdout (console)</text>
+<rect class="cl-data" height="28" rx="5" width="200" x="120" y="94"/>
+<text class="cl-title" x="220" y="108">fd 2 -> stderr (console)</text>
+<rect class="cl-tag" height="28" rx="5" width="200" x="120" y="126"/>
+<text class="cl-title" x="220" y="140">fd 3 -> open file</text>
+<rect class="cl-lane" height="28" rx="5" width="200" x="120" y="158"/>
+<text class="cl-small" x="220" y="172">fd 4-15: free (NULL)</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 17: FILE OPERATIONS -->
+<div class="slide">
+<h2 class="st">file Operations - fileread / filewrite</h2>
+<p><code>fileread</code> and <code>filewrite</code> are the <strong>dispatch layer</strong>. They check the file type and route to the correct handler.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>fileread(f, addr, n)</h4>
+</div>
+<pre><code class="language-c">int
+fileread(struct file *f, uint64 addr, int n)
+{
+  if (!f->readable) return -1;
+
+  switch (f->type) {
+  case FD_PIPE:
+    return piperead(f->pipe, addr, n);
+  case FD_DEVICE:
+    return devsw[f->major].read(1, addr, n);
+  case FD_INODE:
+    ilock(f->ip);
+    int r = readi(f->ip, 0, addr,
+                  f->off, n);
+    if (r > 0) f->off += r;
+    iunlock(f->ip);
+    return r;
+  }
+  return -1;
+}</code></pre>
+</div>
+<div>
+<div class="block warn">
+<h4>filewrite(f, addr, n)</h4>
+<p>Same dispatch pattern, but:</p>
+<ul>
+<li>Checks <code>f->writable</code> first</li>
+<li><code>FD_PIPE</code> -> <code>pipewrite</code></li>
+<li><code>FD_DEVICE</code> -> <code>devsw[major].write</code></li>
+<li><code>FD_INODE</code> -> <code>writei</code>, then update <code>off</code></li>
+</ul>
+</div>
+<div class="block ok">
+<h4>Key observations</h4>
+<ul>
+<li>The <strong>offset</strong> (<code>f->off</code>) is maintained here, not in the inode - so two FDs to the same file have independent positions</li>
+<li><code>readable</code> / <code>writable</code> are checked <em>before</em> any work - set at <code>open()</code> time based on flags</li>
+<li>For <code>FD_INODE</code>, the inode is locked during the I/O</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>System Calls</h2>
+<p>File system syscalls . open flow . read/write flow</p>
+</div>
+
+<!-- SLIDE 19: FILE SYSTEM SYSCALLS -->
+<div class="slide">
+<h2 class="st">File System System Calls</h2>
+<p>These are the user-facing syscalls that the shell and user programs call. Each maps to a <code>sys_*</code> function in <code>sysfile.c</code>.</p>
+<table class="tbl">
+<tr><th>Syscall</th><th>Signature</th><th>Purpose</th></tr>
+<tr><td><code>open</code></td><td><code>open(path, flags)</code></td><td>Open file -> returns fd</td></tr>
+<tr><td><code>close</code></td><td><code>close(fd)</code></td><td>Close file descriptor</td></tr>
+<tr><td><code>read</code></td><td><code>read(fd, buf, n)</code></td><td>Read n bytes into buf</td></tr>
+<tr><td><code>write</code></td><td><code>write(fd, buf, n)</code></td><td>Write n bytes from buf</td></tr>
+<tr><td><code>pipe</code></td><td><code>pipe(fds[2])</code></td><td>Create a pipe, return read/write fds</td></tr>
+<tr><td><code>dup</code></td><td><code>dup(fd)</code></td><td>Duplicate fd -> new fd sharing same file</td></tr>
+<tr><td><code>fork</code></td><td><code>fork()</code></td><td>Create child; copies ofile[]</td></tr>
+<tr><td><code>exec</code></td><td><code>exec(path, argv)</code></td><td>Replace process; keeps ofile[]</td></tr>
+<tr><td><code>mknod</code></td><td><code>mknod(name, major, minor)</code></td><td>Create device file</td></tr>
+<tr><td><code>link</code></td><td><code>link(old, new)</code></td><td>Create hard link (new name -> same inode)</td></tr>
+<tr><td><code>unlink</code></td><td><code>unlink(path)</code></td><td>Remove directory entry; may free inode</td></tr>
+<tr><td><code>mkdir</code></td><td><code>mkdir(path)</code></td><td>Create directory</td></tr>
+<tr><td><code>chdir</code></td><td><code>chdir(path)</code></td><td>Change current directory</td></tr>
+<tr><td><code>fstat</code></td><td><code>fstat(fd, &amp;st)</code></td><td>Get inode metadata</td></tr>
+<tr><td><code>sbrk</code></td><td><code>sbrk(n)</code></td><td>Grow/shrink heap (not FS, but related)</td></tr>
+</table>
+</div>
+
+<!-- SLIDE 20: OPEN FLOW -->
+<div class="slide">
+<h2 class="st">open() Flow</h2>
+<p><code>sys_open</code> is the most complex file syscall. It resolves the path, optionally creates the file, allocates a <code>struct file</code>, and returns a file descriptor.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Step-by-step</h4>
+<ol>
+<li><strong><code>argstr</code></strong> - get the path string from user space</li>
+<li><strong><code>argint</code></strong> - get the flags (<code>O_CREATE</code>, <code>O_RDONLY</code>, <code>O_WRONLY</code>, <code>O_RDWR</code>)</li>
+<li>If <code>O_CREATE</code> is set: <code>ialloc</code> a new inode (type <code>T_FILE</code>)</li>
+<li>Otherwise: <code>namei(path)</code> -> get existing inode</li>
+<li><strong><code>filealloc()</code></strong> - get a free <code>struct file</code> from ftable</li>
+<li>Set <code>f->type = FD_INODE</code>, <code>f->ip = ip</code>, <code>f->off = 0</code></li>
+<li>Set <code>readable</code> / <code>writable</code> based on flags</li>
+<li>Find lowest free slot in <code>myproc()->ofile[]</code></li>
+<li>Store <code>f</code> there, return the index as the fd</li>
+</ol>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>Simplified code</h4>
+</div>
+<pre><code class="language-c">sys_open(void)
+{
+  char path[MAXPATH];
+  int fd, omode;
+  struct file *f;
+  struct inode *ip;
+
+  argstr(1, path, MAXPATH);
+  argint(2, &omode);
+
+  if (omode & O_CREATE) {
+    ip = create(path, T_FILE, 0, 0);
+  } else {
+    ip = namei(path);
+    ilock(ip);
+  }
+
+  f = filealloc();
+  f->type = FD_INODE;
+  f->ip = ip;
+  f->off = 0;
+  f->readable = !(omode & O_WRONLY);
+  f->writable = (omode & O_WRONLY) ||
+                (omode & O_RDWR);
+
+  fd = fdalloc(f);
+  return fd;
+}</code></pre>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: READ/WRITE FLOW -->
+<div class="slide">
+<h2 class="st">read() / write() Flow</h2>
+<p><code>sys_read</code> and <code>sys_write</code> are thin wrappers: they extract arguments from user space, look up the file, and delegate to <code>fileread</code> / <code>filewrite</code>.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>sys_read</h4>
+</div>
+<pre><code class="language-c">sys_read(void)
+{
+  struct file *f;
+  int n;
+  uint64 p;
+
+  argfd(0, 0, &f);   // get fd -> file
+  argaddr(1, &p);     // get buf addr
+  argint(2, &n);      // get byte count
+
+  return fileread(f, p, n);
+}</code></pre>
+<div class="block note">
+<h4>argfd helper</h4>
+<p><code>argfd</code> extracts the fd from user registers, validates it, and looks up <code>myproc()->ofile[fd]</code>. If the fd is out of range or the slot is empty, it returns -1.</p>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>sys_write</h4>
+</div>
+<pre><code class="language-c">sys_write(void)
+{
+  struct file *f;
+  int n;
+  uint64 p;
+
+  argfd(0, 0, &f);
+  argaddr(1, &p);
+  argint(2, &n);
+
+  return filewrite(f, p, n);
+}</code></pre>
+<div class="block ok">
+<h4>The full chain</h4>
+<ol>
+<li>User calls <code>read(fd, buf, n)</code></li>
+<li>Trap -> <code>sys_read</code></li>
+<li><code>argfd</code> -> <code>ofile[fd]</code> -> <code>struct file *</code></li>
+<li><code>fileread(f, buf, n)</code> dispatches by type</li>
+<li>For <code>FD_INODE</code>: <code>readi(ip, ..., off, n)</code></li>
+<li><code>readi</code> -> <code>bmap</code> -> <code>bread</code> -> copy to user</li>
+<li>Update <code>f->off += bytes_read</code></li>
+<li>Return bytes read to user</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 22: SECTION 6 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 6</p>
+<h2>Logging</h2>
+<p>Crash consistency . log protocol . log flow</p>
+</div>
+
+<!-- SLIDE 23: WHY LOGGING -->
+<div class="slide">
+<h2 class="st">Why Logging?</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>The crash consistency problem</h4>
+<p>A single file operation (like <code>write</code>) may require <strong>multiple disk writes</strong>: update the data block, update the inode size, update the bitmap. If power fails <em>mid-operation</em>, the file system is left <strong>inconsistent</strong> - half the writes done, half not.</p>
+</div>
+<div class="block ok">
+<h4>The logging solution</h4>
+<p>Write all changes to a <strong>log area</strong> first. Only when all writes are safely on disk (the <strong>commit point</strong>), apply them to their final locations. This is <strong>write-ahead logging (WAL)</strong>.</p>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>Crash recovery</h4>
+<ul>
+<li><strong>Crash before commit</strong> -> log is incomplete -> discard it -> no changes applied -> file system stays consistent</li>
+<li><strong>Crash after commit, before install</strong> -> log is complete -> replay on next boot -> all changes applied</li>
+<li><strong>Crash during install</strong> -> some changes applied, some not -> replay log -> idempotent, so re-applying is safe</li>
+</ul>
+</div>
+<div class="block">
+<h4>Analogy</h4>
+<p>Think of it like writing a check: you write the check (log), then you transfer the money (install). If the bank crashes after writing the check but before the transfer, you just tear up the check. If it crashes during the transfer, you redo it from the check.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: LOG PROTOCOL -->
+<div class="slide">
+<h2 class="st">Log Protocol</h2>
+<p>The log is managed by three functions: <code>begin_op</code>, the write phase, and <code>end_op</code>. From <code>log.c</code>: <code>MAXOPBLOCKS = 10</code> - max blocks per single operation.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>1. begin_op()</h4>
+<p>Called at the start of a file system operation. Waits until the log is not in use, then reserves space.</p>
+<ul>
+<li>If a commit is in progress, sleep until done</li>
+<li>Increment <code>log.lh.n</code> reservation counter</li>
+<li>Multiple operations can share one log transaction</li>
+</ul>
+</div>
+<div class="block note">
+<h4>2. Write phase</h4>
+<p>During the operation, disk writes (via <code>bwrite</code>) go to the <strong>log area</strong>, not the final location. The buffer cache tracks which blocks are "dirty" and logs them.</p>
+<ul>
+<li><code>log_write()</code> records the block in the log header</li>
+<li>If the same block is written twice, only one log entry is kept (absorption)</li>
+</ul>
+</div>
+<div class="block warn">
+<h4>3. end_op()</h4>
+<p>Called at the end of the operation. If this is the last concurrent operation:</p>
+<ol>
+<li>Write the log header to disk -> <strong>commit point</strong></li>
+<li>Install: copy logged blocks to their final locations</li>
+<li>Clear the log header (set count = 0) -> log is empty</li>
+</ol>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Key constants (log.c)</h4>
+</div>
+<table class="tbl">
+<tr><th>Constant</th><th>Value</th><th>Meaning</th></tr>
+<tr><td><code>MAXOPBLOCKS</code></td><td>10</td><td>Max blocks per operation</td></tr>
+<tr><td><code>LOGSIZE</code></td><td>MAXOPBLOCKS</td><td>Max log entries</td></tr>
+<tr><td><code>nlog</code></td><td>30</td><td>Log blocks on disk (param.h)</td></tr>
+</table>
+<div class="block warn">
+<h4>The commit point</h4>
+<p>Writing the log header (with the count of logged blocks) is the <strong>atomic commit point</strong>. Before this write: crash = discard. After this write: crash = replay. The disk guarantees a single sector write is atomic.</p>
+</div>
+<div class="block note">
+<h4>Group commit</h4>
+<p>Multiple syscalls can batch into one transaction. <code>begin_op</code> increments a counter; <code>end_op</code> decrements it. Only when the counter reaches 0 does the actual commit happen. This amortizes the cost of committing.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 25: LOG FLOW -->
+<div class="slide">
+<h2 class="st">Log Flow</h2>
+<p>Visual timeline of a logged file system operation, showing what happens at each stage and what a crash means.</p>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ard25" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- Timeline -->
+<line stroke="#94a3b8" stroke-width="2" x1="40" x2="920" y1="60" y2="60"/>
+<text class="cl-label" x="20" y="50">time -></text>
+<!-- Step 1: begin_op -->
+<rect class="cl-box" height="60" rx="8" width="120" x="50" y="80"/>
+<text class="cl-title" x="110" y="105">begin_op()</text>
+<text class="cl-small" x="110" y="122">reserve log space</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M170 110 H210" marker-end="url(#ard25)"/>
+<!-- Step 2: buffer writes -->
+<rect class="cl-key" height="60" rx="8" width="140" x="210" y="80"/>
+<text class="cl-title" x="280" y="105">log_write()</text>
+<text class="cl-small" x="280" y="122">buffer in log area</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M350 110 H390" marker-end="url(#ard25)"/>
+<!-- Step 3: end_op -->
+<rect class="cl-box" height="60" rx="8" width="120" x="390" y="80"/>
+<text class="cl-title" x="450" y="105">end_op()</text>
+<text class="cl-small" x="450" y="122">last op? commit</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M510 110 H550" marker-end="url(#ard25)"/>
+<!-- Step 4: commit header -->
+<rect class="cl-bad" height="60" rx="8" width="140" x="550" y="80"/>
+<text class="cl-title" x="620" y="100">Write commit</text>
+<text class="cl-small" x="620" y="118">header -> disk</text>
+<text class="cl-small" style="fill:#991b1b" x="620" y="132">* commit point</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M690 110 H730" marker-end="url(#ard25)"/>
+<!-- Step 5: install -->
+<rect class="cl-data" height="60" rx="8" width="140" x="730" y="80"/>
+<text class="cl-title" x="800" y="105">Install writes</text>
+<text class="cl-small" x="800" y="122">to final locations</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M800 140 V180" marker-end="url(#ard25)"/>
+<!-- Step 6: clear log -->
+<rect class="cl-tag" height="50" rx="8" width="140" x="730" y="180"/>
+<text class="cl-title" x="800" y="205">Clear log</text>
+<text class="cl-small" x="800" y="220">count = 0</text>
+<!-- Crash scenarios -->
+<rect fill="#fff5f5" height="70" rx="8" stroke="#ef4444" stroke-width="1.5" width="320" x="50" y="270"/>
+<text class="cl-title" style="font-size:11px;fill:#991b1b" x="210" y="290">Crash before commit -> discard log</text>
+<text class="cl-small" style="fill:#991b1b" x="210" y="308">No changes applied. FS stays consistent.</text>
+<text class="cl-small" style="fill:#991b1b" x="210" y="324">Original data is untouched.</text>
+<rect fill="#f0fff8" height="70" rx="8" stroke="#10b981" stroke-width="1.5" width="320" x="590" y="270"/>
+<text class="cl-title" style="font-size:11px;fill:#065f46" x="750" y="290">Crash after commit -> replay log</text>
+<text class="cl-small" style="fill:#065f46" x="750" y="308">On boot: read log header.</text>
+<text class="cl-small" style="fill:#065f46" x="750" y="324">Replay all logged writes to final locations.</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 26: SECTION 7 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 7</p>
+<h2>Device Files</h2>
+<p>Device switch . how device files work</p>
+</div>
+
+<!-- SLIDE 27: DEVSW -->
+<div class="slide">
+<h2 class="st">devsw - Device Switch</h2>
+<p>The <strong>device switch table</strong> (<code>devsw</code>) is how xv6 implements the "everything is a file" principle for hardware devices. Each device registers read/write function pointers.</p>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Definition (file.h)</h4>
+</div>
+<pre><code class="language-c">struct devsw {
+  int (*read)(int, uint64, int);
+  int (*write)(int, uint64, int);
+};
+
+extern struct devsw devsw[];</code></pre>
+<div class="block ok">
+<h4>Console device</h4>
+<p>From <code>console.c</code>:</p>
+<pre><code class="language-c">#define CONSOLE 1
+
+void
+consoleinit(void)
+{
+  devsw[CONSOLE].read  = consoleread;
+  devsw[CONSOLE].write = consolewrite;
+}</code></pre>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>How device files are created</h4>
+<ol>
+<li><code>mknod("console", CONSOLE, 0)</code> creates a directory entry with <code>type = T_DEVICE</code>, <code>major = 1</code>, <code>minor = 0</code></li>
+<li><code>open("console", ...)</code> resolves the path -> gets the inode -> sees <code>type == T_DEVICE</code> -> sets <code>f->type = FD_DEVICE</code>, <code>f->major = 1</code></li>
+<li><code>fileread(f, ...)</code> sees <code>FD_DEVICE</code> -> calls <code>devsw[f->major].read(...)</code> -> <code>consoleread</code></li>
+<li><code>filewrite(f, ...)</code> similarly calls <code>devsw[f->major].write(...)</code> -> <code>consolewrite</code></li>
+</ol>
+</div>
+<div class="block warn">
+<h4>The beauty of devsw</h4>
+<p>User code calls <code>read(fd, buf, n)</code> - it doesn't know or care whether <code>fd</code> is a regular file, a pipe, or the console. The kernel dispatches transparently via <code>devsw</code>. This is the Unix file abstraction in action.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 28: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key Takeaways</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="tiles tiles-2">
+<div class="tile b">
+<h4><i class="fas fa-file"></i> Everything is a file</h4>
+<p>One interface - <code>open</code>/<code>read</code>/<code>write</code>/<code>close</code> - works on regular files, directories, devices, and pipes. The <code>devsw</code> table makes this possible for hardware.</p>
+</div>
+<div class="tile g">
+<h4><i class="fas fa-layer-group"></i> Inodes are the core</h4>
+<p>On-disk <code>dinode</code> stores metadata + 12 direct + 1 indirect pointer (268 blocks max). In-memory <code>inode</code> adds locking and reference counting via the itable cache.</p>
+</div>
+<div class="tile o">
+<h4><i class="fas fa-sitemap"></i> Directories are files of entries</h4>
+<p>A directory is a file containing <code>dirent</code> entries (name -> inode number). Path resolution walks these entries from root via <code>dirlookup</code>.</p>
+</div>
+<div class="tile r">
+<h4><i class="fas fa-shield-alt"></i> Logging ensures crash safety</h4>
+<p>Write-ahead logging: buffer in log -> commit -> install -> clear. Crash before commit = discard. Crash after commit = replay. <code>begin_op</code> / <code>end_op</code> bracket every operation.</p>
+</div>
+</div>
+<div class="block note" style="margin-top:14px">
+<h4>What to do next</h4>
+<p>Open <code>fs.c</code>, <code>file.c</code>, <code>log.c</code>, and <code>sysfile.c</code> in xv6. Trace <code>open("README", O_RDONLY)</code> from <code>sys_open</code> through <code>namei</code> -> <code>iget</code> -> <code>filealloc</code> -> <code>fdalloc</code>. Then trace <code>write</code> through the log.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 29: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;overflow:auto">
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - fs.c</h4>
+<p>File system implementation: <code>ialloc</code>, <code>iget</code>, <code>readi</code>, <code>writei</code>, <code>dirlookup</code>, <code>dirlink</code>, <code>namei</code>. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/fs.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/fs.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - file.c</h4>
+<p>File table, <code>struct file</code>, <code>filealloc</code>, <code>filedup</code>, <code>fileclose</code>, <code>fileread</code>, <code>filewrite</code>, <code>devsw</code>. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/file.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/file.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - log.c</h4>
+<p>Write-ahead logging: <code>begin_op</code>, <code>end_op</code>, <code>log_write</code>, <code>install_trans</code>, <code>recover_from_log</code>. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/log.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/log.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - sysfile.c</h4>
+<p>File system syscalls: <code>sys_open</code>, <code>sys_read</code>, <code>sys_write</code>, <code>sys_link</code>, <code>sys_unlink</code>, <code>sys_mkdir</code>, etc. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/sysfile.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/sysfile.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">COURSE</div>
+<div>
+<h4>MIT 6.1810 (6.S081) - Operating Systems</h4>
+<p>xv6 teaching OS, lecture notes on file systems, and lab assignments. The authoritative source for xv6 design decisions. <a href="https://pdos.csail.mit.edu/6.828/2024/xv6.html" style="color:var(--blue)">pdos.csail.mit.edu/6.828</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">BOOK</div>
+<div>
+<h4>R. H. Arpaci-Dusseau and A. C. Arpaci-Dusseau - OSTEP</h4>
+<p>Operating Systems: Three Easy Pieces. Chapters on file system implementation, inodes, and crash consistency provide the conceptual foundation. <a href="https://pages.cs.wisc.edu/~remzi/OSTEP/" style="color:var(--blue)">pages.cs.wisc.edu/~remzi/OSTEP</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 29</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L10 FILE SYSTEMS</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

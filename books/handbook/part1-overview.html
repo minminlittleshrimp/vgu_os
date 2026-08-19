@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 1: Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item active" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 1: Introduction</div>
+      <a class="nav-item" data-target="sec-1-1"><span class="nav-num">1.1</span>What OS Do</a>
+      <a class="nav-item" data-target="sec-1-2"><span class="nav-num">1.2</span>Computer-System Organization</a>
+      <a class="nav-item" data-target="sec-1-3"><span class="nav-num">1.3</span>Computer-System Architecture</a>
+      <a class="nav-item" data-target="sec-1-4"><span class="nav-num">1.4</span>OS Operations</a>
+      <a class="nav-item" data-target="sec-1-5"><span class="nav-num">1.5</span>Resource Management</a>
+      <a class="nav-item" data-target="sec-1-6"><span class="nav-num">1.6</span>Security and Protection</a>
+      <a class="nav-item" data-target="sec-1-7"><span class="nav-num">1.7</span>Virtualization</a>
+      <a class="nav-item" data-target="sec-1-8"><span class="nav-num">1.8</span>Distributed Systems</a>
+      <a class="nav-item" data-target="sec-1-9"><span class="nav-num">1.9</span>Kernel Data Structures</a>
+      <a class="nav-item" data-target="sec-1-10"><span class="nav-num">1.10</span>Computing Environments</a>
+      <a class="nav-item" data-target="sec-1-11"><span class="nav-num">1.11</span>Open-Source OS</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 2: OS Structures</div>
+      <a class="nav-item" data-target="sec-2-1"><span class="nav-num">2.1</span>OS Services</a>
+      <a class="nav-item" data-target="sec-2-2"><span class="nav-num">2.2</span>User &amp; OS Interface</a>
+      <a class="nav-item" data-target="sec-2-3"><span class="nav-num">2.3</span>System Calls</a>
+      <a class="nav-item" data-target="sec-2-4"><span class="nav-num">2.4</span>System Services</a>
+      <a class="nav-item" data-target="sec-2-5"><span class="nav-num">2.5</span>Linkers and Loaders</a>
+      <a class="nav-item" data-target="sec-2-6"><span class="nav-num">2.6</span>OS Design</a>
+      <a class="nav-item" data-target="sec-2-7"><span class="nav-num">2.7</span>OS Structure</a>
+      <a class="nav-item" data-target="sec-2-8"><span class="nav-num">2.8</span>Building and Booting</a>
+      <a class="nav-item" data-target="sec-2-9"><span class="nav-num">2.9</span>OS Debugging</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 1: Overview</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 1–2 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers what an operating system does,
+how computer systems are organized, and how operating systems are structured.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-1-1">1.1 What Operating Systems Do</a></li>
+<li><a href="#sec-1-2">1.2 Computer-System Organization</a></li>
+<li><a href="#sec-1-3">1.3 Computer-System Architecture</a></li>
+<li><a href="#sec-1-4">1.4 Operating-System Operations</a></li>
+<li><a href="#sec-1-5">1.5 Resource Management</a></li>
+<li><a href="#sec-1-6">1.6 Security and Protection</a></li>
+<li><a href="#sec-1-7">1.7 Virtualization</a></li>
+<li><a href="#sec-1-8">1.8 Distributed Systems</a></li>
+<li><a href="#sec-1-9">1.9 Kernel Data Structures</a></li>
+<li><a href="#sec-1-10">1.10 Computing Environments</a></li>
+<li><a href="#sec-1-11">1.11 Open-Source Operating Systems</a></li>
+<li><a href="#sec-2-1">2.1 Operating-System Services</a></li>
+<li><a href="#sec-2-2">2.2 User and Operating-System Interface</a></li>
+<li><a href="#sec-2-3">2.3 System Calls</a></li>
+<li><a href="#sec-2-4">2.4 System Services</a></li>
+<li><a href="#sec-2-5">2.5 Linkers and Loaders</a></li>
+<li><a href="#sec-2-6">2.6 Operating-System Design</a></li>
+<li><a href="#sec-2-7">2.7 Operating-System Structure</a></li>
+<li><a href="#sec-2-8">2.8 Building and Booting</a></li>
+<li><a href="#sec-2-9">2.9 Operating-System Debugging</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-1">1.1 What Operating Systems Do</h2>
+
+<p>An <strong>operating system</strong> is software that manages a computer's hardware and
+provides a convenient environment for running application programs. It acts as an
+<strong>intermediary</strong> between the user and the hardware, abstracting away low-level
+details such as disk sectors, interrupt controllers, and memory addresses. From the
+perspective of a user, the OS provides a virtual machine that is easier to use than the
+bare hardware; from the perspective of the hardware, the OS is a <em>resource manager</em>
+that allocates CPU time, memory, I/O devices, and storage among competing programs.</p>
+
+<p>The two primary goals of an operating system are: (1) <strong>convenience</strong>—making
+the computer convenient to use—and (2) <strong>efficiency</strong>—ensuring that hardware
+resources are used efficiently. In early batch systems, efficiency was paramount because
+hardware was expensive. In modern interactive systems, convenience and responsiveness are
+equally important. A third goal, increasingly emphasized in the 21st century, is
+<strong>security</strong>: the OS must protect one user's programs and data from
+interference by others.</p>
+
+<p>Consider what happens when you run a simple C program that reads a file and prints its
+contents. The program does not directly access the disk controller; instead, it calls
+library functions that eventually invoke <strong>system calls</strong>—protected routines
+provided by the kernel. The OS validates the request, locates the file on disk, reads the
+data into a kernel buffer, copies it to user space, and returns control to the program.
+Every step involves the OS acting as a gatekeeper and resource manager.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Key Insight</div>
+<p>The OS is the <em>only</em> software that runs in <strong>kernel mode</strong>
+(also called <em>supervisor mode</em> or <em>privileged mode</em>). All other
+programs—compilers, browsers, text editors—run in <strong>user mode</strong>, where
+direct hardware access is forbidden. The transition from user mode to kernel mode
+happens via a <em>trap</em> or <em>system call</em>.</p>
+</div>
+
+<p>In the xv6 teaching operating system (used at MIT and elsewhere), this separation is
+visible in the source code. User processes execute in a lower privilege level, and the
+<code class="code-inline">syscall()</code> function in <code class="code-inline">syscall.c</code>
+dispatches to kernel handlers based on a system call number. This mirrors the design
+described by Silberschatz: the kernel provides a <strong>system-call interface</strong>
+that user programs use to request services.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-2">1.2 Computer-System Organization</h2>
+
+<p>A modern computer system can be viewed as having four main components: the
+<strong>CPU</strong> (processor), the <strong>main memory</strong> (RAM), the
+<strong>I/O devices</strong>, and the <strong>system bus</strong> that interconnects them.
+The operating system manages all of these. A key architectural feature is the
+<strong>interrupt</strong> mechanism, which allows I/O devices to signal the CPU when
+they need attention, freeing the CPU from polling.</p>
+
+<p>When an I/O device needs to notify the CPU—for example, when a key is pressed or a
+disk transfer completes—it raises an <strong>interrupt</strong>. The CPU suspends its
+current execution, saves its state (program counter, registers), and transfers control
+to an <strong>interrupt service routine</strong> (ISR) in the OS. After the ISR completes,
+the CPU resumes the interrupted program. This mechanism is fundamental to how operating
+systems achieve concurrency and responsiveness.</p>
+
+<div class="code-block"><span class="comment">/* Simplified interrupt handling flow (xv6-style) */</span>
+
+<span class="comment">// 1. Device raises interrupt signal</span>
+<span class="comment">// 2. CPU finishes current instruction, saves PC to mepc (RISC-V)</span>
+<span class="comment">// 3. CPU jumps to trap vector (mtvec register)</span>
+
+<span class="label">trap_vector:</span>
+    csrrw   <span class="reg">sp</span>, <span class="reg">mscratch</span>, <span class="reg">sp</span>   <span class="comment">// swap to kernel stack</span>
+    <span class="keyword">call</span>   trap_handler             <span class="comment">// dispatch to C handler</span>
+    csrrw   <span class="reg">sp</span>, <span class="reg">mscratch</span>, <span class="reg">sp</span>   <span class="comment">// restore user stack</span>
+    <span class="directive">mret</span>                            <span class="comment">// return to user mode</span></div>
+
+<p>Modern systems use <strong>DMA</strong> (Direct Memory Access) controllers to offload
+bulk data transfers. Instead of the CPU copying each byte from a disk to memory, the DMA
+controller transfers data directly between the device and RAM, raising an interrupt only
+when the entire transfer is complete. This dramatically improves throughput and frees
+the CPU for other work.</p>
+
+<p>Storage structure is layered: <strong>registers</strong> (fastest, smallest, inside the
+CPU) → <strong>cache</strong> (SRAM, L1/L2/L3) → <strong>main memory</strong> (DRAM) →
+<strong>solid-state drives</strong> (SSD) → <strong>hard disk drives</strong> (HDD) →
+<strong>tape</strong> (slowest, cheapest). The OS manages this hierarchy, deciding what
+to keep in cache, what to swap to disk, and how to schedule I/O. The speed gap between
+registers and disk can be over <strong>10 million times</strong>, making the OS's memory
+management decisions critical to performance.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Level</th><th>Typical Size</th><th>Access Time</th><th>Managed By</th></tr>
+</thead>
+<tbody>
+<tr><td>Registers</td><td>&lt; 1 KB</td><td>&lt; 1 ns</td><td>Compiler</td></tr>
+<tr><td>L1 Cache</td><td>32–64 KB</td><td>~1 ns</td><td>Hardware</td></tr>
+<tr><td>L2 Cache</td><td>256 KB–1 MB</td><td>~4 ns</td><td>Hardware</td></tr>
+<tr><td>L3 Cache</td><td>4–32 MB</td><td>~12 ns</td><td>Hardware</td></tr>
+<tr><td>Main Memory (DRAM)</td><td>4–64 GB</td><td>~100 ns</td><td>OS</td></tr>
+<tr><td>SSD</td><td>256 GB–4 TB</td><td>~100 μs</td><td>OS</td></tr>
+<tr><td>HDD</td><td>1–16 TB</td><td>~10 ms</td><td>OS</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-3">1.3 Computer-System Architecture</h2>
+
+<p>Computer systems are classified by how many CPUs they have and how they share memory.
+A <strong>single-processor system</strong> has one main CPU that executes a single
+instruction stream. Most embedded devices and older personal computers fall into this
+category. A <strong>multiprocessor system</strong> (also called a <em>parallel system</em>
+or <em>tightly coupled system</em>) has two or more CPUs that share the same memory and
+I/O devices, communicating via shared variables.</p>
+
+<p>Multiprocessor systems offer several advantages: <strong>increased throughput</strong>
+(doing more work in less time), <strong>economy of scale</strong> (sharing peripherals
+and memory), and <strong>increased reliability</strong> (if one CPU fails, others can
+continue). Two common multiprocessor designs are <strong>SMP</strong> (Symmetric
+Multiprocessing), where all processors are equal and each runs its own copy of the OS,
+and <strong>ASMP</strong> (Asymmetric Multiprocessing), where one <em>master</em>
+processor runs the OS and <em>slave</em> processors run user code. Modern systems almost
+exclusively use SMP.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Multicore vs. Multiprocessor</div>
+<p>A <strong>multicore</strong> CPU has multiple processing cores on a single chip,
+sharing L2/L3 cache. A <strong>multiprocessor</strong> system has multiple CPU chips.
+Both are forms of parallel processing. The OS must be designed to schedule threads
+across cores and manage cache coherence.</p>
+</div>
+
+<p>A <strong>clustered system</strong> is a type of loosely coupled multiprocessor where
+multiple independent computers (nodes) are connected via a network or high-speed
+interconnect. Clusters provide <strong>high availability</strong>—if one node fails,
+others take over. <em>Asymmetric clustering</em> has one node in standby mode ready to
+take over; <em>symmetric clustering</em> has all nodes actively running and monitoring
+each other. Clusters are the backbone of modern cloud computing and data centers.</p>
+
+<p>Modern CPUs also support <strong>simultaneous multithreading</strong> (SMT, called
+<em>Hyper-Threading</em> on Intel CPUs), where a single physical core can execute two or
+more threads concurrently by sharing functional units. From the OS's perspective, an SMT
+core appears as multiple logical processors, but performance gains are typically 15–30%
+per additional thread, not the 100% a true second core would provide.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-4">1.4 Operating-System Operations</h2>
+
+<p>Operating systems are designed to run in two modes: <strong>user mode</strong> and
+<strong>kernel mode</strong> (also called <em>supervisor</em>, <em>system</em>, or
+<em>privileged</em> mode). This <strong>dual-mode operation</strong> is implemented in
+hardware via a mode bit in the CPU's status register. In user mode, certain instructions
+(such as directly accessing I/O ports or manipulating memory management registers) are
+prohibited. In kernel mode, all instructions are allowed. This separation protects the
+OS and other programs from buggy or malicious user code.</p>
+
+<p>When a user program needs a privileged service—reading a file, allocating memory,
+creating a process—it executes a <strong>system call</strong>. The system call causes a
+trap (a software-generated interrupt), which switches the CPU to kernel mode and
+transfers control to a fixed location in the OS. The OS validates the request, performs
+the operation, and returns to user mode. This is the fundamental mechanism by which the
+OS maintains control.</p>
+
+<div class="code-block"><span class="comment">/* Dual-mode operation: user → kernel transition */</span>
+
+<span class="comment">// User program calls: fd = open("file.txt", O_RDONLY);</span>
+<span class="comment">// The C library translates this to a system call:</span>
+
+<span class="label">user_mode:</span>
+    li      <span class="reg">a7</span>, <span class="number">56</span>          <span class="comment">// syscall number for sys_open (RISC-V Linux)</span>
+    ecall                   <span class="comment">// trap into kernel — mode bit → 0 (kernel)</span>
+
+<span class="label">kernel_mode:</span>
+    <span class="comment">// OS saves user registers, checks syscall number,</span>
+    <span class="comment">// validates arguments, performs the operation,</span>
+    <span class="comment">// then returns via sret (mode bit → 1, user)</span>
+    sret</div>
+
+<p>On startup, the OS begins executing in kernel mode as the <strong>bootstrap program</strong>
+(or <em>bootloader</em>) initializes the system: it loads the kernel into memory,
+initializes device drivers, sets up the page tables, and then starts the first user
+process (often called <code class="code-inline">init</code> on UNIX systems, PID 1). In
+xv6, the boot sequence starts at <code class="code-inline">entry.S</code> (assembly) which
+sets up the stack and calls <code class="code-inline">main()</code> in
+<code class="code-inline">main.c</code>, which initializes subsystems and starts the first
+user process via <code class="code-inline">userinit()</code>.</p>
+
+<p>Modern operating systems also support <strong>timers</strong> to prevent a single
+process from monopolizing the CPU. The OS sets a hardware timer to interrupt after a
+fixed interval (the <em>time quantum</em> or <em>time slice</em>). When the timer fires,
+control returns to the OS, which can then <strong>preempt</strong> the current process
+and schedule another. This is the basis of <em>preemptive multitasking</em>.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Timer Interrupts Are Essential</div>
+<p>Without timer interrupts, a CPU-bound process in an infinite loop would
+<strong>never yield</strong>. Cooperative multitasking (used in early Mac OS) relied on
+programs voluntarily yielding, which was unreliable. Preemptive multitasking via timer
+interrupts is now universal.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-5">1.5 Resource Management</h2>
+
+<p>The operating system is fundamentally a <strong>resource manager</strong>. The
+resources it manages include the CPU, memory, storage, I/O devices, and—on multi-user
+systems—access to shared data. Each resource type requires its own management strategy,
+and the OS must balance fairness, efficiency, and protection.</p>
+
+<p><strong>CPU management</strong> is the domain of the <em>process scheduler</em>. The
+OS maintains a <strong>ready queue</strong> of processes waiting for CPU time and uses a
+scheduling algorithm (round-robin, priority, multilevel feedback) to decide which process
+runs next. The scheduler must ensure that every process gets a fair share of CPU time
+while keeping the system responsive. On multiprocessor systems, the scheduler must also
+balance load across cores and manage cache affinity.</p>
+
+<p><strong>Memory management</strong> involves keeping track of which parts of memory are
+in use (by which processes), allocating and freeing memory as needed, and providing
+<strong>virtual memory</strong>—the illusion that each process has its own large,
+contiguous address space. The OS uses <em>paging</em> and <em>segmentation</em> to map
+virtual addresses to physical addresses, and can <em>swap</em> inactive pages to disk to
+free up RAM. In xv6, the functions in <code class="code-inline">kalloc.c</code> manage
+physical memory as a free list of 4 KB pages, while <code class="code-inline">vm.c</code>
+manages page tables.</p>
+
+<div class="code-block"><span class="comment">/* xv6 physical page allocator (simplified) */</span>
+
+<span class="keyword">struct</span> run {
+    <span class="keyword">struct</span> run *next;
+};
+
+<span class="keyword">struct</span> {
+    <span class="keyword">struct</span> run *freelist;  <span class="comment">// linked list of free 4KB pages</span>
+} kmem;
+
+<span class="comment">// Allocate one 4KB page</span>
+<span class="keyword">void</span> *kalloc(<span class="keyword">void</span>) {
+    <span class="keyword">struct</span> run *r = kmem.freelist;
+    <span class="keyword">if</span> (r)
+        kmem.freelist = r->next;
+    <span class="keyword">return</span> (<span class="keyword">void</span>*)r;
+}</div>
+
+<p><strong>Storage management</strong> (file systems) organizes data on disks and SSDs into
+files and directories, providing a convenient abstraction over raw blocks. The OS
+maintains a <strong>file allocation table</strong> or <strong>inode</strong> structure to
+track which blocks belong to which file. <strong>I/O device management</strong> provides
+device drivers that present a uniform interface to diverse hardware—disks, network cards,
+keyboards, displays—so that applications can use them without knowing hardware-specific
+details.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Resource</th><th>OS Component</th><th>Key Abstraction</th><th>xv6 File</th></tr>
+</thead>
+<tbody>
+<tr><td>CPU</td><td>Scheduler</td><td>Process / Thread</td><td>proc.c</td></tr>
+<tr><td>Memory</td><td>Memory Manager</td><td>Virtual Address Space</td><td>kalloc.c, vm.c</td></tr>
+<tr><td>Storage</td><td>File System</td><td>Files &amp; Directories</td><td>fs.c</td></tr>
+<tr><td>I/O Devices</td><td>Device Drivers</td><td>Device Files</td><td>console.c, virtio_disk.c</td></tr>
+<tr><td>Protection</td><td>Security Subsystem</td><td>UID / Permissions</td><td>sysfile.c</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-6">1.6 Security and Protection</h2>
+
+<p><strong>Protection</strong> is a mechanism for controlling the access of programs,
+processes, or users to system resources. <strong>Security</strong> is a broader concept
+that defends the system from external and internal attacks, including unauthorized
+access, denial-of-service, and data corruption. The OS must ensure that a process can
+only access resources within its authorized domain.</p>
+
+<p>The dual-mode (user/kernel) separation is the first line of defense: user programs
+cannot directly access hardware or other processes' memory. <strong>Memory protection</strong>
+ensures that each process's address space is isolated—process A cannot read or write
+process B's memory. This is enforced by the <strong>memory management unit</strong> (MMU)
+and page tables, which map virtual addresses to physical addresses and raise a fault if a
+process accesses an unmapped or protected region.</p>
+
+<p>On multi-user systems, the OS implements <strong>access control</strong> through
+user identifiers (UIDs) and permission bits. Each file has an owner, a group, and a set
+of permission bits (read, write, execute) for the owner, group, and others. The OS checks
+these permissions on every file access. In UNIX-like systems, the
+<code class="code-inline">root</code> user (UID 0) bypasses most permission checks, which
+is both powerful and dangerous.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Principle of Least Privilege</div>
+<p>Every program and every user should operate using the <strong>least set of
+privileges</strong> necessary to complete the job. Running a web server as
+<code class="code-inline">root</code> is a classic security mistake—if the server is
+compromised, the attacker gets full system access. Modern systems use capabilities,
+sandboxing, and containerization to enforce this principle.</p>
+</div>
+
+<p>Security threats include <strong>malware</strong> (viruses, worms, trojans, ransomware),
+<strong>buffer overflow attacks</strong> (overwriting return addresses to hijack
+control flow), and <strong>side-channel attacks</strong> (inferring secrets from timing
+or power consumption). The OS defends against these through <em>address space layout
+randomization</em> (ASLR), <em>stack canaries</em>, <em>non-executable stacks</em>
+(NX bit), and <em>privilege separation</em>. Recent hardware vulnerabilities like
+<em>Meltdown</em> and <em>Spectre</em> have shown that even hardware-level protections
+can be circumvented, requiring OS-level mitigations.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-7">1.7 Virtualization</h2>
+
+<p><strong>Virtualization</strong> is a technology that allows a single physical machine
+to host multiple <strong>virtual machines</strong> (VMs), each running its own operating
+system. The software layer that creates and manages VMs is called a
+<strong>hypervisor</strong> or <strong>virtual machine monitor</strong> (VMM). There are
+two types: <strong>Type 1</strong> (bare-metal, like VMware ESXi, Xen, Hyper-V) runs
+directly on hardware; <strong>Type 2</strong> (hosted, like VirtualBox, VMware
+Workstation) runs on top of a host operating system.</p>
+
+<p>Virtualization works by <strong>trapping and emulating</strong> privileged operations.
+When a guest OS (running in a VM) attempts a privileged instruction—such as modifying a
+page table or accessing an I/O port—the CPU traps to the hypervisor, which emulates the
+operation on behalf of the guest. This allows multiple guest OSes to share the same
+hardware safely. Modern CPUs provide hardware-assisted virtualization (Intel VT-x, AMD-V,
+ARM virtualization extensions) that makes this process much more efficient.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Virtualization vs. Containers</div>
+<p><strong>VMs</strong> virtualize the hardware, each running a full OS kernel.
+<strong>Containers</strong> (Docker, Kubernetes) virtualize at the OS level—sharing one
+kernel but isolating processes and their file systems. Containers are lighter and faster
+to start, but provide weaker isolation than VMs.</p>
+</div>
+
+<p>Virtualization enables <strong>server consolidation</strong> (running many small
+servers on one physical machine), <strong>live migration</strong> (moving a running VM
+to another physical host), and <strong>cloud computing</strong> (renting VMs on demand
+from providers like AWS, Azure, GCP). It also supports <strong>sandboxing</strong>—running
+untrusted code in an isolated VM to limit damage if it misbehaves. The concept of
+virtualization extends beyond CPUs: <em>memory virtualization</em> (virtual memory),
+<em>storage virtualization</em> (RAID, logical volumes), and <em>network virtualization</em>
+(VLANs, SDN) all follow the same principle of abstracting physical resources.</p>
+
+<p>In the context of this course, xv6 itself can be run as a guest under QEMU, which
+emulates a RISC-V machine. This is a form of <strong>system-level emulation</strong>—the
+QEMU VMM translates xv6's RISC-V instructions and emulates its devices, allowing students
+to develop and test OS code without dedicated hardware.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-8">1.8 Distributed Systems</h2>
+
+<p>A <strong>distributed system</strong> is a collection of physically separate computers
+connected by a network, appearing to the user as a single coherent system. Unlike
+multiprocessor systems (which share memory), distributed systems have <strong>no shared
+memory</strong>—each node has its own memory, and communication happens via message
+passing over the network. The network may be a LAN (local area network), WAN (wide area
+network), or even the internet.</p>
+
+<p>Distributed systems offer several advantages: <strong>resource sharing</strong>
+(accessing remote files, printers, databases), <strong>computation speedup</strong>
+(splitting a large task across nodes), <strong>reliability</strong> (if one node fails,
+others continue), and <strong>communication</strong> (email, chat, web). However, they
+introduce challenges: <strong>latency</strong> (network delays), <strong>partial
+failure</strong> (some nodes may crash while others continue), <strong>concurrency</strong>
+(multiple nodes accessing shared data simultaneously), and <strong>heterogeneity</strong>
+(different hardware and OS types).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Key Challenge: Partial Failure</div>
+<p>In a distributed system, the network can partition—some nodes become unreachable.
+The system must decide: do we stop serving requests (sacrificing availability) or risk
+serving stale data (sacrificing consistency)? This is the <strong>CAP theorem</strong>:
+you can have at most two of Consistency, Availability, and Partition tolerance.</p>
+</div>
+
+<p>The OS support for distributed computing includes <strong>network protocols</strong>
+(TCP/IP, RPC—Remote Procedure Call), <strong>distributed file systems</strong> (NFS,
+AFS, CIFS/SMB), and <strong>distributed shared memory</strong> (DSM) systems that simulate
+shared memory over a network. <strong>Cloud computing</strong> platforms (AWS, Azure,
+GCP) are large-scale distributed systems that provide on-demand computing resources.
+Modern distributed system designs include <strong>microservices</strong> (small,
+independently deployable services), <strong>container orchestration</strong>
+(Kubernetes), and <strong>serverless computing</strong> (AWS Lambda).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-9">1.9 Kernel Data Structures</h2>
+
+<p>The kernel uses a variety of data structures to track processes, memory, files, and
+devices. Understanding these is essential for reading kernel source code. The most
+common structures include <strong>linked lists</strong>, <strong>queues</strong>,
+<strong>hash maps</strong>, <strong>trees</strong>, and <strong>bitmaps</strong>.</p>
+
+<p>A <strong>process control block</strong> (PCB) is the central data structure for
+process management. It stores the process's state (running, ready, blocked), program
+counter, CPU registers, memory limits, open file descriptors, scheduling priority, and
+accounting information. In xv6, the PCB is the <code class="code-inline">struct proc</code>
+defined in <code class="code-inline">proc.h</code>. The kernel maintains an array of
+these structures (<code class="code-inline">proc[NPROC]</code>) and uses a linked list
+to track active processes.</p>
+
+<div class="code-block"><span class="comment">/* xv6 process control block (simplified from proc.h) */</span>
+
+<span class="keyword">enum</span> procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+
+<span class="keyword">struct</span> proc {
+    <span class="keyword">enum</span> procstate state;   <span class="comment">// process state</span>
+    <span class="keyword">int</span> pid;                 <span class="comment">// process ID</span>
+    <span class="keyword">struct</span> proc *parent;     <span class="comment">// parent process</span>
+    <span class="keyword">void</span> *chan;              <span class="comment">// sleep channel (for waiting)</span>
+    <span class="keyword">int</span> killed;               <span class="comment">// flag: has been killed?</span>
+    <span class="keyword">struct</span> trapframe *trapframe; <span class="comment">// saved registers</span>
+    <span class="keyword">struct</span> context context;   <span class="comment">// for context switching</span>
+    pagetable_t pagetable;       <span class="comment">// process page table</span>
+    <span class="keyword">struct</span> file *ofile[NOFILE]; <span class="comment">// open files</span>
+};</div>
+
+<p>Other key kernel data structures include: <strong>page tables</strong> (multi-level
+trees mapping virtual to physical addresses), <strong>file tables</strong> (tracking
+open files and their offsets), <strong>inode tables</strong> (tracking file metadata
+and block lists), <strong>device tables</strong> (tracking I/O devices and their
+drivers), and <strong>ready queues</strong> (lists of runnable processes). The choice of
+data structure affects performance: hash tables provide O(1) lookup, balanced trees
+provide O(log n), and linked lists provide O(n) but are simple and flexible.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Data Structure</th><th>Use in Kernel</th><th>Example in xv6</th></tr>
+</thead>
+<tbody>
+<tr><td>Linked List</td><td>Process list, free memory list</td><td>kmem.freelist</td></tr>
+<tr><td>Array</td><td>Process table, file descriptor table</td><td>proc[NPROC]</td></tr>
+<tr><td>Queue</td><td>Ready queue, I/O request queue</td><td>(scheduler uses array scan)</td></tr>
+<tr><td>Multi-level Tree</td><td>Page tables, file system hierarchy</td><td>pagetable (Sv39)</td></tr>
+<tr><td>Bitmap</td><td>Free block map, CPU affinity</td><td>block allocation bitmap</td></tr>
+<tr><td>Hash Table</td><td>Inode cache, dentry cache</td><td>(Linux: dcache)</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-10">1.10 Computing Environments</h2>
+
+<p>Operating systems span a wide range of computing environments, each with different
+requirements. <strong>Traditional computing</strong> refers to desktop and laptop
+computers running general-purpose OSes like Windows, macOS, or Linux. These systems
+prioritize user interactivity, support for diverse applications, and backward
+compatibility.</p>
+
+<p><strong>Mobile computing</strong> (smartphones, tablets) runs OSes like Android and
+iOS. These systems emphasize <strong>power efficiency</strong> (battery life),
+<strong>touch interfaces</strong>, and <strong>app sandboxing</strong> (each app runs in
+an isolated environment with limited permissions). Mobile OSes often aggressively kill
+background apps to save power, unlike desktop OSes that let processes run indefinitely.</p>
+
+<p><strong>Embedded systems</strong> are specialized computers within larger devices—car
+engine controllers, medical devices, IoT sensors, smart appliances. They often run
+<strong>real-time operating systems</strong> (RTOS) like FreeRTOS, VxWorks, or QNX that
+guarantee <strong>deterministic timing</strong>: critical tasks must complete within a
+deadline. A pacemaker that responds 50 ms late could be fatal; a game that drops a frame
+is merely annoying.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Real-Time Systems</div>
+<p><strong>Hard real-time</strong> systems guarantee that deadlines are always met
+(medical, aerospace). <strong>Soft real-time</strong> systems try to meet deadlines but
+tolerate occasional misses (streaming video, games). RTOSes use priority-based
+preemptive scheduling and avoid unpredictable delays (like garbage collection or disk
+I/O).</p>
+</div>
+
+<p><strong>Cloud computing</strong> provides on-demand access to shared pools of
+configurable computing resources over the internet. Service models include
+<strong>IaaS</strong> (Infrastructure as a Service—virtual machines, e.g., AWS EC2),
+<strong>PaaS</strong> (Platform as a Service—managed runtimes, e.g., Heroku, Google App
+Engine), and <strong>SaaS</strong> (Software as a Service—applications, e.g., Gmail,
+Office 365). Cloud OSes must handle massive scale, multi-tenancy, and rapid provisioning.
+<strong>Edge computing</strong> pushes computation closer to data sources (IoT devices,
+5G base stations) to reduce latency.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-1-11">1.11 Open-Source Operating Systems</h2>
+
+<p><strong>Open-source software</strong> is software whose source code is freely
+available for anyone to view, modify, and redistribute. In the OS world, open-source
+systems have become dominant, especially in servers, supercomputers, and embedded
+devices. The most prominent example is <strong>Linux</strong>, created by Linus Torvalds
+in 1991 and now developed by thousands of contributors worldwide.</p>
+
+<p>Open-source OSes offer several advantages: <strong>transparency</strong> (anyone can
+audit the code for bugs and backdoors), <strong>customizability</strong> (you can modify
+the kernel for your specific needs), <strong>community support</strong> (large
+communities provide patches, drivers, and documentation), and <strong>cost</strong>
+(typically free). The <strong>GNU project</strong> (started by Richard Stallman in 1983)
+provides many of the user-space tools (compiler, shell, utilities) that complement the
+Linux kernel, forming what is commonly called "GNU/Linux."</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 Is Open Source Too</div>
+<p>The xv6 teaching operating system used in this course is open source, derived from
+UNIX Version 6 (1975) and modernized for RISC-V. Its source code is small enough
+(~10,000 lines) to read in a semester, yet implements all major OS concepts: processes,
+virtual memory, file system, and system calls. Studying xv6 is one of the best ways to
+understand how a real OS works.</p>
+</div>
+
+<p>Beyond Linux, notable open-source OSes include <strong>FreeBSD</strong> (a direct
+descendant of BSD UNIX, known for its network stack and ZFS support), <strong>Android</strong>
+(open-source mobile OS based on the Linux kernel), and <strong>ReactOS</strong> (an
+open-source Windows-compatible OS). The <strong>GNU General Public License</strong> (GPL)
+used by Linux requires that derivative works also be open source, while more permissive
+licenses like <strong>BSD</strong> and <strong>MIT</strong> allow proprietary derivatives.
+The choice of license has significant implications for how the software can be used and
+distributed.</p>
+
+<p>The open-source development model—distributed contributors, public version control
+(Git), and meritocratic review—has proven remarkably effective. The Linux kernel
+receives thousands of patches per release from hundreds of companies. This collaborative
+approach has made open-source OSes the foundation of modern computing infrastructure,
+from Android phones to the servers running most of the internet.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-1">2.1 Operating-System Services</h2>
+
+<p>An operating system provides a set of <strong>services</strong> to programs and
+users. These services make the computer usable and efficient. Silberschatz organizes
+them into two categories: services that are <em>helpful to the user</em> and services
+that ensure <em>efficient system operation</em>.</p>
+
+<p><strong>User-facing services</strong> include: <strong>user interface</strong> (GUI,
+command-line, or touch), <strong>program execution</strong> (loading programs into memory
+and running them), <strong>I/O operations</strong> (reading from and writing to files and
+devices), <strong>file-system manipulation</strong> (creating, deleting, searching files
+and directories), <strong>communications</strong> (between processes, possibly on
+different machines), and <strong>error detection</strong> (catching hardware failures,
+software bugs, and resource exhaustion).</p>
+
+<p><strong>System-efficiency services</strong> include: <strong>resource allocation</strong>
+(managing CPU, memory, and I/O allocation among competing processes), <strong>accounting</strong>
+(tracking which users and processes use how much of which resources), and
+<strong>protection and security</strong> (ensuring that all access to resources is
+controlled and that processes cannot interfere with each other or the OS).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Service Category</th><th>Service</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td rowspan="3">User-oriented</td><td>Program execution</td><td>exec(), fork()</td></tr>
+<tr><td>I/O operations</td><td>read(), write()</td></tr>
+<tr><td>File-system manipulation</td><td>open(), mkdir(), unlink()</td></tr>
+<tr><td rowspan="3">System-oriented</td><td>Resource allocation</td><td>sched_yield(), brk()</td></tr>
+<tr><td>Protection</td><td>setuid(), chmod()</td></tr>
+<tr><td>Accounting</td><td>getrusage(), /proc/[pid]/stat</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>In xv6, these services are implemented as system calls in
+<code class="code-inline">sysproc.c</code> (process-related) and
+<code class="code-inline">sysfile.c</code> (file-related). The system call interface is
+the <strong>API</strong> that user programs use to request OS services. A well-designed
+system call interface is stable (programs written decades ago still compile and run),
+consistent (naming conventions, error codes), and minimal (only the essential operations
+are in the kernel; the rest are in libraries).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-2">2.2 User and Operating-System Interface</h2>
+
+<p>There are two primary ways users interact with an operating system: through a
+<strong>command-line interface</strong> (CLI) or a <strong>graphical user interface</strong>
+(GUI). Some systems also provide a <strong>touch-screen interface</strong> for mobile
+devices. Each has its strengths and target audience.</p>
+
+<p>A <strong>command interpreter</strong> (or <em>shell</em>) is a program that reads
+commands from the user and executes them. On UNIX-like systems, common shells include
+<code class="code-inline">bash</code>, <code class="code-inline">zsh</code>, and
+<code class="code-inline">fish</code>. The shell can execute built-in commands directly
+or run external programs by forking a child process and calling
+<code class="code-inline">exec()</code>. In xv6, the shell is a user-level program
+(<code class="code-inline">sh.c</code>) that demonstrates how a shell works using
+<code class="code-inline">fork()</code>, <code class="code-inline">exec()</code>, and
+<code class="code-inline">wait()</code>.</p>
+
+<div class="code-block"><span class="comment">/* xv6 shell: simplified command execution */</span>
+
+<span class="keyword">int</span> main(<span class="keyword">void</span>) {
+    <span class="keyword">char</span> buf[128];
+    <span class="keyword">while</span> (getcmd(buf, <span class="keyword">sizeof</span>(buf)) >= <span class="number">0</span>) {
+        <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'c'</span> && buf[<span class="number">1</span>] == <span class="string">'d'</span> && buf[<span class="number">2</span>] == <span class="string">' '</span>) {
+            <span class="comment">// built-in: cd</span>
+            chdir(buf + <span class="number">3</span>);
+            <span class="keyword">continue</span>;
+        }
+        <span class="keyword">if</span> (fork1() == <span class="number">0</span>)   <span class="comment">// child</span>
+            runcmd(parsecmd(buf));  <span class="comment">// exec the command</span>
+        wait(<span class="number">0</span>);              <span class="comment">// parent waits</span>
+    }
+}</div>
+
+<p>A <strong>GUI</strong> provides windows, icons, menus, and a pointing device (mouse).
+The <strong>windowing system</strong> manages overlapping windows, handles input events
+(mouse clicks, key presses), and draws graphics. On Linux, the X Window System (X11) or
+Wayland provides the windowing infrastructure; on macOS, it is Quartz; on Windows, it
+is the Desktop Window Manager. GUIs are more intuitive for casual users but less
+efficient for repetitive or scriptable tasks.</p>
+
+<p>Many power users combine both: using a GUI for browsing and email, but a CLI for
+development, system administration, and automation. The <strong>scripting</strong>
+capability of shells—combining commands with pipes (<code class="code-inline">|</code>),
+redirection (<code class="code-inline">&gt;</code>), and variables—makes them powerful
+tools for automation. Modern systems also provide <strong>system calls via library
+functions</strong> (the C standard library wraps system calls), so programmers rarely
+need to invoke system calls directly.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-3">2.3 System Calls</h2>
+
+<p><strong>System calls</strong> are the interface between user processes and the
+operating system kernel. They provide the only way for a user program to request
+privileged services such as I/O, process creation, and memory management. When a program
+makes a system call, execution transfers from user mode to kernel mode via a
+<strong>trap</strong> instruction (e.g., <code class="code-inline">ecall</code> on
+RISC-V, <code class="code-inline">syscall</code> on x86-64).</p>
+
+<p>System calls are typically grouped into categories: <strong>process control</strong>
+(<code class="code-inline">fork</code>, <code class="code-inline">exec</code>,
+<code class="code-inline">exit</code>, <code class="code-inline">wait</code>),
+<strong>file management</strong> (<code class="code-inline">open</code>,
+<code class="code-inline">read</code>, <code class="code-inline">write</code>,
+<code class="code-inline">close</code>), <strong>device management</strong>
+(<code class="code-inline">ioctl</code>, <code class="code-inline">mmap</code>),
+<strong>information maintenance</strong> (<code class="code-inline">getpid</code>,
+<code class="code-inline">time</code>, <code class="code-inline">getrusage</code>), and
+<strong>communications</strong> (<code class="code-inline">pipe</code>,
+<code class="code-inline">shmget</code>, <code class="code-inline">socket</code>).</p>
+
+<div class="code-block"><span class="comment">/* How a system call works (RISC-V / xv6) */</span>
+
+<span class="comment">// 1. User program calls the C library wrapper:</span>
+<span class="keyword">int</span> fd = open(<span class="string">"hello.txt"</span>, O_RDONLY);
+
+<span class="comment">// 2. The wrapper (in usys.pl / ulib.c) does:</span>
+<span class="label">.globl</span> open
+open:
+    li      <span class="reg">a7</span>, <span class="number">14</span>     <span class="comment">// SYS_open = 14 in xv6</span>
+    ecall               <span class="comment">// trap to kernel</span>
+    ret                 <span class="comment">// return result in a0</span>
+
+<span class="comment">// 3. In the kernel (syscall.c):</span>
+<span class="keyword">void</span> syscall(<span class="keyword">void</span>) {
+    <span class="keyword">int</span> num = p->trapframe->a7;  <span class="comment">// get syscall number</span>
+    <span class="keyword">switch</span> (num) {
+        <span class="keyword">case</span> SYS_open:
+            p->trapframe->a0 = sys_open();  <span class="comment">// dispatch</span>
+            <span class="keyword">break</span>;
+        <span class="comment">// ... other cases ...</span>
+    }
+}</div>
+
+<p>System calls have <strong>parameters</strong> that must be passed from user space to
+kernel space. Three common methods are: (1) passing parameters in <strong>registers</strong>
+(fastest, but limited number), (2) passing parameters in a <strong>block</strong> or
+table in memory, with the address passed in a register, and (3) pushing parameters onto
+the <strong>stack</strong> (flexible, but slower). Most modern systems use a combination
+of registers for the first few arguments and the stack for the rest, following the
+calling convention (e.g., RISC-V uses <code class="code-inline">a0</code>–
+<code class="code-inline">a7</code> for arguments).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ System Call Numbers</div>
+<p>Each system call has a unique <strong>number</strong> that identifies it. The user
+program places this number in a specific register (e.g., <code class="code-inline">a7</code>
+on RISC-V, <code class="code-inline">rax</code> on x86-64) before executing the trap
+instruction. The kernel reads this number and dispatches to the corresponding handler.
+This indirection allows the kernel to validate and control all privileged operations.</p>
+</div>
+
+<p>The <strong>standard C library</strong> (glibc on Linux) provides wrapper functions
+for system calls, so programmers rarely write the assembly directly. For example,
+<code class="code-inline">printf()</code> eventually calls
+<code class="code-inline">write()</code>, which is a system call. This layering means
+that a simple <code class="code-inline">printf("Hello\n")</code> involves: formatting the
+string in user space, calling the <code class="code-inline">write</code> wrapper,
+executing the <code class="code-inline">ecall</code>/<code class="code-inline">syscall</code>
+instruction, the kernel copying data from user space to kernel space, the kernel writing
+to the console device, and returning to user space.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-4">2.4 System Services</h2>
+
+<p>Beyond system calls, operating systems provide <strong>system services</strong>—also
+called <strong>system programs</strong> or <strong>system utilities</strong>—that are
+not part of the kernel but are essential for a usable system. These programs run in user
+space and use system calls to perform their tasks. They bridge the gap between the raw
+kernel interface and what users and administrators need.</p>
+
+<p>Categories of system services include: <strong>file management</strong> (ls, cp, mv,
+rm, mkdir), <strong>status information</strong> (ps, top, du, df, who), <strong>file
+modification</strong> (text editors like vi, emacs, nano), <strong>programming-language
+support</strong> (compilers like gcc, clang; interpreters like python, node),
+<strong>program loading and execution</strong> (the shell, exec, ld), and
+<strong>communications</strong> (ssh, ftp, mail, web browsers).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Kernel vs. User Space</div>
+<p>The <strong>kernel</strong> provides the minimal set of mechanisms (system calls).
+<strong>System services</strong> build higher-level functionality on top. For example,
+the kernel provides <code class="code-inline">read()</code> and
+<code class="code-inline">write()</code>, but the <code class="code-inline">cat</code>
+command (a system service) uses those to concatenate files. This separation keeps the
+kernel small and focused, while allowing rich user-space tools.</p>
+</div>
+
+<p>Most operating systems also provide <strong>background services</strong> called
+<strong>daemons</strong> (UNIX terminology) or <strong>services</strong> (Windows
+terminology). These run continuously, handling requests or performing maintenance. Examples
+include <code class="code-inline">sshd</code> (SSH server),
+<code class="code-inline">httpd</code> (web server),
+<code class="code-inline">cron</code> (task scheduler), and
+<code class="code-inline">syslogd</code> (log collector). On systemd-based Linux
+distributions, these are managed by <code class="code-inline">systemd</code>, which
+handles dependencies, restarts, and logging.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-5">2.5 Linkers and Loaders</h2>
+
+<p>Before a program can run, its source code must be compiled and linked into an
+<strong>executable file</strong>. The process involves several stages: <strong>preprocessing</strong>
+(expanding macros and includes), <strong>compilation</strong> (translating C to assembly),
+<strong>assembly</strong> (translating assembly to machine code in an <em>object file</em>),
+and <strong>linking</strong> (combining object files and libraries into an executable).</p>
+
+<p>A <strong>linker</strong> resolves <strong>symbol references</strong>—when one object
+file calls a function defined in another, the linker fills in the correct address. There
+are two types of linking: <strong>static linking</strong> copies library code directly
+into the executable (larger files, but self-contained), while <strong>dynamic linking</strong>
+(deferred to runtime) leaves references to shared libraries (smaller files, but depends
+on the library being present at runtime). The <code class="code-inline">.so</code> files
+on Linux and <code class="code-inline">.dll</code> files on Windows are shared libraries.</p>
+
+<div class="code-block"><span class="comment">/* Compilation pipeline */</span>
+
+<span class="comment">// Source: hello.c</span>
+<span class="preprocessor">#include</span> <span class="string">&lt;stdio.h&gt;</span>
+<span class="keyword">int</span> main() { printf(<span class="string">"Hello\n"</span>); <span class="keyword">return</span> <span class="number">0</span>; }
+
+<span class="comment">// Stages:</span>
+<span class="directive">hello.c</span>  ──preprocess──&gt;  <span class="directive">hello.i</span>   <span class="comment">// expand #include, #define</span>
+<span class="directive">hello.i</span>  ──compile─────&gt;  <span class="directive">hello.s</span>   <span class="comment">// C → assembly</span>
+<span class="directive">hello.s</span>  ──assemble───&gt;  <span class="directive">hello.o</span>   <span class="comment">// assembly → machine code</span>
+<span class="directive">hello.o</span>  ──link────────&gt;  <span class="directive">hello</span>     <span class="comment">// + libc → executable</span>
+
+<span class="comment">// Or all at once:</span>
+$ gcc -o hello hello.c</div>
+
+<p>A <strong>loader</strong> is the OS component that loads an executable into memory and
+starts it running. The <strong>absolute loader</strong> copies the executable to a fixed
+memory address. A <strong>relocating loader</strong> can load at any address, adjusting
+addresses as needed. Modern systems use <strong>dynamic loading</strong> and
+<strong>position-independent code</strong> (PIC), where the loader maps the executable at
+a random address (ASLR) and resolves dynamic library symbols at runtime via the
+<strong>dynamic linker</strong> (<code class="code-inline">ld-linux.so</code> on Linux).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ ELF Format</div>
+<p>On Linux, executables use the <strong>ELF</strong> (Executable and Linkable Format).
+An ELF file contains: a header, program headers (segments for loading), section headers
+(sections for linking), symbol tables, and relocation entries. The OS loader reads the
+program headers to determine which segments to map into memory. In xv6, the executable
+format is simpler (a header followed by segments), but the principle is the same.</p>
+</div>
+
+<p>The <strong>address space</strong> of a running process typically has four segments:
+<strong>text</strong> (code, read-only), <strong>data</strong> (initialized global
+variables), <strong>bss</strong> (uninitialized globals, zero-filled), and
+<strong>stack</strong> (local variables, function calls). The heap grows upward (via
+<code class="code-inline">malloc</code>), and the stack grows downward. The OS sets up
+these segments when loading the program, using the information in the executable file's
+header.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-6">2.6 Operating-System Design</h2>
+
+<p>Designing an operating system is one of the most complex software engineering tasks.
+The designer must balance many competing goals: <strong>performance</strong> (fast
+response, high throughput), <strong>correctness</strong> (no crashes, no data
+corruption), <strong>security</strong> (protection from attacks), <strong>portability</strong>
+(running on different hardware), <strong>extensibility</strong> (adding new features
+without rewriting), and <strong>compatibility</strong> (running old software).</p>
+
+<p>A key design principle is <strong>separation of policy and mechanism</strong>.
+<strong>Mechanisms</strong> are the <em>how</em>—the tools the OS provides (e.g., a
+timer interrupt, a priority field in the PCB, a CPU scheduling queue).
+<strong>Policies</strong> are the <em>what</em>—the decisions made using those tools
+(e.g., "give higher priority to interactive processes"). By separating them, the OS can
+change policies without redesigning mechanisms. For example, the timer mechanism (a
+hardware countdown) supports many scheduling policies (round-robin, priority, fair
+share).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Policy vs. Mechanism</div>
+<p><strong>Mechanism:</strong> "The scheduler can preempt a process after a time
+quantum."<br>
+<strong>Policy:</strong> "The time quantum is 10 ms, and interactive processes get
+higher priority."<br>
+The mechanism is in the kernel; the policy can be a tunable parameter or even a
+loadable module.</p>
+</div>
+
+<p>Another important principle is <strong>least privilege</strong>: each component of the
+OS should have only the privileges it needs. This is why modern OSes run device drivers
+in user space (microkernel design) or in separate protection domains. The
+<strong>end-to-end argument</strong> suggests that functions placed at a low level may be
+redundant or insufficient—some functionality can only be correctly implemented at the
+highest level (the application). OS designers must decide what belongs in the kernel and
+what belongs in user space.</p>
+
+<p>Performance considerations include minimizing <strong>context switch time</strong>
+(saving and restoring registers), reducing <strong>system call overhead</strong> (the
+cost of trapping to kernel mode), optimizing <strong>cache usage</strong> (keeping
+frequently accessed data in cache), and avoiding <strong>lock contention</strong> (too
+many threads waiting for the same lock). These low-level concerns often drive OS design
+decisions, sometimes at the expense of clean abstractions.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-7">2.7 Operating-System Structure</h2>
+
+<p>As operating systems grew larger and more complex, different <strong>architectural
+structures</strong> emerged to organize the code. The main structures are:
+<strong>monolithic</strong>, <strong>layered</strong>, <strong>microkernel</strong>,
+<strong>modules</strong>, and <strong>hybrid</strong>. Each makes different trade-offs
+between performance, maintainability, and security.</p>
+
+<p>A <strong>monolithic kernel</strong> puts all OS services—the scheduler, memory
+manager, file system, device drivers, network stack—into a single large executable
+running in kernel mode. <strong>Linux</strong> is the prime example. Advantages include
+<strong>performance</strong> (no overhead for crossing protection boundaries within the
+kernel) and <strong>simplicity of communication</strong> (all components share the same
+address space). Disadvantages include <strong>large kernel size</strong> (millions of
+lines of code), <strong>security risk</strong> (a bug in any component can crash the
+entire system), and <strong>maintainability</strong> (the code is hard to understand and
+modify).</p>
+
+<p>A <strong>layered structure</strong> organizes the OS into <strong>hierarchical
+layers</strong>, where each layer uses services from the layer below and provides services
+to the layer above. Layer 0 is the hardware; Layer 1 is the scheduler; Layer 2 is memory
+management; and so on, up to the user interface. This design is clean and modular—each
+layer can be developed and tested independently—but it can be <strong>inefficient</strong>
+because each call must traverse multiple layers. THE operating system (Dijkstra, 1968)
+was the first layered OS. Few modern systems use pure layering because of the performance
+overhead.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Microkernel Design</div>
+<p>A <strong>microkernel</strong> keeps the kernel as small as possible—only IPC, basic
+scheduling, and minimal memory management. All other services (file system, device
+drivers, network) run as <strong>user-space processes</strong> and communicate via
+<strong>message passing</strong>. Examples: MINIX, QNX, Mach. Advantages: easier to
+develop, more secure, more reliable. Disadvantage: <strong>overhead of message passing</strong>
+makes it slower than monolithic kernels for many operations.</p>
+</div>
+
+<p>A <strong>modular kernel</strong> (used by modern Linux and Solaris) has a small core
+kernel but allows <strong>loadable kernel modules</strong> (LKMs) to be dynamically
+loaded and unloaded. This combines the performance of a monolithic kernel with some
+flexibility of a microkernel: the core is always in memory, but drivers and file systems
+can be loaded on demand. The <code class="code-inline">insmod</code> and
+<code class="code-inline">rmmod</code> commands on Linux manage modules.</p>
+
+<p>Most modern commercial OSes use a <strong>hybrid structure</strong>. <strong>Windows
+NT</strong> (the basis of modern Windows) and <strong>macOS</strong> (XNU kernel) are
+hybrids: they have a microkernel-like core but run many services in kernel mode for
+performance. macOS's XNU combines the Mach microkernel with BSD UNIX components and the
+I/O Kit driver framework. These designs attempt to get the best of both worlds—modularity
+and performance—but are complex to understand and maintain.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Structure</th><th>Example</th><th>Pros</th><th>Cons</th></tr>
+</thead>
+<tbody>
+<tr><td>Monolithic</td><td>Linux</td><td>Fast, simple IPC</td><td>Large, less secure</td></tr>
+<tr><td>Layered</td><td>THE (1968)</td><td>Clean, modular</td><td>Slow (layer traversal)</td></tr>
+<tr><td>Microkernel</td><td>MINIX, QNX</td><td>Secure, reliable</td><td>Slow (message passing)</td></tr>
+<tr><td>Modular</td><td>Linux (with LKMs)</td><td>Flexible, on-demand</td><td>Complex module mgmt</td></tr>
+<tr><td>Hybrid</td><td>Windows, macOS</td><td>Balanced</td><td>Complex design</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>In xv6, the structure is essentially <strong>monolithic</strong>: all kernel code runs
+in supervisor mode, and there is no module loading. However, the code is organized into
+files by function (<code class="code-inline">proc.c</code> for processes,
+<code class="code-inline">vm.c</code> for virtual memory,
+<code class="code-inline">fs.c</code> for the file system), which provides some logical
+separation. This makes xv6 easy to study: you can read each file to understand one
+subsystem.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-8">2.8 Building and Booting</h2>
+
+<p>The process of <strong>building</strong> an operating system involves compiling the
+kernel source code, linking it into a kernel image, and preparing it for booting. For
+xv6, this means compiling the kernel C and assembly files, linking them with a linker
+script that specifies the memory layout, and producing a kernel image that can be loaded
+by QEMU or a bootloader.</p>
+
+<p>The <strong>boot process</strong> begins when power is applied. The CPU starts
+executing at a fixed address (often in <strong>ROM</strong> or <strong>flash memory</strong>)
+where the <strong>BIOS</strong> (Basic Input/Output System) or
+<strong>UEFI</strong> (Unified Extensible Firmware Interface) resides. This firmware
+performs <strong>POST</strong> (Power-On Self-Test), initializes hardware, and then
+loads the <strong>bootloader</strong> (e.g., GRUB on Linux) from a storage device. The
+bootloader then loads the <strong>kernel image</strong> into memory and jumps to its
+entry point.</p>
+
+<div class="code-block"><span class="comment">/* xv6 boot sequence (RISC-V) */</span>
+
+<span class="comment">// 1. QEMU starts in machine mode at 0x80000000</span>
+<span class="comment">//    (ROM: boot ROM loads kernel from disk)</span>
+
+<span class="comment">// 2. Kernel entry: entry.S (assembly)</span>
+<span class="label">_entry:</span>
+    <span class="comment">// Set up stack pointer for each hart (CPU core)</span>
+    la      <span class="reg">sp</span>, stack0
+    addi    <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">4096</span>  <span class="comment">// 4KB stack</span>
+    <span class="keyword">call</span>    start          <span class="comment">// call C function start()</span>
+
+<span class="comment">// 3. start() in start.c: initialize, then call main()</span>
+<span class="comment">// 4. main() in main.c: initialize all subsystems</span>
+<span class="comment">//    kinit(), kvminit(), procinit(), trapinit(),</span>
+<span class="comment">//    then userinit() → scheduler()</span></div>
+
+<p>Once the kernel is loaded, it initializes its subsystems: setting up
+<strong>page tables</strong>, initializing the <strong>interrupt controller</strong>,
+registering <strong>trap handlers</strong>, initializing the <strong>file system</strong>,
+and creating the <strong>first user process</strong> (the <code class="code-inline">init</code>
+process, PID 1). On UNIX-like systems, <code class="code-inline">init</code> reads a
+configuration file (e.g., <code class="code-inline">/etc/inittab</code> or systemd units)
+and starts login services, network daemons, and other system services. In xv6,
+<code class="code-inline">init</code> (the <code class="code-inline">init.c</code> user
+program) simply forks a shell on the console.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Boot Stages</div>
+<p>Modern booting often involves <strong>multiple stages</strong>: Stage 1 (MBR or UEFI
+boot manager, tiny, in the first sector) loads Stage 2 (the full bootloader, like GRUB),
+which can read file systems, display a boot menu, and load the kernel with parameters.
+This multi-stage approach allows a tiny first-stage loader to fit in the 512-byte boot
+sector while still supporting complex boot configurations.</p>
+</div>
+
+<p><strong>Building</strong> the kernel involves a <strong>Makefile</strong> that
+compiles each source file, links them according to a <strong>linker script</strong>
+(specifying where the text, data, and bss segments go in memory), and produces a binary
+image. For xv6, the command <code class="code-inline">make qemu</code> compiles the
+kernel and user programs, creates a file system image, and launches QEMU with the kernel.
+The <strong>cross-compiler</strong> (<code class="code-inline">riscv64-linux-gnu-gcc</code>)
+is used because the host (x86) and target (RISC-V) architectures differ.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-2-9">2.9 Operating-System Debugging</h2>
+
+<p>Debugging an operating system is significantly harder than debugging a user program
+because a kernel bug can crash the entire system, making it difficult to run a debugger.
+OS developers use a variety of techniques to find and fix bugs.</p>
+
+<p><strong>Logging</strong> is the simplest technique: the kernel writes diagnostic
+messages to a <strong>log buffer</strong> (the <code class="code-inline">dmesg</code>
+buffer on Linux, or <code class="code-inline">printf</code> in xv6). These messages can
+be viewed after a crash or during normal operation. In xv6, the
+<code class="code-inline">printf</code> function in
+<code class="code-inline">printf.c</code> writes directly to the console, which is
+invaluable for debugging. However, excessive logging can slow the system or change timing
+behavior, masking the bug.</p>
+
+<p><strong>Kernel debuggers</strong> (like <code class="code-inline">kgdb</code> on Linux)
+allow setting breakpoints, inspecting memory, and single-stepping through kernel code.
+These require either a second machine connected via serial cable or a virtual machine
+with debugger support. <strong>Crash dumps</strong> save the contents of memory to disk
+after a kernel panic, allowing post-mortem analysis. On Linux, the
+<code class="code-inline">crash</code> utility can analyze these dumps.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Debugging xv6</div>
+<p>When debugging xv6 under QEMU, you can use <code class="code-inline">make
+qemu-gdb</code> to start QEMU with GDB server support, then connect with
+<code class="code-inline">riscv64-linux-gnu-gdb</code>. You can set breakpoints (e.g., in
+<code class="code-inline">syscall</code> or <code class="code-inline">scheduler</code>),
+inspect registers and memory, and step through kernel code. This is one of the best ways
+to understand how the OS works.</p>
+</div>
+
+<p><strong>Tracing</strong> tools (like <code class="code-inline">strace</code> for
+system calls, <code class="code-inline">ftrace</code> for function calls, and
+<code class="code-inline">perf</code> for performance profiling) help identify what the
+system is doing without modifying the code. <strong>Static analysis</strong> tools (like
+<code class="code-inline">sparse</code> for the Linux kernel) can find bugs by analyzing
+source code without running it. <strong>Sanitizers</strong> (AddressSanitizer,
+ThreadSanitizer) can detect memory errors and data races, though they are harder to use
+in kernel code.</p>
+
+<p>Common OS bugs include <strong>race conditions</strong> (multiple threads accessing
+shared data without proper synchronization), <strong>deadlocks</strong> (threads waiting
+for each other indefinitely), <strong>memory leaks</strong> (allocating memory without
+freeing it), <strong>buffer overflows</strong> (writing past the end of an array), and
+<strong>null pointer dereferences</strong> (accessing memory at address 0). The
+consequences are more severe in the kernel: a null pointer dereference causes a kernel
+panic, not just a segfault in one process. This is why kernel code must be written with
+extreme care, with thorough testing and code review.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return; // skip links without data-target (e.g., part links)
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

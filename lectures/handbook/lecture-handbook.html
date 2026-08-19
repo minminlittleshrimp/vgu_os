@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS - Lecture Companion Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Lecture Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Overview</div>
+      <a class="nav-item active" data-target="ch01"><span class="nav-num">01</span>OS Overview</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">RISC-V &amp; Assembly</div>
+      <a class="nav-item" data-target="ch02"><span class="nav-num">02</span>RISC-V ISA Basics</a>
+      <a class="nav-item" data-target="ch03"><span class="nav-num">03</span>RISC-V Assembly</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Kernel &amp; Processes</div>
+      <a class="nav-item" data-target="ch04"><span class="nav-num">04</span>xv6 Kernel Programming</a>
+      <a class="nav-item" data-target="ch05"><span class="nav-num">05</span>Process Management</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Memory &amp; Traps</div>
+      <a class="nav-item" data-target="ch06"><span class="nav-num">06</span>Memory Management</a>
+      <a class="nav-item" data-target="ch07"><span class="nav-num">07</span>Traps &amp; System Calls</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">I/O &amp; Concurrency</div>
+      <a class="nav-item" data-target="ch08"><span class="nav-num">08</span>Interrupts &amp; Drivers</a>
+      <a class="nav-item" data-target="ch09"><span class="nav-num">09</span>Concurrency &amp; Locks</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">File Systems &amp; Advanced VM</div>
+      <a class="nav-item" data-target="ch10"><span class="nav-num">10</span>File Systems</a>
+      <a class="nav-item" data-target="ch11"><span class="nav-num">11</span>Page Faults &amp; Advanced VM</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../books/handbook/part1-overview.html">Silberschatz Handbook</a>
+      <a class="nav-item" href="../../books/handbook/xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Lecture Companion Handbook</h1>
+<p style="color:var(--text-dim);font-size:14px">Detailed study notes to accompany the lecture slide decks L01–L11.
+Use this handbook alongside the slides for deeper explanations, code examples, and context.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#ch01">Operating System Overview</a></li>
+<li><a href="#ch02">RISC-V ISA Basics</a></li>
+<li><a href="#ch03">RISC-V Assembly Programming</a></li>
+<li><a href="#ch04">xv6 Kernel Programming</a></li>
+<li><a href="#ch05">Process Management</a></li>
+<li><a href="#ch06">Memory Management</a></li>
+<li><a href="#ch07">Traps and System Calls</a></li>
+<li><a href="#ch08">Interrupts and Drivers</a></li>
+<li><a href="#ch09">Concurrency and Locks</a></li>
+<li><a href="#ch10">File Systems</a></li>
+<li><a href="#ch11">Page Faults and Advanced VM</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch01">1. Operating System Overview</h2>
+
+<p>An operating system is, at its core, a special program that sits between user applications
+and the hardware. Think of it as a building manager: the building has desks, rooms, and a filing
+cabinet (the hardware), and the manager ensures everyone gets fair access without trampling each
+other. The OS does two fundamental jobs — it is a <strong>resource manager</strong> (allocating
+CPU time, memory, and devices) and a <strong>protector</strong> (keeping programs isolated from
+one another). Every design decision in an OS traces back to these two roles.</p>
+
+<p>The most important boundary in the entire system is the <strong>system call interface</strong> —
+the thin line between user programs and the kernel. Everything above that line is unprivileged
+(user mode); everything below it is privileged (kernel mode). The only way to cross the boundary
+is through a system call, which is a controlled, hardware-enforced transition. A user program
+cannot simply jump into kernel memory or touch a device register — the CPU will trap and the
+kernel will intervene.</p>
+
+<div class="code-block"><span class="comment"># USER:     shell  |  compiler  |  database  |  your app</span>
+<span class="comment"># SVC:      System Call Interface (open, read, write, fork, exec, ...)</span>
+<span class="comment"># KERNEL:   File system | Processes | Memory | Network</span>
+<span class="comment"># HW:       CPU | RAM | Disk | NIC</span></div>
+
+<p>The <strong>Unix philosophy</strong> shapes how we interact with the OS. Three ideas are central:
+(1) <em>everything is a file</em> — disks, terminals, and network sockets are all accessed through
+file descriptors with <code>read()</code> and <code>write()</code>; (2) <em>pipes</em> connect
+programs so the output of one feeds the input of another; (3) the process model is built on
+<code>fork()</code>, <code>exec()</code>, and <code>wait()</code> — you create a copy of a process,
+replace its image with a new program, and then wait for it to finish. This simple model is
+remarkably powerful.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">The OS provides <strong>abstraction</strong> (files, processes, sockets),
+<strong>isolation</strong> (each process has its own address space), and <strong>resource
+management</strong> (fair sharing of CPU and memory). The system call interface is the contract
+between user and kernel.</p>
+</div>
+
+<p>Throughout this course we study <strong>xv6</strong>, a teaching operating system developed at
+MIT. It is roughly 10,000 lines of C and assembly — small enough to read in a weekend, but real
+enough to boot on real hardware (or QEMU) and run real programs. Every concept we discuss has a
+concrete implementation in xv6 that you can read, modify, and break. When you see a reference like
+<code>proc.c</code> or <code>trap.c</code> in these notes, open the file and follow along.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch02">2. RISC-V ISA Basics</h2>
+
+<p>RISC-V is a <strong>Reduced Instruction Set Computer</strong> architecture. The "reduced" part
+means the instructions are simple, fixed-length (32 bits each), and designed to execute in a single
+pipeline stage. This contrasts with CISC designs like x86, where instructions vary in length and
+complexity. The RISC philosophy is: keep the hardware simple, let the compiler do the heavy lifting,
+and make pipelining predictable. RISC-V is clean, modern, and open — which is why we use it as our
+teaching ISA.</p>
+
+<p>The CPU has <strong>32 general-purpose registers</strong>, named <code>x0</code> through
+<code>x31</code>. Register <code>x0</code> is special — it always reads as zero, and writes to it
+are discarded. This is a clever trick: many instructions need a zero operand, and having a dedicated
+zero register avoids needing a separate instruction encoding. The registers also have
+<strong>ABI names</strong> that hint at their conventional use:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Register</th><th>ABI Name</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td class="reg-name">x0</td><td class="reg-name">zero</td><td>Hard-wired zero</td></tr>
+<tr><td class="reg-name">x1</td><td class="reg-name">ra</td><td>Return address</td></tr>
+<tr><td class="reg-name">x2</td><td class="reg-name">sp</td><td>Stack pointer</td></tr>
+<tr><td class="reg-name">x10–x11</td><td class="reg-name">a0–a1</td><td>Function arguments / return value</td></tr>
+<tr><td class="reg-name">x12–x17</td><td class="reg-name">a2–a7</td><td>Function arguments</td></tr>
+<tr><td class="reg-name">x8</td><td class="reg-name">s0/fp</td><td>Frame pointer / callee-saved</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>RISC-V defines several <strong>instruction formats</strong> — the way bits are laid out inside
+the 32-bit word. The main formats are R, I, S, B, U, and J. Each format encodes an opcode, some
+register operands, and possibly an immediate value. The key insight is that the opcode always lives
+in the lowest 7 bits (bits 0–6), so the CPU can decode the instruction type quickly. The immediate
+field is scattered across the upper bits in a way that differs per format — this is a trade-off for
+keeping the register fields in consistent positions.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">All RISC-V instructions are 32 bits. The low 7 bits are always the opcode.
+Immediate values are <strong>sign-extended</strong> — the highest bit of the immediate field is
+replicated to fill the upper bits of the 64-bit register. Always check whether an immediate is
+treated as signed or unsigned.</p>
+</div>
+
+<p><strong>Immediate encoding</strong> deserves special attention. In the I-type format, the
+immediate is 12 bits and occupies bits 31–20. In S-type and B-type, the immediate is split across
+two non-contiguous fields — this was done so that register source fields stay in the same bit
+positions across formats, simplifying decode logic. When you write
+<code>addi x5, x6, -1</code>, the assembler encodes <code>-1</code> as the 12-bit two's complement
+value <code>0xFFF</code>, and the CPU sign-extends it to <code>0xFFFFFFFFFFFFFFFF</code> before
+adding. Understanding sign extension is essential for reading assembly correctly.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch03">3. RISC-V Assembly Programming</h2>
+
+<p>RISC-V assembly is the language we use to talk directly to the CPU. The arithmetic and logic
+instructions are straightforward: <code>add</code>, <code>sub</code>, <code>and</code>,
+<code>or</code>, <code>xor</code>, <code>sll</code> (shift left logical), <code>srl</code> (shift
+right logical), and <code>sra</code> (shift right arithmetic). Each takes three register operands:
+two sources and one destination. For immediate operands, append an <code>i</code>:
+<code>addi</code>, <code>andi</code>, <code>ori</code>, etc.</p>
+
+<div class="code-block"><span class="comment"># Arithmetic examples</span>
+<span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a1</span>, <span class="reg">a2</span>      <span class="comment"># a0 = a1 + a2</span>
+<span class="keyword">sub</span>  <span class="reg">a0</span>, <span class="reg">a1</span>, <span class="reg">a2</span>      <span class="comment"># a0 = a1 - a2</span>
+<span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>     <span class="comment"># sp = sp - 16 (allocate stack frame)</span>
+<span class="keyword">li</span>   <span class="reg">a0</span>, <span class="number">42</span>           <span class="comment"># a0 = 42 (pseudo-instruction)</span></div>
+
+<p><strong>Load and store</strong> instructions move data between registers and memory. RISC-V is a
+load/store architecture — arithmetic only operates on registers, never directly on memory. The
+address is formed by a base register plus a signed offset. Loads come in sizes:
+<code>lb</code> (byte), <code>lh</code> (halfword), <code>lw</code> (word), <code>ld</code>
+(doubleword), and unsigned variants <code>lbu</code>, <code>lhu</code> that zero-extend instead of
+sign-extend. Stores are <code>sb</code>, <code>sh</code>, <code>sw</code>, <code>sd</code>.</p>
+
+<div class="code-block"><span class="keyword">ld</span>   <span class="reg">a0</span>, <span class="number">8</span>(<span class="reg">sp</span>)       <span class="comment"># a0 = *(sp + 8)  (load 64-bit)</span>
+<span class="keyword">sd</span>   <span class="reg">a0</span>, <span class="number">8</span>(<span class="reg">sp</span>)       <span class="comment"># *(sp + 8) = a0  (store 64-bit)</span>
+<span class="keyword">lb</span>   <span class="reg">a1</span>, <span class="number">0</span>(<span class="reg">a0</span>)        <span class="comment"># a1 = *(a0) sign-extended byte</span>
+<span class="keyword">lbu</span>  <span class="reg">a2</span>, <span class="number">0</span>(<span class="reg">a0</span>)        <span class="comment"># a2 = *(a0) zero-extended byte</span></div>
+
+<p><strong>Branches</strong> implement control flow. The conditional branches compare two registers
+and jump if the condition holds: <code>beq</code> (equal), <code>bne</code> (not equal),
+<code>blt</code> (less than, signed), <code>bge</code> (greater or equal, signed), and the unsigned
+variants <code>bltu</code>, <code>bgeu</code>. Unconditional jumps use <code>j</code> (pseudo for
+<code>jal x0, offset</code>) and <code>jr</code> (pseudo for <code>jalr x0, 0(rs)</code>). Note
+that branches use 12-bit offsets measured in bytes, and the range is limited (±4 KiB). For longer
+jumps, the assembler inserts a pseudo-instruction sequence.</p>
+
+<p><strong>Function calls</strong> rely on the <code>ra</code> (return address) register. The
+<code>jal</code> instruction jumps and links — it saves the address of the next instruction into
+<code>ra</code>, so the callee can return with <code>ret</code> (which is
+<code>jalr x0, 0(ra)</code>). The <strong>calling convention</strong> specifies which registers the
+caller can assume survive a call (<em>callee-saved</em>: <code>ra</code>, <code>sp</code>,
+<code>s0</code>–<code>s11</code>) and which the callee may freely clobber (<em>caller-saved</em>:
+<code>a0</code>–<code>a7</code>, <code>t0</code>–<code>t6</code>). Arguments are passed in
+<code>a0</code>–<code>a7</code>, and the return value comes back in <code>a0</code> (and
+<code>a1</code> for a 128-bit return).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Study Tip</div>
+<p style="margin:0">When reading assembly, always track <code>sp</code> and <code>ra</code>. The
+stack grows downward. A function prologue typically does
+<code>addi sp, sp, -N</code> followed by <code>sd ra, 0(sp)</code>. The epilogue reverses this:
+<code>ld ra, 0(sp)</code> then <code>addi sp, sp, N</code> then <code>ret</code>.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch04">4. xv6 Kernel Programming</h2>
+
+<p>xv6 is structured as a traditional monolithic kernel. The source tree is small and readable:
+<code>kernel/</code> contains the kernel C sources and assembly, <code>user/</code> contains user
+programs and the user library, and <code>Makefile</code> ties it together. Key kernel files you
+will return to again and again include <code>proc.c</code> (process management),
+<code>vm.c</code> (virtual memory), <code>trap.c</code> (trap handling), <code>syscall.c</code>
+(system call dispatch), <code>spinlock.c</code> (locking), and <code>file.c</code> (file
+descriptors). The build produces <code>kernel.bin</code>, which is loaded by QEMU.</p>
+
+<p>The <strong>kernel/user boundary</strong> in xv6 is enforced by RISC-V privilege modes. User
+code runs in U-mode; the kernel runs in S-mode. The boundary is crossed only via the
+<code>ecall</code> instruction, which traps into S-mode at the address in <code>stvec</code>. The
+kernel never trusts pointers passed by user programs — it validates every address against the
+process's page table. This is the heart of isolation: a buggy or malicious user program cannot
+corrupt kernel data because the hardware refuses the access.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">Adding a system call to xv6 is a rite of passage. The steps are: (1) add a
+prototype to <code>user/user.h</code>, (2) add an entry to <code>user/usys.pl</code> (which
+generates the <code>ecall</code> stub), (3) add an entry to <code>kernel/syscall.h</code> and the
+dispatch table in <code>kernel/syscall.c</code>, (4) implement the body in
+<code>kernel/sys_*.c</code>. Five files, one feature.</p>
+</div>
+
+<p>xv6 has strong <strong>code conventions</strong> that you must follow. Pointers to structures
+are written <code>p->field</code>, never <code>(*p).field</code>. Functions that manipulate a
+shared structure acquire its lock first — for example, code touching <code>struct proc</code> fields
+holds <code>p->lock</code>. The rule is: <em>if you read or write a field that another CPU might
+touch, hold the lock</em>. Comments are terse but meaningful; a comment like
+<code>// must hold p->lock</code> is a contract, not a suggestion.</p>
+
+<div class="code-block"><span class="comment">// Example: a typical xv6 system call body</span>
+<span class="keyword">uint64</span>
+sys_getpid(<span class="keyword">void</span>)
+{
+  <span class="keyword">struct</span> proc *p = myproc();
+  <span class="keyword">return</span> p->pid;   <span class="comment">// myproc() holds p->lock internally</span>
+}</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Locking Discipline</div>
+<p style="margin:0">xv6 enforces a strict lock ordering to prevent deadlock. If function A
+acquires <code>lock1</code> then <code>lock2</code>, no other code path may acquire them in the
+opposite order. When you add a new lock, document its position in the ordering in a comment. The
+classic trap: calling a function that sleeps while holding a spinlock — this is forbidden because
+the sleep may never wake up if the waker needs that same lock.</p>
+</div>
+
+<p>The <strong>Makefile</strong> is worth reading. It compiles kernel and user code separately,
+links the kernel at a high physical address (so it can run in place), and sets up the entry point
+in <code>entry.S</code>. The <code>$U/_</code> and <code>$K/</code> prefixes in the Makefile
+distinguish user and kernel objects. When you add a new user program, you add its name to the
+<code>UPROGS</code> list; when you add a kernel source file, you add it to the relevant variable.
+Build with <code>make qemu</code> and you get a booting system.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch05">5. Process Management</h2>
+
+<p>A <strong>process</strong> is the OS's unit of execution. In xv6, each process is represented
+by a <code>struct proc</code> (defined in <code>proc.h</code>). This structure — sometimes called a
+PCB (process control block) — holds everything the kernel needs to manage the process: the page
+table, the trapframe (saved registers), the open file table, the kernel stack, the process state,
+and the PID. When you think "process," think of this struct: it is the process.</p>
+
+<div class="code-block"><span class="comment">// Simplified struct proc (kernel/proc.h)</span>
+<span class="keyword">struct</span> proc {
+  <span class="keyword">enum</span> procstate state;   <span class="comment">// UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE</span>
+  <span class="keyword">int</span> pid;                 <span class="comment">// Process ID</span>
+  <span class="keyword">struct</span> trapframe *trapframe; <span class="comment">// Saved user registers</span>
+  <span class="keyword">struct</span> context context;  <span class="comment">// Saved kernel registers for swtch</span>
+  <span class="keyword">pagetable_t</span> pagetable;  <span class="comment">// User page table</span>
+  <span class="keyword">uint64</span> sz;               <span class="comment">// Size of process memory (bytes)</span>
+  <span class="keyword">struct</span> file *ofile[NOFILE]; <span class="comment">// Open files</span>
+  <span class="keyword">struct</span> inode *cwd;        <span class="comment">// Current directory</span>
+  <span class="keyword">char</span> name[16];           <span class="comment">// Process name (for debugging)</span>
+};</div>
+
+<p>A process moves through a <strong>lifecycle</strong> of states. It begins as
+<code>UNUSED</code>, becomes <code>USED</code> when allocated, then <code>RUNNABLE</code> when
+ready to run. The scheduler picks a runnable process and marks it <code>RUNNING</code>. If it
+blocks on I/O or a lock, it becomes <code>SLEEPING</code>. When it exits, it becomes
+<code>ZOMBIE</code> until the parent calls <code>wait()</code> to reap it. The transition from
+<code>RUNNING</code> to <code>RUNNABLE</code> (a preemption) happens on a timer interrupt; the
+transition from <code>RUNNING</code> to <code>SLEEPING</code> happens when the process calls
+<code>sleep()</code>.</p>
+
+<p><code>fork()</code> creates a new process that is a copy of the caller. In xv6,
+<code>fork()</code> (in <code>proc.c</code>) allocates a new <code>struct proc</code>, copies the
+parent's user memory (page by page), copies the file descriptor table (with reference counts
+incremented), and sets the child's state to <code>RUNNABLE</code>. The child returns from
+<code>fork()</code> with a return value of 0; the parent returns with the child's PID. This single
+return-value trick is how the two processes tell themselves apart.</p>
+
+<p><code>exec()</code> replaces the current process image with a new program loaded from a file.
+The process keeps its PID, open files, and current directory — but its memory is discarded and
+replaced with the new program's code, data, and stack. This is the second half of the Unix
+process-creation pattern: <code>fork()</code> then <code>exec()</code>. The shell uses this
+constantly — for every command you type, it forks, the child calls <code>exec()</code> on the
+command, and the parent <code>wait()</code>s.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0"><code>fork()</code> + <code>exec()</code> + <code>wait()</code> is the Unix
+trinity. <code>fork</code> duplicates, <code>exec</code> transforms, <code>wait</code> reaps.
+Separating creation from transformation lets the shell insert redirection and pipes between them
+(via <code>dup2</code> and <code>pipe</code> before the <code>exec</code>).</p>
+</div>
+
+<p>The <strong>context switch</strong> is implemented in <code>swtch.S</code>. When the scheduler
+decides to switch from process A to process B, it calls <code>swtch()</code>, which saves A's
+callee-saved registers into <code>A->context</code> and loads B's from <code>B->context</code>.
+Crucially, <code>swtch</code> only switches the <em>kernel</em> context — the user registers are
+already saved in the trapframe when the process trapped into the kernel. The scheduler itself runs
+on a dedicated stack and is not a process; it is a function that loops forever, picking runnable
+processes.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch06">6. Memory Management</h2>
+
+<p>Memory management is about giving each process the illusion of a large, private, contiguous
+address space — the <strong>virtual address space</strong>. The hardware, via the memory
+management unit (MMU), translates every virtual address to a physical address using a <strong>page
+table</strong>. This translation is what makes isolation possible: process A's virtual address
+0x1000 maps to a different physical page than process B's 0x1000, so they cannot see each other's
+memory. The kernel itself also has a page table (the kernel page table), and each process has its
+own user page table.</p>
+
+<p>RISC-V uses the <strong>Sv39</strong> paging scheme on systems we study. Sv39 means 39-bit
+virtual addresses, broken into a three-level page table: level 2 (root), level 1, and level 0. Each
+page table is 4 KiB and holds 512 entries (PTEs, page table entries). Each PTE is 64 bits and
+contains a 44-bit physical page number (PPN) plus permission flags. The translation walks the
+tree: the root PTE points to a level-1 table, which points to a level-0 table, whose PTE points to
+the actual 4 KiB physical page.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Level</th><th>Index bits</th><th>Entries per table</th><th>Points to</th></tr>
+</thead>
+<tbody>
+<tr><td>Level 2 (root)</td><td>bits 30–38</td><td>512</td><td>Level 1 table</td></tr>
+<tr><td>Level 1</td><td>bits 21–29</td><td>512</td><td>Level 0 table</td></tr>
+<tr><td>Level 0</td><td>bits 12–20</td><td>512</td><td>4 KiB physical page</td></tr>
+<tr><td>Offset</td><td>bits 0–11</td><td>—</td><td>Byte within page</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Each PTE carries <strong>permission flags</strong>: <code>V</code> (valid), <code>R</code>
+(readable), <code>W</code> (writable), <code>X</code> (executable), <code>U</code> (user-accessible),
+and <code>A</code>/<code>D</code> (accessed/dirty bits). If a user program tries to execute a
+non-<code>X</code> page, or write a non-<code>W</code> page, or access a non-<code>U</code> page,
+the MMU raises a page fault — which is how the kernel enforces protection. The kernel's own pages
+have <code>U=0</code>, so user code cannot touch them even if it guesses the address.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">A page table is a tree of PTEs. Each level narrows the address by 9 bits. The
+leaf PTE gives the physical page base; the low 12 bits (offset) pass through unchanged. This is why
+page size is 4 KiB — 12 bits of offset.</p>
+</div>
+
+<p>The <strong>TLB</strong> (translation lookaside buffer) caches recent virtual-to-physical
+translations so the CPU does not walk the page table on every memory access. When the kernel
+switches page tables (on a context switch), it must invalidate the TLB with <code>sfence.vma</code>
+— otherwise stale translations from the previous process would leak. In xv6, the
+<code>sfence.vma</code> is issued in <code>kvminithart</code> and during process switches. The TLB
+is the reason page table switches are not free.</p>
+
+<p>In xv6, the key memory-management functions live in <code>vm.c</code>.
+<code>proc_pagetable()</code> allocates a fresh page table for a process.
+<code>uvmalloc()</code> grows a process's memory by mapping new pages.
+<code>uvmcopy()</code> copies a process's pages (used by <code>fork()</code>).
+<code>copyin()</code> / <code>copyout()</code> safely copy data between user and kernel space,
+validating addresses against the page table. <code>mappages()</code> installs mappings by walking
+the page table and creating intermediate levels as needed. Reading <code>vm.c</code> end to end is
+the single best way to understand paging.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Common Pitfall</div>
+<p style="margin:0">Never dereference a user pointer directly in the kernel. Always use
+<code>copyin()</code> / <code>copyout()</code> or <code>walkaddr()</code>. A raw dereference might
+work by accident (if the kernel page table happens to map that address) but is a security hole —
+and on RISC-V the kernel page table does <em>not</em> include user mappings by default, so it will
+usually fault.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch07">7. Traps and System Calls</h2>
+
+<p>A <strong>trap</strong> is a controlled transfer of execution from user mode to kernel mode.
+The word "controlled" is key: the user program does not choose where in the kernel to jump. The
+CPU always jumps to the address in the <code>stvec</code> register, which the kernel set up at
+boot. Three things cause a trap: a <em>system call</em> (the user runs <code>ecall</code>), an
+<em>exception</em> (the CPU detects a fault like a page fault or illegal instruction), or an
+<em>interrupt</em> (hardware signals an event like a timer tick). All three use the same trap
+mechanism; the kernel distinguishes them by reading <code>scause</code>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">One mechanism, three triggers. Syscalls, exceptions, and interrupts all enter
+the kernel through the same path. The <code>scause</code> register tells the kernel <em>why</em>.
+This unification is elegant — the kernel has a single trap entry point that handles everything.</p>
+</div>
+
+<p>On a trap, the hardware does several things atomically: it saves the current program counter
+into <code>sepc</code> (so the kernel can resume), saves the current privilege mode, switches to
+S-mode, disables interrupts, and jumps to <code>stvec</code>. The kernel must then save all user
+registers (since it will use them), figure out the cause from <code>scause</code>, and dispatch
+accordingly. On return, the kernel restores registers, sets <code>sepc</code> to the instruction
+after <code>ecall</code>, and executes <code>sret</code> to drop back to U-mode.</p>
+
+<p>In xv6, the trap path goes through the <strong>trampoline</strong> — a special page mapped at
+the same virtual address in both user and kernel page tables. This is necessary because at the
+moment of the trap, the MMU is still using the user page table, so the trap handler must be
+reachable via that mapping. The trampoline page contains <code>uservec</code> (the entry, in
+<code>trampoline.S</code>), which saves user registers into the process's trapframe, switches to
+the kernel page table, and jumps to <code>usertrap()</code> in C. On return,
+<code>usertrapret()</code> sets up the return and jumps to <code>userret</code>, which restores
+registers and executes <code>sret</code>.</p>
+
+<div class="code-block"><span class="comment">// Simplified usertrap() dispatch (kernel/trap.c)</span>
+<span class="keyword">void</span>
+usertrap(<span class="keyword">void</span>)
+{
+  <span class="keyword">int</span> which = (r_scause() &amp; <span class="number">0x8000000000000000</span>) ? <span class="number">1</span> : <span class="number">0</span>;
+  <span class="keyword">if</span> (r_scause() == <span class="number">8</span>) {           <span class="comment">// syscall</span>
+    p->trapframe->epc += <span class="number">4</span>;      <span class="comment">// skip ecall instruction</span>
+    syscall();                  <span class="comment">// dispatch via table</span>
+  } <span class="keyword">else</span> <span class="keyword">if</span> (which) {
+    devintr();                  <span class="comment">// device interrupt</span>
+  } <span class="keyword">else</span> {
+    <span class="comment">// exception: kill the process</span>
+    p->killed = <span class="number">1</span>;
+  }
+}</div>
+
+<p><strong>System call dispatch</strong> uses a table. Each syscall has a number (defined in
+<code>syscall.h</code>), and <code>syscall.c</code> holds an array of function pointers indexed by
+that number. The user stub (generated from <code>usys.pl</code>) loads the syscall number into
+<code>a7</code> and arguments into <code>a0</code>–<code>a5</code>, then runs <code>ecall</code>.
+In the kernel, <code>argint()</code>, <code>argaddr()</code>, and <code>argfd()</code> fetch the
+arguments from the saved trapframe. The return value goes into <code>a0</code> in the trapframe,
+which the user sees when <code>ecall</code> returns.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Two Stacks</div>
+<p style="margin:0">Every process has <strong>two stacks</strong>: a user stack (in user memory)
+and a kernel stack (allocated separately, in <code>proc.h</code>). When a trap occurs, the kernel
+switches to the kernel stack — saved in <code>sscratch</code> during <code>uservec</code>. The
+kernel stack is per-process so that each process has a private stack even when in the kernel. The
+trampoline uses <code>sscratch</code> to swap <code>sp</code> between user and kernel stacks.</p>
+</div>
+
+<p>The <code>usys.pl</code> file is a Perl script that generates assembly stubs. Each entry like
+<code>entry("write");</code> produces a small function that loads the syscall number and traps.
+This is why user programs call <code>write(fd, buf, n)</code> as a normal C function — the library
+hides the <code>ecall</code>. Understanding this pipeline — from C call to stub to
+<code>ecall</code> to trampoline to <code>usertrap</code> to <code>syscall</code> table — is the
+core of understanding how an OS actually works.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch08">8. Interrupts and Drivers</h2>
+
+<p>It is important to distinguish three terms that students often conflate. A <strong>trap</strong>
+is the general term for any synchronous or asynchronous transfer to the kernel. An
+<strong>exception</strong> is a synchronous trap caused by the current instruction (page fault,
+divide-by-zero, illegal instruction). An <strong>interrupt</strong> is an asynchronous trap
+caused by an external event (timer, disk I/O completion, keyboard press) — it is not tied to any
+particular instruction. The hardware handles them through the same <code>stvec</code> path, but the
+<code>scause</code> register has its high bit set for interrupts, so the kernel can tell them
+apart.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Term</th><th>Trigger</th><th>Synchronous?</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>System call</td><td><code>ecall</code> instruction</td><td>Yes</td><td><code>write()</code></td></tr>
+<tr><td>Exception</td><td>Instruction fault</td><td>Yes</td><td>Page fault, illegal opcode</td></tr>
+<tr><td>Interrupt</td><td>External hardware signal</td><td>No</td><td>Timer tick, UART RX</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>On RISC-V, external interrupts (from devices) are routed through the <strong>PLIC</strong>
+(Platform-Level Interrupt Controller). The PLIC collects interrupt signals from all devices,
+prioritizes them, and delivers one at a time to the CPU. The kernel acknowledges the interrupt by
+reading a PLIC register (which also tells it which device caused it), services the device, then
+completes the interrupt by writing to the PLIC's "claim" register. The timer interrupt is special —
+it comes from a separate RISC-V timer device and is handled via <code>timerintr</code> in
+<code>trap.c</code>, which schedules the next tick and may yield to the scheduler.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">Device drivers split work into a <strong>top half</strong> (the interrupt
+handler, which runs with interrupts disabled and must be fast) and a <strong>bottom half</strong>
+(deferred work that runs later, with interrupts enabled). The top half acknowledges the hardware
+and queues data; the bottom half does the heavy processing. This keeps interrupt latency low.</p>
+</div>
+
+<p>The <strong>console driver</strong> in xv6 is the canonical example. It spans two files:
+<code>uart.c</code> (the low-level UART hardware driver) and <code>console.c</code> (the higher-level
+line discipline). When a key is pressed, the UART raises an interrupt; <code>uartintr()</code> reads
+the byte from the UART data register and pushes it into a buffer. <code>consoleintr()</code> then
+processes the byte — handling special keys like backspace and Ctrl-P, and waking any process
+blocked in <code>consoleread()</code>. On the output side, <code>consolewrite()</code> pushes bytes
+to the UART, polling the transmit-ready bit before each byte.</p>
+
+<div class="code-block"><span class="comment">// Simplified console input path (kernel/console.c)</span>
+<span class="keyword">void</span>
+consoleintr(<span class="keyword">int</span> c)
+{
+  acquire(&amp;cons.lock);
+  <span class="keyword">if</span> (c == BACKSPACE) { ... }       <span class="comment">// handle edit</span>
+  <span class="keyword">else</span> { cons.buf[cons.wpos++] = c; } <span class="comment">// buffer char</span>
+  wakeup(&amp;cons.rpos);               <span class="comment">// wake reader</span>
+  release(&amp;cons.lock);
+}</div>
+
+<p>Devices are exposed to user programs as <strong>device files</strong>. In xv6, the console is
+file descriptor 0 (stdin), 1 (stdout), 2 (stderr) — opened automatically by the shell. The
+<code>write()</code> system call on fd 1 ends up in <code>consolewrite()</code> via the file table
+dispatch. This is the Unix "everything is a file" idea in action: the same <code>read</code> and
+<code>write</code> syscalls work on disk files, pipes, and devices, because the file table
+abstracts the underlying object behind a uniform interface.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Study Tip</div>
+<p style="margin:0">Read <code>uart.c</code> and <code>console.c</code> side by side. Trace a
+keystroke from the UART register, through the interrupt, into the buffer, and out to a
+<code>read()</code> call in the shell. That round trip is the complete picture of how I/O works in
+a real OS.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch09">9. Concurrency and Locks</h2>
+
+<p>When two CPUs (or two threads) access the same data, you get a <strong>race condition</strong>:
+the result depends on the timing of the accesses. The classic example is a shared counter:
+<code>counter++</code> is not atomic — it is a load, an add, and a store. If two CPUs do this
+simultaneously, one increment can be lost. The solution is <strong>mutual exclusion</strong>:
+ensure only one CPU at a time can execute a critical section. The tool for this is a lock.</p>
+
+<div class="code-block"><span class="comment">// Race condition: two CPUs, one counter</span>
+counter = counter + <span class="number">1</span>;
+<span class="comment">// CPU A loads 5, CPU B loads 5, both store 6 — one increment lost!</span></div>
+
+<p>A <strong>spinlock</strong> is the simplest lock. It has two states: locked and unlocked. To
+acquire, a CPU atomically tests-and-sets the lock word; if it was already locked, the CPU spins
+(busy-waits) in a loop until it becomes free. On RISC-V, the atomic operation is
+<code>amoswap</code> (atomic swap), or the load-reserved / store-conditional pair
+(<code>lr.w</code>/<code>sc.w</code>). The xv6 implementation lives in <code>spinlock.c</code> and
+uses <code>amoswap</code> via inline assembly in <code>__sync_lock_test_and_set</code>.</p>
+
+<div class="code-block"><span class="comment">// Simplified xv6 spinlock acquire (kernel/spinlock.c)</span>
+<span class="keyword">void</span>
+acquire(<span class="keyword">struct</span> spinlock *lk)
+{
+  push_off();                       <span class="comment">// disable interrupts on this CPU</span>
+  <span class="keyword">while</span> (__sync_lock_test_and_set(&amp;lk->locked, <span class="number">1</span>) != <span class="number">0</span>)
+    ;                               <span class="comment">// spin until we get it</span>
+  __sync_synchronize();             <span class="comment">// memory barrier</span>
+}</div>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">A spinlock disables interrupts on the acquiring CPU (via <code>push_off</code>).
+Why? Because if an interrupt fires while holding a spinlock, and the interrupt handler tries to
+acquire the same lock, the CPU deadlocks with itself. Disabling interrupts during a critical
+section prevents this self-deadlock on a single CPU.</p>
+</div>
+
+<p><strong>Lock ordering</strong> is the rule that prevents deadlock. If code path A acquires
+<code>L1</code> then <code>L2</code>, no other path may acquire <code>L2</code> then <code>L1</code>
+— that would be a circular wait, the classic deadlock. xv6 documents a global lock ordering in
+comments. When you add a lock, you must place it in this ordering. The general rule: acquire locks
+in a consistent global order, and release them in reverse order. If you ever see a hang where all
+CPUs are stuck, suspect a lock-ordering violation.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Never Sleep With a Spinlock</div>
+<p style="margin:0">A spinlock is held for a short, bounded time — never across a
+<code>sleep()</code> or any operation that might block indefinitely. If you need to wait for a
+condition (e.g., "data available in the buffer"), use a <strong>sleep lock</strong> instead. A
+sleep lock releases the CPU while waiting, so other processes can run and eventually wake you.</p>
+</div>
+
+<p>A <strong>sleep lock</strong> (struct <code>sleeplock</code> in xv6) is built on top of a
+spinlock and the <code>sleep()</code>/<code>wakeup()</code> primitives. To acquire, you take an
+internal spinlock, check a flag, and if the lock is held, call <code>sleep()</code> — which atomically
+releases the spinlock and puts the process to sleep. When the holder releases, it calls
+<code>wakeup()</code> on the sleep channel, and a waiter wakes and retries. Sleep locks are used
+for long-held resources like file system buffers, where spinning would waste CPU for milliseconds.
+
+<p>The underlying atomic instructions deserve a closer look. <code>amoswap rd, rs2, (rs1)</code>
+atomically reads the value at <code>(rs1)</code> into <code>rd</code> and writes <code>rs2</code> to
+<code>(rs1)</code>, all as one indivisible operation. The <code>lr</code>/<code>sc</code> pair is
+more flexible: <code>lr</code> loads and reserves the address; <code>sc</code> stores only if the
+reservation is still valid (no other write to that address occurred). This lets you build more
+complex atomic operations like compare-and-swap. Both rely on the memory system guaranteeing
+atomicity at the cache-line level.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch10">10. File Systems</h2>
+
+<p>The file system provides the abstraction of <strong>files</strong> (named byte streams) and
+<strong>directories</strong> (named collections of files). In xv6, the file system is a simple but
+complete implementation that lives on a virtual disk image. It supports files, directories, hard
+links, and a journaling log for crash recovery. Studying it teaches you how a real file system
+works, from the on-disk layout up to the system call interface.</p>
+
+<p>The xv6 disk is divided into regions, laid out in a fixed order. The <strong>superblock</strong>
+(recorded in <code>struct superblock</code> in <code>mkfs/mkfs.c</code> and <code>fs.h</code>)
+describes the layout: number of blocks, number of inodes, and the start of each region. The layout
+is: <code>boot</code> block, <code>super</code> block, <code>log</code> blocks, <code>inode</code>
+blocks, <code>bitmap</code> block, and <code>data</code> blocks.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Region</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td>Boot block</td><td>First block; reserved for bootloader</td></tr>
+<tr><td>Super block</td><td>File system parameters (sizes, offsets)</td></tr>
+<tr><td>Log blocks</td><td>Journal for crash recovery</td></tr>
+<tr><td>Inode blocks</td><td>On-disk inodes (struct dinode)</td></tr>
+<tr><td>Bitmap block</td><td>One bit per data block (free/used)</td></tr>
+<tr><td>Data blocks</td><td>File and directory contents</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>An <strong>inode</strong> is the on-disk record describing a file. It holds the file's type
+(file/directory/device), size, link count, and an array of 12 direct block pointers plus one
+single-indirect and one double-indirect pointer. The inode does <em>not</em> store the file name —
+names live in directory entries, which map names to inode numbers. This separation is why hard
+links work: multiple directory entries can point to the same inode, and the file persists until the
+link count reaches zero.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">An inode is the file; the name is just a directory entry pointing to it. This
+is why <code>unlink</code> removes a name but the file's data survives until the last link is gone.
+The link count in the inode tracks how many names point to it.</p>
+</div>
+
+<p>The kernel keeps an <strong>inode cache</strong> (<code>itable</code> in <code>file.c</code> /
+<code>fs.c</code>) to avoid reading inodes from disk on every operation. When a process opens a
+file, the kernel looks up the inode in the cache (reading from disk if needed), increments its
+reference count, and returns a pointer. The cache is small — it holds only recently used inodes —
+and is protected by a single lock. Inodes in the cache have an in-memory <code>ref</code> count
+(how many file descriptors reference them) separate from the on-disk <code>nlink</code> count (how
+many directory entries point to them).</p>
+
+<p><strong>File descriptors</strong> are the user's handle to an open file. Each process has a
+table of open file descriptors (the <code>ofile</code> array in <code>struct proc</code>). A
+descriptor points to a <code>struct file</code> (in <code>file.c</code>), which tracks the
+underlying inode (or pipe, or device), the current offset, and a reference count. <code>fork()</code>
+copies the descriptor table (sharing the <code>struct file</code> objects, incrementing their
+refs); <code>exec()</code> preserves the table. This sharing is how shell pipes work: the child
+inherits the parent's descriptors, including the pipe ends.</p>
+
+<div class="code-block"><span class="comment">// Simplified struct file (kernel/file.h)</span>
+<span class="keyword">struct</span> file {
+  <span class="keyword">enum</span> { FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE } type;
+  <span class="keyword">int</span> ref;            <span class="comment">// reference count</span>
+  <span class="keyword">int</span> readable;
+  <span class="keyword">int</span> writable;
+  <span class="keyword">struct</span> pipe *pipe;  <span class="comment">// if type == FD_PIPE</span>
+  <span class="keyword">struct</span> inode *ip;   <span class="comment">// if type == FD_INODE</span>
+  <span class="keyword">uint</span> off;            <span class="comment">// current offset (for inode files)</span>
+};</div>
+
+<p>The <strong>log layer</strong> provides crash recovery. Before modifying any file system
+structure, the kernel writes the intended changes to the log area on disk. Once all changes for a
+transaction are in the log, it writes a "commit" record. Only then does it apply the changes to
+their final on-disk locations and clear the log. If the system crashes mid-transaction, the
+recovery code (in <code>recover_from_log()</code>) sees an incomplete log and discards it — the
+file system remains consistent. If it crashes after commit but before install, recovery replays the
+log. This is <em>write-ahead logging</em>, the same principle used by enterprise databases.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Log Discipline</div>
+<p style="margin:0">xv6's log has a fixed size. A single system call must not write more blocks than
+the log can hold, or it will deadlock. This is why <code>write()</code> to a file breaks large
+writes into chunks that fit in the log. The <code>begin_op()</code> / <code>end_op()</code> calls
+in <code>log.c</code> delimit transactions; <code>log_write()</code> records the blocks to be
+written.</p>
+</div>
+
+<p><strong>Path name resolution</strong> turns a string like <code>/home/alice/file.txt</code> into
+an inode. The function <code>namei()</code> (in <code>fs.c</code>) walks the path component by
+component: it starts at the root (or the current directory for relative paths), reads the directory
+inode, scans its entries for the next component, gets that entry's inode number, and repeats. Each
+step involves inode lookups (cached in the itable) and directory reads. Symlinks are not supported
+in base xv6, which keeps the resolver simple.</p>
+
+<!-- ============================================================ -->
+<h2 id="ch11">11. Page Faults and Advanced VM</h2>
+
+<p>A <strong>page fault</strong> is an exception raised by the MMU when it cannot translate a
+virtual address — either because the PTE is invalid, or because the access violates the PTE's
+permission bits. There are three kinds, distinguished by the access that caused them: a
+<strong>load page fault</strong> (a read, <code>scause</code> = 5), a <strong>store page
+fault</strong> (a write, <code>scause</code> = 7), and an <strong>instruction page fault</code>
+(an instruction fetch, <code>scause</code> = 12). The kernel's page fault handler reads
+<code>stval</code> to get the faulting address and <code>scause</code> to get the type, then
+decides what to do.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>scause</th><th>Type</th><th>Trigger</th></tr>
+</thead>
+<tbody>
+<tr><td>5</td><td>Load page fault</td><td>Read from unmapped/protected page</td></tr>
+<tr><td>7</td><td>Store page fault</td><td>Write to read-only/unmapped page</td></tr>
+<tr><td>12</td><td>Instruction page fault</td><td>Execute from non-executable page</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>In base xv6, a page fault usually means the process did something wrong — accessed an invalid
+address, or wrote to a read-only page — and the kernel kills the process. But page faults are also
+a powerful mechanism: they let the kernel implement features <em>lazily</em>, only doing work
+when it is actually needed. This is the foundation of several advanced virtual memory techniques.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">🔑 Key Idea</div>
+<p style="margin:0">A page fault is a <strong>trap</strong>, just like a system call. The kernel
+gets control, sees the faulting address in <code>stval</code>, and can choose to fix up the
+mapping (map a new page, copy data, change permissions) and resume the process — all transparently.
+This turns the MMU into a general-purpose mechanism for demand-driven memory management.</p>
+</div>
+
+<p><strong>Copy-on-write (COW) fork</strong> is the classic optimization. In standard
+<code>fork()</code>, the kernel copies every page of the parent into the child — expensive if the
+child immediately calls <code>exec()</code> and discards it all. In COW fork, the kernel instead
+maps the child's pages to the <em>same</em> physical pages as the parent, but marks them
+read-only in both page tables. When either process writes, a store page fault occurs. The handler
+then allocates a fresh page, copies the content, maps it writable, and resumes. Only pages that are
+actually written get copied. To implement this, you need a reference count per physical page (so
+you know when it is safe to reuse) and careful handling of the "already shared" case.</p>
+
+<div class="code-block"><span class="comment">// COW fault handler (conceptual)</span>
+<span class="keyword">void</span>
+cow_fault(<span class="keyword">struct</span> proc *p, <span class="keyword">uint64</span> va) {
+  pte_t *pte = walk(p->pagetable, va, <span class="number">0</span>);
+  <span class="keyword">uint64</span> pa = PTE2PA(*pte);
+  <span class="keyword">if</span> (kref_get(pa) == <span class="number">1</span>) {
+    *pte |= PTE_W;                 <span class="comment">// sole owner: just make writable</span>
+  } <span class="keyword">else</span> {
+    <span class="keyword">char</span> *mem = kalloc();
+    memmove(mem, (<span class="keyword">char</span>*)pa, PGSIZE);
+    uvmunmap(p->pagetable, va, <span class="number">1</span>, <span class="number">0</span>);
+    mappages(p->pagetable, va, PGSIZE, (<span class="keyword">uint64</span>)mem, PTE_W|PTE_U);
+    kref_dec(pa);                 <span class="comment">// parent no longer owns this copy</span>
+  }
+}</div>
+
+<p><strong>Lazy allocation</strong> defers actually allocating memory until it is used. When a
+program calls <code>sbrk()</code> to grow its heap, the kernel just increases the process's
+<code>sz</code> field — it does not map any pages. When the program first touches the new memory, a
+page fault occurs, and the handler allocates a zeroed page and maps it. This makes
+<code>sbrk()</code> fast and avoids allocating memory the program never uses. The handler must
+check that the faulting address is within <code>[old_sz, sz)</code> and that it is a store fault
+(reading uninitialized memory should still fault, or be handled by mapping a zero page).</p>
+
+<p><strong>Demand paging</strong> extends lazy allocation to executables. When <code>exec()</code>
+loads a program, instead of reading the entire binary into memory, it maps the code and data
+segments as file-backed pages with the <code>V</code> bit clear (or with a special marker). When the
+program runs and touches a page, the fault handler reads the corresponding block from the
+executable file into a fresh page and maps it. This dramatically speeds up program startup — only
+the pages actually executed are loaded. If memory is tight, the kernel can evict clean file-backed
+pages (just drop them; they can be re-read) or write dirty pages to a swap area.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Security Implications</div>
+<p style="margin:0">Page faults have security consequences. <strong>Stack growth</strong> via
+faults can be abused: a program that recurses infinitely can consume all memory. <strong>Lazy
+allocation</strong> means <code>malloc()</code> succeeding does not guarantee the memory exists —
+the OOM killer may strike later. <strong>COW</strong> must clear the TLB entry for the parent when
+sharing, or the parent could write through a stale writable mapping. And <strong>page fault
+side channels</strong> (like Spectre/Meltdown variants) can leak data across privilege boundaries
+based on fault timing. Always validate the faulting address against the process's legitimate
+range.</p>
+</div>
+
+<p><strong>mmap</strong> (memory-mapped files) lets a process map a file directly into its address
+space, so reads and writes to memory become file I/O. The kernel sets up a VMA (virtual memory
+area) describing the file, offset, and length, with pages initially unmapped. On first access, a
+page fault reads the file block into a page and maps it. Writes (if the mapping is writable) are
+flushed back to the file on <code>munmap</code> or <code>msync</code>. <code>mmap</code> unifies
+file I/O and memory: you can treat a file as an array, and the kernel handles the paging. This is
+how shared libraries and database engines achieve high performance — they let the page cache do the
+buffering, avoiding explicit <code>read</code>/<code>write</code> syscalls.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Study Tip</div>
+<p style="margin:0">The xv6 labs on COW fork and lazy allocation are where these concepts become
+real. Start by instrumenting the page fault handler in <code>trap.c</code> to print
+<code>stval</code> and <code>scause</code> on every fault. Then implement COW by adding a reference
+count to <code>kalloc.c</code> and handling store faults in <code>usertrap()</code>. The hardest
+part is getting the reference counting right — off-by-one errors cause use-after-free bugs that
+manifest far from the cause.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Lecture Companion Handbook - August 2026<br>
+Companion to Lecture Slides L01–L11
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = this.dataset.target;
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      // Hide section if all items hidden
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

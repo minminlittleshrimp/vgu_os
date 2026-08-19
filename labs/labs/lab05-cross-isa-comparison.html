@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 05 - Cross-ISA Comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Lab 05: Cross-ISA</h1>
+    <a class="subtitle" href="../main.html">VGU Operating Systems</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Labs</div>
+      <a class="nav-item" href="lab01-riscv-asm-basics.html"><span class="nav-num">01</span>RISC-V Basics</a>
+      <a class="nav-item" href="lab02-riscv-stack-frames.html"><span class="nav-num">02</span>Stack Frames</a>
+      <a class="nav-item" href="lab03-x86-64-asm.html"><span class="nav-num">03</span>x86-64 ASM</a>
+      <a class="nav-item" href="lab04-arm64-asm.html"><span class="nav-num">04</span>ARM64 ASM</a>
+      <a class="nav-item active" href="lab05-cross-isa-comparison.html"><span class="nav-num">05</span>Cross-ISA</a>
+      <a class="nav-item" href="lab06-c-to-asm-explorer.html"><span class="nav-num">06</span>C to ASM</a>
+      <a class="nav-item" href="lab07-os-syscalls-traps.html"><span class="nav-num">07</span>Syscalls & Traps</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Resources</div>
+      <a class="nav-item" href="../handbook/main.html">Handbook</a>
+      <a class="nav-item" href="../simulator/main.html">Simulator</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Lab 05: Cross-ISA Comparison: RISC-V vs ARM64 vs x86-64 vs MIPS</h1>
+<p style="color:var(--text-dim);font-size:14px">Compile the same C code to four ISAs and compare instruction count, code size, encoding, and calling conventions.</p>
+
+<div class="divider"></div>
+
+<h2>Objectives</h2>
+<ul>
+<li>Compile identical C functions to RISC-V, ARM64, x86-64, and MIPS</li>
+<li>Compare instruction counts and code sizes across all four ISAs</li>
+<li>Understand CISC vs RISC tradeoffs in practice</li>
+<li>Compare instruction encoding (fixed vs variable length)</li>
+<li>Map calling conventions and syscall mechanisms across ISAs</li>
+<li>Build a comprehensive feature comparison table</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+<li>Complete <a href="lab01-riscv-asm-basics.html">Lab 01</a> through <a href="lab04-arm64-asm.html">Lab 04</a></li>
+<li>Read <a href="../handbook/main.html">Handbook Chapters 14-18</a> (MIPS + Cross-ISA comparison)</li>
+<li>Open the <a href="../simulator/main.html">Simulator</a> (supports all four ISAs)</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">The Four ISAs</div>
+<table style="margin-top:8px">
+<tr><th>ISA</th><th>Type</th><th>Encoding</th><th>Registers</th></tr>
+<tr><td><span class="badge badge-riscv">RISC-V</span></td><td>RISC</td><td>Fixed 32-bit</td><td>32 (x0-x31)</td></tr>
+<tr><td><span class="badge badge-arm">ARM64</span></td><td>RISC</td><td>Fixed 32-bit</td><td>31 (x0-x30)</td></tr>
+<tr><td><span class="badge badge-x86">x86-64</span></td><td>CISC</td><td>Variable 1-15 bytes</td><td>16 (rax-r15)</td></tr>
+<tr><td><span class="badge badge-mips">MIPS</span></td><td>RISC</td><td>Fixed 32-bit</td><td>32 ($0-$31)</td></tr>
+</table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== EXERCISE 1 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 1: Compile add() to All 4 ISAs - Compare Instruction Count</span>
+</div>
+<p>Compile a simple <span class="code-inline">add</span> function to all four ISAs and count instructions.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">add</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="keyword">return</span> a + b;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile to RISC-V (RV64) with -O2</div>
+<p>Select RISC-V, compile, and note the instructions. Expected:</p>
+<div class="code-block"><span class="label">add:</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Compile to ARM64 with -O2</div>
+<p>Expected:</p>
+<div class="code-block"><span class="label">add:</span>
+    <span class="keyword">add</span>  <span class="reg">w0</span>, <span class="reg">w0</span>, <span class="reg">w1</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Compile to x86-64 with -O2</div>
+<p>Expected:</p>
+<div class="code-block"><span class="label">add:</span>
+    <span class="keyword">mov</span>  <span class="reg">eax</span>, <span class="reg">edi</span>
+    <span class="keyword">add</span>  <span class="reg">eax</span>, <span class="reg">esi</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Compile to MIPS with -O2</div>
+<p>Expected:</p>
+<div class="code-block"><span class="label">add:</span>
+    <span class="keyword">jr</span>   <span class="reg">$ra</span>
+    <span class="keyword">addu</span> <span class="reg">$v0</span>, <span class="reg">$a0</span>, <span class="reg">$a1</span>  <span class="comment"># delay slot</span></div>
+</div>
+<div class="step">
+<div class="step-title">Fill in the comparison table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>ISA</th><th>Instruction Count</th><th>Uses 2-op or 3-op?</th><th>Return Register</th></tr>
+</thead>
+<tbody>
+<tr><td><span class="badge badge-riscv">RISC-V</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-arm">ARM64</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-x86">x86-64</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-mips">MIPS</span></td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Key Observation</div>
+RISC-V and ARM64 use 3-operand form (<code>add dst, src1, src2</code>) - non-destructive. x86-64 uses 2-operand form (<code>add dst, src</code>) - destructive, requiring an extra <code>mov</code>. MIPS uses 3-operand but has a branch delay slot (the <code>addu</code> executes before the <code>jr</code> takes effect).
+</div>
+</div>
+
+<!-- ===== EXERCISE 2 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 2: Compile a Loop to All 4 ISAs - Compare Code Size</span>
+</div>
+<p>Compile a loop function to all four ISAs and compare code size and structure.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">sum_to</span>(<span class="keyword">int</span> n) {
+    <span class="keyword">int</span> sum = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++)
+        sum += i;
+    <span class="keyword">return</span> sum;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile to each ISA with -O2</div>
+<p>For each ISA, compile and note:</p>
+<ul>
+<li>How many instructions in the loop body?</li>
+<li>How is the loop condition checked? (branch vs compare+branch)</li>
+<li>Does it use a special loop instruction?</li>
+<li>How many bytes is the function? (if the simulator shows this)</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Fill in the comparison table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>ISA</th><th>Loop Instructions</th><th>Condition Check</th><th>Total Instructions</th></tr>
+</thead>
+<tbody>
+<tr><td><span class="badge badge-riscv">RISC-V</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-arm">ARM64</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-x86">x86-64</span></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><span class="badge badge-mips">MIPS</span></td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Observe CISC memory operations</div>
+<p>In x86-64, the compiler may use a single instruction like <span class="code-inline">add eax, [rsp+rcx*4]</span> that reads from memory and adds. In RISC-V/ARM64/MIPS, this requires a separate load instruction. Count how many memory-access instructions each ISA uses.</p>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 3 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 3: Compile Recursion to All 4 ISAs - Compare Stack Frames</span>
+</div>
+<p>Compile a recursive function and compare how each ISA sets up stack frames.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">factorial</span>(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">1</span>) <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">return</span> n * factorial(n - <span class="number">1</span>);
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile to each ISA with -O2</div>
+<p>For each ISA, note the prologue and epilogue:</p>
+</div>
+<div class="step">
+<div class="step-title">Fill in the stack frame comparison</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr>
+</thead>
+<tbody>
+<tr><td>Prologue instructions</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Saves which registers?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Frame allocation</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Uses pair store? (stp/sd pair)</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Epilogue instructions</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Note unique features</div>
+<ul>
+<li><strong>ARM64</strong>: Uses <span class="code-inline">stp</span> to save <span class="code-inline">fp</span> + <span class="code-inline">lr</span> in one instruction</li>
+<li><strong>x86-64</strong>: Uses <span class="code-inline">push rbp</span> / <span class="code-inline">pop rbp</span> (single-instruction push/pop)</li>
+<li><strong>RISC-V</strong>: Uses <span class="code-inline">addi sp,sp,-16</span> + <span class="code-inline">sd ra,8(sp)</span> + <span class="code-inline">sd s0,0(sp)</span></li>
+<li><strong>MIPS</strong>: Uses <span class="code-inline">addiu sp,sp,-16</span> + <span class="code-inline">sw ra,12(sp)</span> + <span class="code-inline">sw fp,8(sp)</span></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 4 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge reading">Reading</span>
+<span class="exercise-title">Exercise 4: Map Syscall Mechanisms Across ISAs</span>
+</div>
+<p>Each ISA has its own way to invoke system calls. Map the syscall mechanism for each.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Read about each ISA's syscall mechanism</div>
+<p>Consult the <a href="../handbook/main.html">Handbook Chapter 17: Syscalls and Traps</a> for details on each ISA.</p>
+</div>
+<div class="step">
+<div class="step-title">Fill in the syscall table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr>
+</thead>
+<tbody>
+<tr><td>Syscall instruction</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Syscall number register</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Argument registers</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Return value register</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Return from trap instruction</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Expected answers (verify with handbook)</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr>
+</thead>
+<tbody>
+<tr><td>Syscall instruction</td><td><code>ecall</code></td><td><code>svc #0</code></td><td><code>syscall</code></td><td><code>syscall</code></td></tr>
+<tr><td>Syscall number</td><td><code>a7</code></td><td><code>x8</code></td><td><code>rax</code></td><td><code>$v0</code></td></tr>
+<tr><td>Args</td><td><code>a0-a5</code></td><td><code>x0-x5</code></td><td><code>rdi,rsi,rdx,r10,r8,r9</code></td><td><code>$a0-$a3</code></td></tr>
+<tr><td>Return value</td><td><code>a0</code></td><td><code>x0</code></td><td><code>rax</code></td><td><code>$v0</code></td></tr>
+<tr><td>Return from trap</td><td><code>sret</code></td><td><code>eret</code></td><td><code>sysret</code></td><td><code>eret</code></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Note the pattern</div>
+<p>All four ISAs use a dedicated instruction to trap into the kernel, a register for the syscall number, registers for arguments, and a register for the return value. The specific registers differ, but the pattern is the same.</p>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 5 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge question">Question</span>
+<span class="exercise-title">Exercise 5: Feature Comparison Table - Fill in the Blanks</span>
+</div>
+<p>Complete this comprehensive comparison table by filling in all the blanks.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Fill in the architecture features table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr>
+</thead>
+<tbody>
+<tr><td>Architecture type</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Instruction encoding</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Instruction width</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Number of GPRs</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Zero register</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Link register</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Stack pointer</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Call instruction</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Return instruction</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Operand form</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Memory addressing</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Load/store pair?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Conditional select?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Branch delay slot?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Privilege levels</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Fill in the calling convention table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr>
+</thead>
+<tbody>
+<tr><td>Arg registers</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Max args in registers</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Return value</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Callee-saved regs</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Caller-saved regs</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td>Stack alignment</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Answer the synthesis questions</div>
+<ol>
+<li>Which ISA would you choose for a low-power embedded device? Why?</li>
+<li>Which ISA has the most complex instruction decoding? Why?</li>
+<li>Which ISA is most similar to RISC-V? Why?</li>
+<li>What is the advantage of fixed-length encoding?</li>
+<li>What is the advantage of variable-length encoding?</li>
+<li>Which ISA has the most registers available for arguments?</li>
+</ol>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">CISC vs RISC Summary</div>
+<strong>RISC</strong> (RISC-V, ARM64, MIPS): Fixed encoding, simple instructions, load/store architecture, more instructions but simpler decode. <strong>CISC</strong> (x86-64): Variable encoding, complex instructions, memory operands, fewer instructions but complex decode. Modern x86 CPUs internally decode CISC instructions into RISC-like micro-ops.
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>Deliverables</h2>
+<div class="steps">
+<div class="step">
+<div class="step-title">Exercise 1 table</div>
+<p>Completed instruction count comparison for <span class="code-inline">add()</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 2 table</div>
+<p>Completed loop comparison table with code size analysis.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 3 table</div>
+<p>Completed stack frame comparison for <span class="code-inline">factorial()</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 4 table</div>
+<p>Completed syscall mechanism mapping table.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 5 tables + answers</div>
+<p>Both feature comparison tables filled in, plus answers to synthesis questions.</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>References</h2>
+<ul>
+<li><a href="../handbook/main.html">Assembly Handbook</a> - Chapters 14-18 (MIPS, Cross-ISA, Syscalls, Quick Reference)</li>
+<li><a href="../simulator/main.html">Simulator</a> - Supports all four ISAs</li>
+<li>RISC-V Spec - <a href="https://riscv.org/specifications/">riscv.org</a></li>
+<li>ARM ARM - <a href="https://developer.arm.com/documentation/ddi0487/latest">developer.arm.com</a></li>
+<li>Intel SDM - <a href="https://www.intel.com/sdm">intel.com/sdm</a></li>
+<li>MIPS ISA - <a href="https://www.mips.com/products/architectures/mips64/">mips.com</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<script src="../sidebar.js"></script>
+</body>
+</html>

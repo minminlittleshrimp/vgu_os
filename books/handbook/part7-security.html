@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 7: Security &amp; Protection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item active" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 16: Security</div>
+      <a class="nav-item" data-target="sec-16-1"><span class="nav-num">16.1</span>The Security Problem</a>
+      <a class="nav-item" data-target="sec-16-2"><span class="nav-num">16.2</span>Program Threats</a>
+      <a class="nav-item" data-target="sec-16-3"><span class="nav-num">16.3</span>System &amp; Network Threats</a>
+      <a class="nav-item" data-target="sec-16-4"><span class="nav-num">16.4</span>Cryptography as a Security Tool</a>
+      <a class="nav-item" data-target="sec-16-5"><span class="nav-num">16.5</span>User Authentication</a>
+      <a class="nav-item" data-target="sec-16-6"><span class="nav-num">16.6</span>Implementing Security Defenses</a>
+      <a class="nav-item" data-target="sec-16-7"><span class="nav-num">16.7</span>Windows 10 Example</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 17: Protection</div>
+      <a class="nav-item" data-target="sec-17-1"><span class="nav-num">17.1</span>Goals of Protection</a>
+      <a class="nav-item" data-target="sec-17-2"><span class="nav-num">17.2</span>Principles of Protection</a>
+      <a class="nav-item" data-target="sec-17-3"><span class="nav-num">17.3</span>Protection Rings</a>
+      <a class="nav-item" data-target="sec-17-4"><span class="nav-num">17.4</span>Domain of Protection</a>
+      <a class="nav-item" data-target="sec-17-5"><span class="nav-num">17.5</span>Access Matrix</a>
+      <a class="nav-item" data-target="sec-17-6"><span class="nav-num">17.6</span>Implementation of Access Matrix</a>
+      <a class="nav-item" data-target="sec-17-7"><span class="nav-num">17.7</span>Revocation of Access Rights</a>
+      <a class="nav-item" data-target="sec-17-8"><span class="nav-num">17.8</span>Role-Based Access Control</a>
+      <a class="nav-item" data-target="sec-17-9"><span class="nav-num">17.9</span>Mandatory Access Control</a>
+      <a class="nav-item" data-target="sec-17-10"><span class="nav-num">17.10</span>Capability-Based Systems</a>
+      <a class="nav-item" data-target="sec-17-11"><span class="nav-num">17.11</span>Language-Based Protection</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 7: Security &amp; Protection</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 16–17 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers the security problem, program and
+system threats, cryptography, authentication, protection mechanisms, access control, and
+capability-based systems.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-16-1">16.1 The Security Problem</a></li>
+<li><a href="#sec-16-2">16.2 Program Threats</a></li>
+<li><a href="#sec-16-3">16.3 System and Network Threats</a></li>
+<li><a href="#sec-16-4">16.4 Cryptography as a Security Tool</a></li>
+<li><a href="#sec-16-5">16.5 User Authentication</a></li>
+<li><a href="#sec-16-6">16.6 Implementing Security Defenses</a></li>
+<li><a href="#sec-16-7">16.7 Windows 10 Example</a></li>
+<li><a href="#sec-17-1">17.1 Goals of Protection</a></li>
+<li><a href="#sec-17-2">17.2 Principles of Protection</a></li>
+<li><a href="#sec-17-3">17.3 Protection Rings</a></li>
+<li><a href="#sec-17-4">17.4 Domain of Protection</a></li>
+<li><a href="#sec-17-5">17.5 Access Matrix</a></li>
+<li><a href="#sec-17-6">17.6 Implementation of Access Matrix</a></li>
+<li><a href="#sec-17-7">17.7 Revocation of Access Rights</a></li>
+<li><a href="#sec-17-8">17.8 Role-Based Access Control</a></li>
+<li><a href="#sec-17-9">17.9 Mandatory Access Control</a></li>
+<li><a href="#sec-17-10">17.10 Capability-Based Systems</a></li>
+<li><a href="#sec-17-11">17.11 Language-Based Protection</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-1">16.1 The Security Problem</h2>
+
+<p><strong>Security</strong> is the set of mechanisms and policies that protect a computer
+system's resources—data, programs, CPU, memory, network, and devices—from unauthorized
+access, modification, or destruction. While <em>protection</em> (Chapter 17) is about
+internal mechanisms that enforce access rules, <em>security</em> is the broader goal of
+defending the system against deliberate attacks and accidental threats. The two concepts
+are deeply intertwined: a system cannot be secure without robust protection mechanisms,
+and protection mechanisms are designed with security goals in mind.</p>
+
+<p>The <strong>security problem</strong> arises because computer systems are shared by
+multiple users and connected to networks. A <em>threat</em> is a potential security
+violation, and an <em>attack</em> is an actual attempt to breach security. Threats can be
+categorized as <strong>intentional</strong> (malicious attacks by hackers, insiders, or
+nation-states) or <strong>accidental</strong> (bugs, misconfigurations, human error).
+The classic security goals are summarized by the <strong>CIA triad</strong>:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Meaning</th><th>Example Threat</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Confidentiality</strong></td><td>Data is accessible only to authorized parties</td><td>Eavesdropping, data theft</td></tr>
+<tr><td><strong>Integrity</strong></td><td>Data is not modified without authorization</td><td>Tampering, unauthorized writes</td></tr>
+<tr><td><strong>Availability</strong></td><td>System and data are available when needed</td><td>Denial-of-service (DoS)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>An <strong>attacker</strong> may try to <em>intercept</em> data (read confidential
+information), <em>modify</em> data (alter files or messages), <em>fabricate</em> data
+(create fake records), or <em>interrupt</em> service (crash the system). The attacker's
+goals map directly to violations of the CIA triad. For example, a <em>man-in-the-middle
+attack</em> violates confidentiality and integrity, while a <em>DDoS attack</em> violates
+availability.</p>
+
+<p>Security is fundamentally a <strong>weakest-link</strong> problem: a system is only as
+secure as its most vulnerable component. A perfectly encrypted network connection is
+useless if the endpoint has a keylogger. A hardened kernel is irrelevant if users choose
+weak passwords. This is why security must be <em>defense in depth</em>—multiple layers of
+protection, so that if one layer fails, others still defend the system.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Security Is Never Perfect</div>
+<p>No system is 100% secure. The goal is <strong>risk management</strong>: reducing the
+probability and impact of attacks to an acceptable level. Security measures always involve
+trade-offs with <em>convenience</em>, <em>performance</em>, and <em>cost</em>. The most
+secure computer is one that is turned off, disconnected, and locked in a vault—but it is
+also completely useless.</p>
+</div>
+
+<p>In xv6, the security model is minimal but illustrative. The kernel runs in supervisor
+mode (RISC-V S-mode) and user processes run in user mode (U-mode). The hardware enforces
+that user processes cannot directly access kernel memory or execute privileged
+instructions. However, xv6 has no file permissions, no encryption, and no
+authentication—any user process can read or write any file. This is acceptable for a
+teaching OS but would be catastrophic in production. Studying xv6 helps you understand
+the <em>foundation</em> of protection (hardware-enforced privilege levels) upon which
+real security systems are built.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-2">16.2 Program Threats</h2>
+
+<p><strong>Program threats</strong> are attacks that exploit vulnerabilities in programs
+to gain unauthorized access, escalate privileges, or damage data. The most common program
+threat is <strong>malware</strong>—malicious software designed to harm or co-opt a
+system. Malware categories include <em>viruses</em>, <em>worms</em>, <em>Trojan horses</em>,
+<em>spyware</em>, <em>ransomware</em>, and <em>rootkits</em>. Each has a different
+propagation mechanism and payload, but all exploit the fact that programs run with the
+privileges of the user who executes them.</p>
+
+<p>A <strong>virus</strong> is a program that attaches itself to a legitimate program and
+replicates by infecting other programs. When the infected program runs, the virus code
+executes first, spreads to other files, and then (optionally) delivers its payload.
+Viruses can be <em>boot-sector viruses</em> (infecting the boot sector), <em>file
+viruses</em> (infecting executables), <em>macro viruses</em> (infecting documents with
+embedded macros), or <em>polymorphic viruses</em> (mutating their code to evade
+detection). The key characteristic is <em>self-replication</em> requiring a host
+program.</p>
+
+<p>A <strong>worm</strong>, by contrast, is a standalone program that replicates itself
+across network connections without needing a host file. Famous worms include the
+<em>Morris worm</em> (1988, one of the first Internet worms), <em>Code Red</em> (2001,
+exploited IIS buffer overflow), and <em>Stuxnet</em> (2010, targeted Iranian nuclear
+centrifuges). Worms spread by exploiting network vulnerabilities—buffer overflows,
+default passwords, or unpatched services—and can infect millions of systems within
+hours.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Code Injection Attacks</div>
+<p>A <strong>code injection</strong> attack occurs when an attacker provides malicious
+input that is executed as code by the target program. Common variants include:</p>
+<ul>
+<li><strong>Buffer overflow</strong>: Writing past the end of an array to overwrite
+return addresses or function pointers, redirecting execution to attacker-controlled
+code (the classic "stack smashing" attack).</li>
+<li><strong>SQL injection</strong>: Injecting SQL commands through user input fields
+that are concatenated into database queries.</li>
+<li><strong>Command injection</strong>: Injecting shell commands through input that is
+passed to <code class="code-inline">system()</code> or similar.</li>
+<li><strong>Cross-site scripting (XSS)</strong>: Injecting JavaScript into web pages
+viewed by other users.</li>
+</ul>
+</div>
+
+<p>The <strong>buffer overflow</strong> deserves special attention because it is the most
+common and dangerous program threat in C/C++ systems. When a program writes more data to
+a stack buffer than it can hold, the excess data overwrites adjacent memory. If the
+overwritten region contains the saved return address, the attacker can redirect execution
+to arbitrary code—often a sequence called <em>shellcode</em> that spawns a shell with
+the program's privileges.</p>
+
+<div class="code-block"><span class="comment">/* Classic stack-smashing buffer overflow */</span>
+
+<span class="comment">// Vulnerable function: no bounds checking</span>
+<span class="keyword">void</span> vulnerable(<span class="keyword">char</span> *input) {
+    <span class="keyword">char</span> buf[64];
+    <span class="func">strcpy</span>(buf, input);  <span class="comment">// overflow if input > 64 bytes!</span>
+    <span class="func">printf</span>(<span class="string">"%s\n"</span>, buf);
+}
+
+<span class="comment">// Attack: input is crafted to overwrite return address</span>
+<span class="comment">// [64 bytes padding][saved ebp][return addr → shellcode]</span>
+<span class="comment">// When vulnerable() returns, CPU jumps to shellcode</span></div>
+
+<p>Modern defenses against buffer overflows include: <strong>stack canaries</strong>
+(compiler-inserted values that detect stack corruption before return), <strong>ASLR</strong>
+(Address Space Layout Randomization, which randomizes code and stack addresses),
+<strong>DEP/NX bit</strong> (marking stack and heap as non-executable), and <strong>stack
+protectors</strong> like <code class="code-inline">-fstack-protector</code> in GCC. In
+xv6, none of these are implemented—the system trusts all code. This makes xv6 a good
+platform for <em>understanding</em> the vulnerability, but also a reminder of why
+production systems need these protections.</p>
+
+<p>A <strong>Trojan horse</strong> is a program that appears legitimate but contains
+hidden malicious functionality. For example, a "free game" that also installs a keylogger.
+Unlike viruses, Trojans do not self-replicate—they rely on social engineering to trick
+users into running them. <strong>Spyware</strong> secretly monitors user activity
+(keystrokes, browsing habits) and reports it to a third party. <strong>Ransomware</strong>
+encrypts the victim's files and demands payment for the decryption key—WannaCry (2017)
+and NotPetya (2017) caused billions in damage worldwide.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Rootkits and Persistence</div>
+<p>A <strong>rootkit</strong> is malware designed to maintain privileged access while
+hiding its presence. Kernel-mode rootkits modify the kernel itself (e.g., hooking system
+calls) so that <code class="code-inline">ls</code>, <code class="code-inline">ps</code>,
+and other tools do not show the malicious process or files. Detecting rootkits often
+requires comparing the system's view of itself against an external, trusted view (e.g.,
+booting from a clean rescue disk). This is why <em>secure boot</em> and <em>measured
+boot</em> are important: they establish a chain of trust from firmware to OS.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-3">16.3 System and Network Threats</h2>
+
+<p>While program threats target individual applications, <strong>system and network
+threats</strong> target the operating system and network infrastructure. These threats
+exploit weaknesses in system configuration, network protocols, or the sheer
+interconnectedness of systems. A compromised system can become a <em>stepping stone</em>
+for attacking other systems, making network security a chain that is only as strong as
+its weakest link.</p>
+
+<p><strong>Network intrusions</strong> occur when an attacker gains unauthorized access
+to a system over a network. Common intrusion vectors include: exploiting known
+vulnerabilities in network services (e.g., a vulnerable SSH daemon), brute-forcing weak
+passwords, exploiting misconfigured services (e.g., an open Samba share), or using
+<em>port scanning</em> to find exposed services. Once inside, the attacker may install a
+<em>backdoor</em> for persistent access, <em>escalate privileges</em> to root/admin, and
+<em>exfiltrate data</em> or <em>pivot</em> to other systems on the network.</p>
+
+<p><strong>Denial-of-service (DoS)</strong> attacks aim to make a system unavailable to
+legitimate users. A <em>flood attack</em> overwhelms the target with more requests than
+it can handle. A <em>SYN flood</em> exploits the TCP handshake by sending SYN packets
+without completing the handshake, exhausting the server's connection table. A
+<em>Distributed DoS (DDoS)</em> uses thousands of compromised machines (a <em>botnet</em>)
+to amplify the attack. The <em>amplification attack</em> uses services like DNS or NTP
+that respond with much larger packets than the request, multiplying the attacker's
+bandwidth.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Attack Type</th><th>Mechanism</th><th>Mitigation</th></tr>
+</thead>
+<tbody>
+<tr><td>SYN Flood</td><td>Half-open TCP connections exhaust server resources</td><td>SYN cookies, connection rate limiting</td></tr>
+<tr><td>DDoS (volumetric)</td><td>Botnet floods target with traffic</td><td>CDN, traffic scrubbing, BGP blackholing</td></tr>
+<tr><td>Amplification</td><td>Exploits UDP services that send large responses</td><td>Disable UDP services, rate-limit responses</td></tr>
+<tr><td>Port scan</td><td>Probes ports to find open services</td><td>Firewall, intrusion detection (IDS)</td></tr>
+<tr><td>Man-in-the-middle</td><td>Intercepts and possibly alters traffic</td><td>TLS/SSL, certificate pinning</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Worms</strong> are both program threats and network threats: they exploit
+program vulnerabilities but spread via network connections. The <em>Morris worm</em>
+(1988) used multiple vectors: a buffer overflow in <code class="code-inline">fingerd</code>,
+weak passwords, and trust relationships via <code class="code-inline">rsh</code>. It
+infected roughly 6,000 machines (10% of the Internet at the time) and led to the creation
+of CERT (Computer Emergency Response Team). Modern worms like <em>Conficker</em> and
+<em>WannaCry</em> use similar multi-vector strategies, demonstrating that network
+interconnectedness amplifies the impact of any single vulnerability.</p>
+
+<p><strong>Port scanning</strong> is a reconnaissance technique where an attacker probes
+a range of ports on a target to identify open services. Tools like <code class="code-inline">nmap</code>
+can fingerprint the OS and service versions, helping the attacker identify known
+vulnerabilities. <strong>Intrusion detection systems (IDS)</strong> like Snort or
+Suricata monitor network traffic for suspicious patterns and alert administrators.
+<strong>Firewalls</strong> filter traffic based on rules (allow/deny by IP, port,
+protocol), reducing the attack surface. A <em>stateful firewall</em> tracks connection
+state, while a <em>deep packet inspection (DPI)</em> firewall examines packet contents.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ The Threat Landscape</div>
+<p>Modern threats are often <strong>multi-stage</strong>: reconnaissance → initial access
+→ privilege escalation → lateral movement → data exfiltration → persistence. This is
+formalized in frameworks like the <em>MITRE ATT&amp;CK</em> matrix. Defenders use
+<em>zero-trust architecture</em> (never trust, always verify), <em>network
+segmentation</em> (limiting lateral movement), and <em>endpoint detection and response
+(EDR)</em> to detect and contain attacks at each stage.</p>
+</div>
+
+<p>In the context of xv6, there is no networking stack, so network threats do not apply
+directly. However, the <em>principle</em> is relevant: xv6's lack of authentication
+means that if it were networked, any connection would effectively be root access. This
+illustrates why real operating systems invest heavily in network security—without it, a
+single exposed port can compromise the entire system.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-4">16.4 Cryptography as a Security Tool</h2>
+
+<p><strong>Cryptography</strong> is the science of encoding information so that only
+authorized parties can read it. It is the backbone of modern computer security, enabling
+confidentiality (encryption), integrity (hashing), authentication (digital signatures),
+and non-repudiation (proof of origin). The OS uses cryptography for secure
+communication (TLS), password storage (hashing), disk encryption (full-disk encryption),
+code signing (verifying executable integrity), and secure boot (verifying firmware).</p>
+
+<p><strong>Symmetric encryption</strong> uses the same key for encryption and decryption.
+It is fast and suitable for bulk data. Common algorithms include <em>AES</em> (Advanced
+Encryption Standard, 128/192/256-bit keys), <em>ChaCha20</em>, and the older <em>DES</em>/<em>3DES</em>
+(now deprecated). The challenge with symmetric encryption is <em>key distribution</em>:
+how do two parties securely share the secret key? This is solved by asymmetric
+cryptography.</p>
+
+<p><strong>Asymmetric encryption</strong> (public-key cryptography) uses a pair of keys:
+a <em>public key</em> that can be freely shared and a <em>private key</em> that is kept
+secret. Data encrypted with the public key can only be decrypted with the private key
+(and vice versa). <em>RSA</em> (Rivest-Shamir-Adleman) and <em>ECC</em> (Elliptic Curve
+Cryptography) are the most common algorithms. Asymmetric encryption is computationally
+expensive, so it is typically used to exchange a symmetric session key, which is then
+used for bulk encryption. This is exactly how <strong>TLS</strong> works: the handshake
+uses RSA/ECC to agree on an AES session key, then all subsequent data is encrypted with
+AES.</p>
+
+<div class="code-block"><span class="comment">/* Simplified TLS 1.3 handshake (conceptual) */</span>
+
+<span class="comment">// 1. Client sends supported cipher suites + random number</span>
+Client → Server: ClientHello(ciphers, client_random)
+
+<span class="comment">// 2. Server responds with chosen cipher + certificate + random</span>
+Server → Client: ServerHello(cipher, server_random), Certificate
+
+<span class="comment">// 3. Client verifies certificate, generates pre-master secret</span>
+<span class="comment">//    Encrypts with server's public key (RSA) or uses ECDHE</span>
+Client → Server: KeyExchange(encrypted_pre_master)
+
+<span class="comment">// 4. Both derive session key from pre_master + randoms</span>
+session_key = HKDF(pre_master, client_random, server_random)
+
+<span class="comment">// 5. All subsequent traffic encrypted with AES-GCM(session_key)</span>
+Client ↔ Server: ApplicationData(encrypted)</div>
+
+<p><strong>Hash functions</strong> produce a fixed-size digest from arbitrary input.
+A cryptographic hash must be <em>one-way</em> (infeasible to reverse), <em>collision-resistant</em>
+(infeasible to find two inputs with the same hash), and <em>avalanche</em> (small input
+change → large output change). Common hashes: <em>SHA-256</em>, <em>SHA-3</em>,
+<em>BLAKE2/3</em>. Hashes are used for password storage (store <em>hash(password)</em>,
+not the password itself), file integrity (compare hash before and after transfer), and
+digital signatures (sign the hash, not the full message).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Never Store Plaintext Passwords</div>
+<p>Storing passwords in plaintext is a critical security failure. Even storing
+<em>hash(password)</em> is insufficient—attackers can use <em>rainbow tables</em>
+(precomputed hash databases) or <em>brute-force</em> common passwords. The correct
+approach is to use a <strong>salted, slow hash function</strong> like <em>bcrypt</em>,
+<em>scrypt</em>, or <em>Argon2</em>. These functions are deliberately slow and
+memory-hard, making brute-force attacks computationally expensive.</p>
+</div>
+
+<p><strong>Digital signatures</strong> combine hashing and asymmetric encryption to
+provide <em>authentication</em> (proof of identity), <em>integrity</em> (proof the
+message was not altered), and <em>non-repudiation</em> (the signer cannot deny signing).
+To sign a message, the sender computes <em>hash(message)</em> and encrypts it with their
+private key. The recipient decrypts the signature with the sender's public key and
+compares it to <em>hash(message)</em>. If they match, the signature is valid. This is
+how code signing works: the OS verifies that an executable was signed by a trusted
+publisher before running it.</p>
+
+<p><strong>Key management</strong> is often the hardest part of cryptography. Keys must be
+generated securely (using a cryptographically secure random number generator), stored
+safely (hardware security modules, TPMs), distributed securely (PKI, certificate
+authorities), rotated periodically, and revoked when compromised. A <em>certificate
+authority (CA)</em> is a trusted third party that issues digital certificates binding
+public keys to identities. The <em>X.509</em> certificate format is used in TLS, S/MIME,
+and code signing. The <em>chain of trust</em> flows from root CAs (pre-installed in the
+OS/browser) through intermediate CAs to end-entity certificates.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Cryptography in xv6</div>
+<p>xv6 has no cryptography—no encryption, no hashing, no authentication. This is a
+deliberate simplification for a teaching OS. However, the <em>concepts</em> are directly
+relevant: if you were to add file encryption to xv6, you would need to (1) generate or
+accept a key, (2) encrypt file blocks with AES, (3) store the key securely (perhaps in a
+keyring file protected by a password hash), and (4) decrypt on read. Each step involves
+the cryptographic primitives discussed above.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-5">16.5 User Authentication</h2>
+
+<p><strong>Authentication</strong> is the process of verifying a user's identity. It is
+the first line of defense in system security: before granting access to resources, the
+system must confirm <em>who</em> is requesting access. Authentication is based on one or
+more of three factors: <strong>something you know</strong> (password, PIN),
+<strong>something you have</strong> (smart card, token, phone), and <strong>something you
+are</strong> (biometric: fingerprint, face, iris). <em>Multi-factor authentication
+(MFA)</em> combines two or more factors, dramatically increasing security.</p>
+
+<p><strong>Passwords</strong> remain the most common authentication method despite their
+weaknesses. A good password should be long, random, and unique per service. In practice,
+humans choose weak, predictable passwords, reuse them across sites, and write them down.
+The system stores not the password itself but a <em>hash</em> of the password (ideally
+salted and slow-hashed). When the user logs in, the system hashes the entered password
+and compares it to the stored hash. In Linux, this is stored in <code class="code-inline">/etc/shadow</code>
+(readable only by root), using formats like <code class="code-inline">$6$</code> (SHA-512
+with salt) or <code class="code-inline">$2b$</code> (bcrypt).</p>
+
+<div class="code-block"><span class="comment">/* /etc/shadow entry format (Linux) */</span>
+
+<span class="comment">// username:$algorithm$salt$hash:lastchanged:min:max:warn:inactive:expire</span>
+
+alice:$6$<span class="reg">$salt</span>$<span class="reg">$long_sha512_hash</span>:19000:0:99999:7:::
+
+<span class="comment">// $6$ = SHA-512, $2b$ = bcrypt, $y$ = yescrypt</span>
+<span class="comment">// salt is random, prevents rainbow table attacks</span>
+<span class="comment">// hash is computed as: hash = SHA512(salt + password), iterated</span></div>
+
+<p><strong>Password cracking</strong> techniques include <em>dictionary attacks</em>
+(trying common passwords and variations), <em>brute-force</em> (trying all possible
+combinations), <em>rainbow tables</em> (precomputed hash chains), and <em>credential
+stuffing</em> (reusing passwords leaked from other breaches). Defenses include rate
+limiting (lockout after N failed attempts), password complexity rules, password managers
+(generating and storing strong, unique passwords), and <em>passwordless authentication</em>
+(WebAuthn, passkeys) that replaces passwords with cryptographic keys stored on a device.</p>
+
+<p><strong>One-time passwords (OTP)</strong> generate a new password for each login,
+defeating replay attacks. <em>TOTP</em> (Time-based OTP, RFC 6238) generates codes from
+a shared secret and the current time—this is what Google Authenticator and similar apps
+use. <em>HOTP</em> (HMAC-based OTP, RFC 4226) uses a counter instead of time. <em>Hardware
+tokens</em> like YubiKey implement <em>FIDO U2F</em> or <em>FIDO2/WebAuthn</em>, using
+public-key cryptography: the token signs a challenge with a private key that never leaves
+the device. This is resistant to phishing because the signature is bound to the origin
+domain.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Method</th><th>Factor</th><th>Strengths</th><th>Weaknesses</th></tr>
+</thead>
+<tbody>
+<tr><td>Password</td><td>Something you know</td><td>Simple, no hardware</td><td>Weak, reused, phishable</td></tr>
+<tr><td>SMS OTP</td><td>Something you have</td><td>Widely available</td><td>SIM swap, interception</td></tr>
+<tr><td>TOTP (Authenticator app)</td><td>Something you have</td><td>No SMS needed</td><td>Phishable (code can be relayed)</td></tr>
+<tr><td>Hardware key (FIDO2)</td><td>Something you have</td><td>Phishing-resistant</td><td>Cost, availability</td></tr>
+<tr><td>Biometric</td><td>Something you are</td><td>Convenient, no memorization</td><td>Cannot be changed if stolen</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Biometric authentication</strong> uses physiological or behavioral
+characteristics: fingerprints, facial recognition, iris scans, voice, or typing
+patterns. Biometrics are convenient (no password to remember) but have unique risks:
+they cannot be changed if compromised, they can have false positives/negatives, and they
+raise privacy concerns. Modern systems like Windows Hello and Touch ID store biometric
+templates locally (not raw biometric data) and use them to unlock a cryptographic key,
+combining the convenience of biometrics with the security of hardware-backed keys.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Authentication vs. Authorization</div>
+<p><strong>Authentication</strong> answers "who are you?" while <strong>authorization</strong>
+answers "what are you allowed to do?" A user may authenticate successfully but still be
+denied access to a file (authorization). In xv6, there is no authentication (anyone can
+log in as any user) and no authorization (any user can access any file). Real systems
+combine both: authenticate the user, then check their permissions (see Chapter 17 on
+access control).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-6">16.6 Implementing Security Defenses</h2>
+
+<p>Securing an operating system requires a <strong>layered, defense-in-depth</strong>
+approach. No single mechanism is sufficient; instead, multiple independent controls must
+work together so that the failure of one does not compromise the system. The key
+categories of defense are: <em>prevention</em> (stopping attacks before they succeed),
+<em>detection</em> (identifying attacks in progress or after the fact), and
+<em>response</em> (containing and recovering from attacks).</p>
+
+<p><strong>Security policies</strong> define what is allowed and what is prohibited. A
+policy might state: "only the database service may access the customer database; all
+other network connections to port 5432 are denied." Policies are implemented through
+mechanisms: firewalls (network-level), access control lists (file-level), and application
+sandboxing (process-level). The <em>principle of least privilege</em> states that every
+process, user, or program should have only the minimum privileges needed to perform its
+function—and no more.</p>
+
+<p><strong>Firewalls</strong> are a primary network defense. A <em>packet-filtering
+firewall</em> examines each packet's source/destination IP, port, and protocol, applying
+allow/deny rules. A <em>stateful firewall</em> tracks connection state (e.g., allowing
+return traffic for an established connection). A <em>proxy firewall</em> (application-level
+gateway) terminates the connection and re-originates it, inspecting application-layer
+data. <em>Next-generation firewalls (NGFW)</em> combine these with intrusion prevention,
+deep packet inspection, and threat intelligence feeds.</p>
+
+<div class="code-block"><span class="comment">/* Example firewall rules (iptables-style) */</span>
+
+<span class="comment">// Allow established connections</span>
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+<span class="comment">// Allow SSH from trusted subnet only</span>
+iptables -A INPUT -s 10.0.0.0/24 -p tcp --dport 22 -j ACCEPT
+
+<span class="comment">// Allow HTTP/HTTPS from anywhere</span>
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+<span class="comment">// Drop everything else</span>
+iptables -A INPUT -j DROP
+iptables -P INPUT DROP  <span class="comment">// default deny</span></div>
+
+<p><strong>Intrusion detection</strong> complements firewalls by detecting attacks that
+bypass perimeter defenses. A <em>host-based IDS (HIDS)</em> monitors system logs, file
+integrity, and process behavior on a single host. A <em>network-based IDS (NIDS)</em>
+inspects network traffic for attack signatures or anomalies. <em>SIEM</em> (Security
+Information and Event Management) systems aggregate logs from across the organization
+and use correlation rules and machine learning to detect sophisticated attacks.</p>
+
+<p><strong>Sandboxing</strong> restricts what a program can do, limiting the damage if it
+is compromised. Examples include: <em>chroot</em> (changes the apparent root directory),
+<em>seccomp</em> (filters system calls), <em>AppArmor/SELinux</em> (mandatory access
+control), <em>containers</em> (namespace + cgroup isolation), and <em>virtual machines</em>
+(full hardware-level isolation). Browsers sandbox each tab in a separate process with
+restricted privileges, so a compromised tab cannot access the user's files or other
+tabs.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Defense in Depth Layers</div>
+<p>A well-defended system has multiple independent layers:</p>
+<ol>
+<li><strong>Network perimeter</strong>: Firewall, DDoS protection, VPN</li>
+<li><strong>Host hardening</strong>: Patching, disabling unused services, host firewall</li>
+<li><strong>Access control</strong>: Authentication, authorization, least privilege</li>
+<li><strong>Application security</strong>: Input validation, ASLR, DEP, stack canaries</li>
+<li><strong>Data protection</strong>: Encryption at rest, encryption in transit</li>
+<li><strong>Monitoring</strong>: IDS, SIEM, audit logging</li>
+<li><strong>Response</strong>: Incident response plan, backups, disaster recovery</li>
+</ol>
+<p>Each layer must be independently effective. If an attacker breaches one layer, the
+next layer should still stop them.</p>
+</div>
+
+<p><strong>Patching and vulnerability management</strong> are critical. New
+vulnerabilities are discovered constantly—<em>CVE</em> (Common Vulnerabilities and
+Exposures) entries document known issues. The <em>CVSS</em> (Common Vulnerability Scoring
+System) rates severity. Systems must be patched promptly, but patching can introduce
+regressions, so organizations balance speed with testing. <em>Zero-day vulnerabilities</em>
+(unknown to the vendor) cannot be patched and are especially dangerous—defense in depth
+is the only mitigation until a patch is available.</p>
+
+<p><strong>Audit logging</strong> records security-relevant events: logins (successful
+and failed), privilege escalations, file access, configuration changes, and policy
+violations. Logs must be <em>tamper-resistant</em> (an attacker who compromises the
+system should not be able to erase their tracks) and <em>retained</em> for forensic
+analysis. In Linux, <code class="code-inline">auditd</code> provides detailed auditing;
+in Windows, the Event Log and Sysmon serve similar purposes. The challenge is volume:
+a busy system generates gigabytes of logs, requiring automated analysis to find the
+signal in the noise.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-16-7">16.7 Windows 10 Example</h2>
+
+<p>Windows 10 (and its successors Windows 11) implements a comprehensive security
+architecture that illustrates many of the concepts in this chapter. Microsoft adopted a
+<em>security development lifecycle (SDL)</em> in the early 2000s after repeated
+vulnerabilities in Windows XP and earlier. The SDL mandates threat modeling, secure
+coding practices, fuzzing, and security testing throughout the development process.</p>
+
+<p><strong>Windows security fundamentals</strong> include: <em>user accounts</em> with
+distinct Security Identifiers (SIDs), <em>access tokens</em> that encode the user's
+identity and group memberships, <em>security descriptors</em> on securable objects
+(files, registry keys, processes), and <em>privileges</em> that grant specific
+capabilities (e.g., <code class="code-inline">SeDebugPrivilege</code> allows inspecting
+other processes). The <em>Local Security Authority (LSA)</em> manages authentication,
+and the <em>Security Reference Monitor (SRM)</em> enforces access checks in the kernel.</p>
+
+<p><strong>User Account Control (UAC)</strong> is a key Windows security feature
+introduced in Windows Vista. Even administrators run with standard user privileges by
+default; when an action requires elevation, UAC prompts the user to confirm. This
+reduces the impact of malware: even if a malicious program runs, it cannot modify system
+files or install services without the user explicitly consenting. UAC is an application
+of the <em>principle of least privilege</em>—administrators do not need admin powers for
+most tasks.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Windows Access Control Model</div>
+<p>Every securable object in Windows has a <strong>security descriptor</strong>
+containing:</p>
+<ul>
+<li><strong>Owner SID</strong>: who owns the object (can change permissions)</li>
+<li><strong>DACL</strong> (Discretionary ACL): who is allowed/denied access</li>
+<li><strong>SACL</strong> (System ACL): what access attempts to audit</li>
+</ul>
+<p>When a thread accesses an object, the SRM checks the thread's access token against the
+DACL. If an explicit <em>deny</em> entry matches, access is denied. If an <em>allow</em>
+entry matches and grants the requested access, access is granted. If no entry matches,
+access is denied by default.</p>
+</div>
+
+<p><strong>Windows Defender</strong> (now Microsoft Defender) provides built-in
+antivirus, anti-malware, and endpoint detection and response (EDR). It uses signature-based
+detection, heuristic analysis, behavioral monitoring, and cloud-delivered protection.
+<em>Controlled Folder Access</em> (ransomware protection) restricts which applications
+can modify files in protected folders. <em>Exploit Protection</em> enables DEP, ASLR,
+and other mitigations per application, even for legacy software that was not compiled
+with them.</p>
+
+<p><strong>BitLocker</strong> is Windows' full-disk encryption feature. It encrypts the
+entire system volume using AES, protecting data at rest if the device is lost or stolen.
+BitLocker can use a <em>TPM</em> (Trusted Platform Module) to verify boot integrity
+(<em>measured boot</em>): the TPM records measurements of boot components, and if the
+measurements have changed (e.g., due to a bootkit), the TPM refuses to release the
+encryption key. This ties disk encryption to hardware-level boot security.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>Purpose</th><th>Defense Against</th></tr>
+</thead>
+<tbody>
+<tr><td>UAC</td><td>Least privilege for admins</td><td>Malware running with admin rights</td></tr>
+<tr><td>Windows Defender</td><td>Antivirus / EDR</td><td>Malware, ransomware</td></tr>
+<tr><td>BitLocker</td><td>Full-disk encryption</td><td>Data theft from lost/stolen device</td></tr>
+<tr><td>Secure Boot</td><td>Verify boot integrity</td><td>Bootkits, rootkits</td></tr>
+<tr><td>Windows Firewall</td><td>Network filtering</td><td>Network intrusions, worms</td></tr>
+<tr><td>AppLocker / WDAC</td><td>Application whitelisting</td><td>Unauthorized/malicious software</td></tr>
+<tr><td>Credential Guard</td><td>Isolate LSA secrets</td><td>Pass-the-hash, credential theft</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Windows Hello</strong> provides passwordless authentication using biometrics
+(facial recognition, fingerprint) or a PIN. The biometric data is processed locally and
+never leaves the device. Windows Hello for Business uses certificate-based authentication,
+eliminating passwords entirely for domain login. <em>Credential Guard</em> isolates the
+LSA in a virtualization-based security (VBS) container, protecting credentials from
+<em>pass-the-hash</em> and <em>pass-the-ticket</em> attacks even if the kernel is
+compromised.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Comparing Windows and xv6 Security</div>
+<p>Windows 10 represents the state of the art in commercial OS security, while xv6
+represents the bare minimum. The contrast is instructive: xv6 has <em>no</em>
+authentication, <em>no</em> access control, <em>no</em> encryption, and <em>no</em>
+auditing. Windows has all of these plus UAC, Defender, BitLocker, Secure Boot, and
+Credential Guard. The gap between them illustrates how much real-world security
+engineering goes into a production operating system—and why studying xv6 (which exposes
+the raw mechanisms) helps you appreciate what those features are built upon.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-1">17.1 Goals of Protection</h2>
+
+<p>While <em>security</em> (Chapter 16) is about defending against external threats,
+<em>protection</em> is about the <strong>internal mechanisms</strong> that enforce rules
+governing how processes access resources. Protection ensures that programs behave
+according to a defined policy, preventing accidental or intentional misuse of resources.
+The goal is not to prevent all errors (impossible) but to ensure that when errors or
+attacks occur, their <em>blast radius</em> is limited.</p>
+
+<p>The primary goals of protection are: (1) <strong>isolation</strong>—preventing
+processes from interfering with each other's memory, files, or execution; (2)
+<strong>controlled sharing</strong>—allowing processes to share resources when
+authorized, but only when authorized; (3) <strong>least privilege</strong>—granting each
+process only the privileges it needs; and (4) <strong>accountability</strong>—ensuring
+that actions can be attributed to the responsible principal (user or process).</p>
+
+<p>Protection mechanisms are the <em>foundation</em> upon which security is built. Without
+hardware-enforced memory protection (user/kernel mode, page tables, privilege levels), no
+amount of software can make a system secure. The hardware provides the <em>mechanism</em>;
+the OS provides the <em>policy</em>. This separation of mechanism and policy is a
+fundamental OS design principle: mechanisms should be general and flexible, while
+policies should be specific and adaptable.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Mechanism vs. Policy</div>
+<p><strong>Mechanism</strong> = <em>how</em> to enforce rules (e.g., page tables, privilege
+levels, access control lists). <strong>Policy</strong> = <em>what</em> rules to enforce
+(e.g., "only root can read /etc/shadow"). Good OS design separates the two: the mechanism
+should support any reasonable policy, and the policy should be changeable without
+rewriting the mechanism. In xv6, the hardware (RISC-V privilege levels) is the mechanism;
+the kernel's code that checks permissions (minimal in xv6) is the policy.</p>
+</div>
+
+<p>Protection is also about <strong>fault containment</strong>. If one process crashes or
+misbehaves, protection ensures that other processes are unaffected. This is why modern
+OSes give each process its own address space: a bug in your browser cannot corrupt the
+memory of your text editor. Without this isolation, a single buggy program could crash
+the entire system—as was common in early single-address-space systems like MS-DOS.</p>
+
+<p>In xv6, the fundamental protection mechanism is the <strong>hardware privilege
+levels</strong>. RISC-V has three modes: <em>U-mode</em> (user), <em>S-mode</em>
+(supervisor, where xv6 kernel runs), and <em>M-mode</em> (machine, for firmware). User
+processes run in U-mode and cannot execute privileged instructions or access kernel
+memory. The <code class="code-inline">sstatus</code> register's SPP bit tracks the
+previous privilege level, and the <code class="code-inline">satp</code> register (only
+accessible in S-mode) controls page tables. This hardware foundation is what makes
+protection possible.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-2">17.2 Principles of Protection</h2>
+
+<p>The <strong>principle of least privilege</strong> is the cornerstone of protection
+design: every program, process, and user should operate with the minimum set of
+privileges needed to accomplish its task, and no more. This limits the damage from bugs,
+misconfiguration, and attacks. If a web server runs with only the privileges needed to
+serve web pages, a compromise cannot spread to the rest of the system.</p>
+
+<p>Least privilege is implemented through <em>privilege separation</em>: splitting a
+system into components with different privilege levels. For example, a web server might
+run as a low-privilege user, while a separate privileged helper process handles tasks
+that require elevated permissions (like binding to port 80). The helper validates each
+request, reducing the attack surface of the privileged component. <em>Privilege
+dropping</em> is a related technique: a program starts with elevated privileges, performs
+the privileged operations it needs, then permanently drops those privileges before
+handling untrusted input.</p>
+
+<div class="code-block"><span class="comment">/* Privilege dropping pattern (C, Unix-like) */</span>
+
+<span class="keyword">int</span> main() {
+    <span class="comment">// 1. Start as root (e.g., to bind port 80)</span>
+    <span class="keyword">int</span> fd = bind_port(80);
+
+    <span class="comment">// 2. Drop to unprivileged user</span>
+    <span class="func">setgid</span>(UNPRIV_GID);
+    <span class="func">setuid</span>(UNPRIV_UID);
+
+    <span class="comment">// 3. Now running as unprivileged user</span>
+    <span class="comment">//    Even if exploited, attacker has no root</span>
+    serve(fd);
+}</div>
+
+<p>The <strong>need-to-know principle</strong> extends least privilege to information
+access: a process should only have access to the information it needs to perform its
+function. A payroll system needs access to salary data but not to source code
+repositories. This principle motivates <em>compartmentalization</em>: dividing
+information and resources into compartments, with strict access controls between them.</p>
+
+<p>The <strong>principle of separation of privilege</strong> states that a system should
+not grant access based on a single condition. For example, <em>two-person control</em>
+requires two authorized users to approve a sensitive action. In software, this means
+requiring multiple independent checks (e.g., authentication <em>and</em> authorization
+<em>and</em> audit logging) rather than relying on any single one.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Confused Deputy Problem</div>
+<p>A <strong>confused deputy</strong> is a privileged program that is tricked by an
+unprivileged caller into misusing its privileges. The classic example: a compiler with
+write access to a system log file is tricked by a malicious user into writing to
+<code class="code-inline">/etc/passwd</code> instead. The solution is <em>capability-based
+security</em> (Section 17.10): pass the specific capability (file descriptor) the caller
+is authorized to use, rather than letting the deputy open files by name.</p>
+</div>
+
+<p>The <strong>principle of complete mediation</strong> requires that every access to
+every resource be checked against the access control policy—not just the first time. A
+common mistake is to check permissions once and cache the result; if permissions change
+between checks, the cached result is stale. Complete mediation is expensive (checking on
+every access) but necessary for correctness. <em>Capability systems</em> make this
+efficient: holding a capability <em>is</em> the authorization, so no separate check is
+needed.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-3">17.3 Protection Rings</h2>
+
+<p><strong>Protection rings</strong> are a hardware-enforced privilege hierarchy
+introduced by Multics and later adopted (in simplified form) by x86 and other
+architectures. The idea is to organize privilege levels into concentric rings, where
+inner rings have more privilege than outer rings. The most privileged code (the kernel)
+runs in ring 0, and user programs run in ring 3. Intermediate rings (1, 2) can be used
+for device drivers or system services, though most modern OSes only use rings 0 and 3.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Ring</th><th>Typical Use</th><th>Privileges</th></tr>
+</thead>
+<tbody>
+<tr><td>Ring 0</td><td>Kernel</td><td>Full hardware access</td></tr>
+<tr><td>Ring 1</td><td>Device drivers (rarely used)</td><td>I/O, some system calls</td></tr>
+<tr><td>Ring 2</td><td>System services (rarely used)</td><td>Limited I/O</td></tr>
+<tr><td>Ring 3</td><td>User applications</td><td>No direct hardware access</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>On x86, the <strong>Current Privilege Level (CPL)</strong> is stored in the CS register
+(2 bits, giving 4 rings). When code in ring 3 attempts a privileged operation (e.g.,
+executing <code class="code-inline">hlt</code>, accessing an I/O port, or writing to a
+page marked supervisor-only), the CPU raises a <em>general protection fault</em>. The
+transition from ring 3 to ring 0 happens through <em>gates</em>: system call gates,
+interrupt gates, or (on modern x86) the <code class="code-inline">SYSCALL</code>/<code class="code-inline">SYSRET</code>
+instructions, which atomically switch privilege level and jump to a kernel entry point.</p>
+
+<p>RISC-V uses a simpler model: <em>U-mode</em> (user), <em>S-mode</em> (supervisor), and
+<em>M-mode</em> (machine). There are no intermediate rings. xv6 runs its kernel in S-mode
+and user processes in U-mode. The <code class="code-inline">sstatus</code> register's SPP
+bit records the previous mode, and the <code class="code-inline">scause</code> register
+indicates the trap cause. The <code class="code-inline">ecall</code> instruction triggers
+an environment call (system call) that transitions from U-mode to S-mode.</p>
+
+<div class="code-block"><span class="comment">/* RISC-V privilege levels and xv6 */</span>
+
+<span class="comment">// M-mode: Machine mode (firmware, SBI) — highest privilege</span>
+<span class="comment">// S-mode: Supervisor mode (xv6 kernel) — can access satp, sstatus</span>
+<span class="comment">// U-mode: User mode (xv6 processes) — restricted</span>
+
+<span class="comment">// User → Kernel transition (system call):</span>
+<span class="label">user_code:</span>
+    li a7, 64        <span class="comment">// syscall number (SYS_write)</span>
+    ecall            <span class="comment">// trap to S-mode</span>
+
+<span class="comment">// Kernel entry point (trampoline):</span>
+<span class="label">uservec:</span>
+    csrr a0, scause   <span class="comment">// read trap cause</span>
+    <span class="comment">// ... save user registers, switch to kernel stack ...</span>
+    call usertrap     <span class="comment">// dispatch to C handler</span></div>
+
+<p>The <strong>hypervisor ring</strong> (sometimes called "ring -1") extends the ring
+model for virtualization. A <em>hypervisor</em> runs at a privilege level below ring 0,
+managing multiple guest operating systems that each think they have ring 0. On x86, this
+is implemented with <em>VMX root</em> (hypervisor) and <em>VMX non-root</em> (guest)
+modes, controlled by Intel VT-x or AMD-V extensions. RISC-V has the <em>H-extension</em>
+for the same purpose. This is covered in more detail in Chapter 18 (Virtual Machines).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Why Only Two Rings in Practice?</div>
+<p>Although x86 supports 4 rings, Linux and Windows only use rings 0 and 3. The
+intermediate rings (1, 2) were intended for device drivers and system services, but
+experience showed that the complexity of managing multiple privilege levels outweighed
+the benefit. Instead, modern OSes put drivers in ring 0 (kernel space) or in ring 3
+(user space, via frameworks like Linux's <em>VFIO</em> or Windows' <em>User-Mode Driver
+Framework</em>). The trend is toward <em>more</em> code in user space, not more rings.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-4">17.4 Domain of Protection</h2>
+
+<p>A <strong>protection domain</strong> is the set of resources (memory, files, devices,
+capabilities) that a process (or a component within a process) is authorized to access.
+The concept of a domain generalizes the idea of a user or a privilege level: a domain is
+an execution context with a specific set of access rights. A process may execute in
+different domains at different times—for example, switching from a user domain to a
+kernel domain when making a system call.</p>
+
+<p>In its simplest form, a domain corresponds to a <strong>user identity</strong>: all
+processes running as user "alice" share the same access rights. This is the model used by
+traditional Unix: each process has a <em>UID</em> (user ID), <em>GID</em> (group ID), and
+<em>supplementary groups</em>, and file permissions are checked against these. However,
+this model is coarse: all of alice's processes have the same rights, even if they perform
+very different functions.</p>
+
+<p>A more fine-grained model associates a domain with a <strong>process</strong> or even
+a <strong>thread</strong>. Each process has its own address space (memory protection) and
+its own set of open file descriptors. In xv6, each process has its own page table, so
+processes cannot access each other's memory. The kernel is a separate domain with access
+to all physical memory. When a process makes a system call, it temporarily enters the
+kernel domain, performs the requested operation (with kernel privileges), and returns to
+the user domain.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Domain Switching</div>
+<p>A <strong>domain switch</strong> occurs when execution moves from one protection
+domain to another. The most common example is a system call: user process (domain A)
+→ kernel (domain B) → back to user process (domain A). The hardware ensures that this
+transition is controlled: you cannot jump directly into the middle of kernel code; you
+must enter through a defined entry point (trap vector) that saves state and sets up the
+kernel stack. In xv6, the <code class="code-inline">trampoline</code> page handles this
+transition.</p>
+</div>
+
+<p><strong>Capability-based addressing</strong> is an alternative to traditional
+addressing where a memory reference is not a raw address but a <em>capability</em>—a
+token that both names the object and carries the rights to access it. In a capability
+system, you cannot access an object unless you hold a capability for it. This makes
+protection <em>automatic</em>: the hardware checks the capability on every access. The
+classic capability-based systems (Hydra, CAP—see Section 17.10) demonstrated this
+approach, though it has not been widely adopted in mainstream hardware.</p>
+
+<p>The <strong>principle of context-dependent access</strong> recognizes that access
+rights may depend on the context of execution. For example, a process may have the right
+to read a file when running normally, but not when running in a debugger. Or a process
+may have different rights depending on which network interface it is using. This is
+implemented through <em>security contexts</em> that can be switched at well-defined
+points, such as entering a sandbox or connecting to a network.</p>
+
+<p>In modern systems, <strong>namespaces</strong> (Linux) and <strong>job objects</strong>
+(Windows) provide a form of domain isolation: processes in different namespaces see
+different sets of resources (different process IDs, network interfaces, mount points).
+Containers combine namespaces with <em>cgroups</em> (resource limits) to create
+lightweight isolated environments. This is a software-level implementation of the domain
+concept, built on top of the hardware's privilege levels.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-5">17.5 Access Matrix</h2>
+
+<p>The <strong>access matrix</strong> is an abstract model of protection that captures
+the relationships between <em>domains</em> (subjects), <em>objects</em> (resources), and
+<em>rights</em> (permissions). The matrix has domains as rows, objects as columns, and
+access rights as entries. The entry <code class="code-inline">M[i][j]</code> lists the
+rights that domain <em>i</em> has on object <em>j</em>. This model is general enough to
+express most protection policies.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th></th><th>File F1</th><th>File F2</th><th>Printer</th><th>Process P1</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Domain D1 (alice)</strong></td><td>read, write</td><td>read</td><td>print</td><td>—</td></tr>
+<tr><td><strong>Domain D2 (bob)</strong></td><td>read</td><td>read, write</td><td>—</td><td>signal</td></tr>
+<tr><td><strong>Domain D3 (root)</strong></td><td>read, write, own</td><td>read, write, own</td><td>print, own</td><td>signal, kill, own</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The access rights in the matrix can include: <strong>read</strong> (examine the
+object), <strong>write</strong> (modify the object), <strong>execute</strong> (run the
+object if it is a program), <strong>append</strong> (add data but not modify existing),
+<strong>own</strong> (the owner can grant or revoke rights to others), and
+<strong>control</strong> (can modify the rights of other domains on this object). The
+<em>own</em> right is special: it allows the holder to change the access rights of other
+domains on that object, enabling <em>discretionary access control</em>.</p>
+
+<p>The access matrix is a <em>conceptual model</em>, not a practical implementation. A
+real system with thousands of users and millions of files would have an enormous, mostly
+empty matrix. Instead, the matrix is <em>decomposed</em> into more efficient structures
+(Section 17.6). However, the matrix is valuable as a <em>specification</em>: any
+protection policy that can be expressed as an access matrix can be implemented, and the
+matrix provides a framework for reasoning about protection.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Rights as Capabilities and ACLs</div>
+<p>The access matrix can be decomposed in two ways:</p>
+<ul>
+<li><strong>By row</strong> (access control lists): For each object, store the list of
+domains and their rights. This is the <em>ACL</em> approach used by Windows and (optionally)
+Linux.</li>
+<li><strong>By column</strong> (capability lists): For each domain, store the list of
+objects and the rights held. This is the <em>capability</em> approach.</li>
+</ul>
+<p>Both are valid decompositions of the same matrix; they differ in efficiency and
+semantics for specific operations.</p>
+</div>
+
+<p>The access matrix also supports the concept of <strong>copy rights</strong> and
+<strong>transfer rights</strong>. A <em>copy right</em> (often denoted <code class="code-inline">*</code>)
+allows a domain to copy its access right to another domain. A <em>transfer right</em>
+allows a domain to transfer (move) its right to another domain, losing it itself. These
+rights control how access propagates through the system, which is critical for
+maintaining the integrity of the protection policy.</p>
+
+<p>In xv6, there is no access matrix—there are no file permissions at all. Every process
+can read and write every file. This makes xv6 unsuitable for multi-user scenarios but
+keeps the code simple for teaching. The <em>concept</em> of the access matrix is still
+relevant: if you were to add permissions to xv6, you would need to decide whether to use
+ACLs (per-file lists of allowed UIDs) or capabilities (per-process lists of accessible
+files), and how to store and check them efficiently.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-6">17.6 Implementation of Access Matrix</h2>
+
+<p>Since the full access matrix is too large to store directly, real systems decompose it
+into one of two structures: <strong>access control lists (ACLs)</strong> (column-wise
+decomposition) or <strong>capability lists</strong> (row-wise decomposition). Each has
+trade-offs in efficiency, expressiveness, and ease of management.</p>
+
+<p><strong>Access Control Lists (ACLs)</strong> associate with each object a list of
+(domain, rights) pairs. When a domain attempts to access an object, the system checks the
+object's ACL for an entry matching the domain and the requested right. ACLs are used by
+Windows (security descriptors with DACLs) and, in extended form, by Linux (POSIX ACLs in
+addition to the traditional owner/group/other model).</p>
+
+<div class="code-block"><span class="comment">/* Unix file permissions (simplified ACL) */</span>
+
+<span class="comment">// Traditional Unix: 3 classes × 3 bits = 9 permission bits</span>
+<span class="comment">//   owner | group | other</span>
+<span class="comment">//   rwx  | rwx   | rwx</span>
+
+$ ls -l /etc/passwd
+-rw-r--r-- 1 root root ... /etc/passwd
+<span class="comment">// owner(root): rw-, group(root): r--, other: r--</span>
+
+<span class="comment">// POSIX ACL (extended): more granular per-user/group entries</span>
+<span class="comment">// getfacl /etc/passwd</span>
+<span class="comment">// user::rw-</span>
+<span class="comment">// user:alice:r--   ← specific user grant</span>
+<span class="comment">// group::r--</span>
+<span class="comment">// other::r--</span></div>
+
+<p>ACLs are efficient for answering "who can access this object?" (just read the ACL) but
+inefficient for "what can this domain access?" (must scan all objects). They make
+<em>revocation</em> easy (just edit the ACL) but make it hard to enumerate all of a
+user's permissions. ACLs are the natural choice when objects are the primary unit of
+management (e.g., file systems).</p>
+
+<p><strong>Capability lists</strong> associate with each domain a list of (object,
+rights) pairs—essentially, a list of capabilities the domain holds. A <em>capability</em>
+is a token that both names an object and confers specific rights on it. To access an
+object, a domain must present a valid capability. Capabilities are efficient for
+answering "what can this domain access?" (just read the capability list) but inefficient
+for "who can access this object?" (must scan all domains). They make <em>delegation</em>
+easy (pass the capability) but make <em>revocation</em> harder (must find and invalidate
+all copies of the capability).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>ACLs</th><th>Capabilities</th></tr>
+</thead>
+<tbody>
+<tr><td>Decomposition</td><td>By column (per-object)</td><td>By row (per-domain)</td></tr>
+<tr><td>"Who can access X?"</td><td>Fast (read ACL)</td><td>Slow (scan all domains)</td></tr>
+<tr><td>"What can D access?"</td><td>Slow (scan all objects)</td><td>Fast (read cap list)</td></tr>
+<tr><td>Revocation</td><td>Easy (edit ACL)</td><td>Hard (find all copies)</td></tr>
+<tr><td>Delegation</td><td>Hard (edit ACLs)</td><td>Easy (pass capability)</td></tr>
+<tr><td>Confused deputy</td><td>Vulnerable</td><td>Immune</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>In practice, <strong>file descriptors are capabilities</strong>. When a process opens a
+file, it receives a file descriptor—a small integer that serves as a capability for that
+file with specific rights (read, write). The process can pass this descriptor to child
+processes (via <code class="code-inline">fork</code> or Unix domain sockets), delegating
+access. The kernel checks the capability (file descriptor) on each read/write, not the
+original path or permissions. This is a form of capability-based protection embedded
+within an ACL-based system.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 File Descriptors as Capabilities</div>
+<p>In xv6, file descriptors are implemented as indices into a per-process file table
+(<code class="code-inline">proc->ofile[]</code>). Each entry points to a
+<code class="code-inline">struct file</code> that tracks the file, the offset, and the
+mode (readable/writable). When a process calls <code class="code-inline">read(fd, buf, n)</code>,
+the kernel uses <code class="code-inline">fd</code> to look up the
+<code class="code-inline">struct file</code> and checks the mode. The process cannot
+access a file it has not opened—this is capability-based protection, even though xv6 has
+no file permissions. The <em>capability</em> (file descriptor) is the authorization.</p>
+</div>
+
+<p><strong>Lock-and-key</strong> is a hybrid approach combining aspects of ACLs and
+capabilities. Each object has a unique <em>lock</em> (a bit pattern), and each domain has
+a set of <em>keys</em>. A domain can access an object if it holds a key matching the
+object's lock. This model is rarely used directly but appears in some forms of
+<em>capability hardware</em> and in <em>memory keys</em> (where each memory page has an
+associated key, and the CPU checks the key on access).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-7">17.7 Revocation of Access Rights</h2>
+
+<p><strong>Revocation</strong> is the process of withdrawing a previously granted access
+right. It is essential for security: when an employee leaves, a password is compromised,
+or a policy changes, the system must be able to remove access. The difficulty of
+revocation depends on the protection model: in ACL-based systems, revocation is
+straightforward (edit the ACL); in capability-based systems, it is harder (find and
+invalidate all copies of the capability).</p>
+
+<p>The key requirements for revocation are: <strong>immediacy</strong> (the revocation
+should take effect quickly, ideally immediately), <strong>completeness** (all copies of
+the right should be revoked, not just some), and <strong>selectivity</strong> (it should
+be possible to revoke a right from one domain without affecting others). These
+requirements can conflict: immediate, complete revocation is easy with ACLs but hard with
+capabilities; selective revocation is easy with ACLs but may require indirection with
+capabilities.</p>
+
+<p>In <strong>ACL-based systems</strong>, revocation is simple: remove the entry from the
+object's ACL. The next access check will fail. However, there is a subtlety: if a process
+has already opened a file (holding a file descriptor/capability), revoking the ACL entry
+does not close the file descriptor. The process can continue to use the open descriptor
+until it closes it or exits. To achieve immediate revocation, the system must also
+invalidate open descriptors—this is rarely done in practice, creating a window where
+revoked users retain access.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Open File Descriptor Problem</div>
+<p>When you revoke a user's read permission on a file, any file descriptors they already
+have open for that file remain valid. The user can continue reading until they close the
+descriptor. This is a fundamental limitation of capability-based access (file
+descriptors are capabilities). Some systems provide a <em>revoke</em> system call that
+forces all open descriptors to a file to be closed, but this is rarely implemented and can
+cause application crashes.</p>
+</div>
+
+<p>In <strong>capability-based systems</strong>, revocation is harder because
+capabilities can be copied and passed around. The standard solution is <em>indirection</em>:
+instead of giving a domain a direct capability for an object, give it a capability for an
+<em>indirection object</em> (sometimes called a "capability locker" or "revoke
+capability"). The indirection object points to the real object. To revoke, the owner
+changes the indirection object to point nowhere (or to a different object). All holders
+of the indirection capability lose access simultaneously.</p>
+
+<p><strong>Back-pointers</strong> are another approach: each object maintains a list of
+all domains that hold capabilities for it. To revoke, the system traverses this list and
+invalidates each capability. This is expensive in space (the back-pointer lists can be
+large) and time (traversal is O(n)), but it provides complete, immediate revocation. Few
+systems implement this due to the overhead.</p>
+
+<p><strong>Time-limited capabilities</strong> (or <em>expiring capabilities</em>) are a
+proactive approach: capabilities include an expiration time, after which they are
+automatically invalid. The holder must periodically renew the capability, and if the
+owner stops renewing, access is revoked. This is used in systems like Kerberos (where
+tickets expire) and in some distributed capability systems. The trade-off is that
+renewal adds overhead and that there is a window (until expiration) during which a
+revoked capability remains valid.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Revocation in Practice</div>
+<p>In Linux, revoking a user's access typically involves: (1) changing file permissions
+or ownership (<code class="code-inline">chmod</code>, <code class="code-inline">chown</code>),
+(2) killing the user's processes (<code class="code-inline">pkill -u username</code>),
+and (3) disabling the account (<code class="code-inline">usermod -L</code> or
+<code class="code-inline">passwd -l</code>). Step 2 is necessary because open file
+descriptors remain valid after permission changes. In Windows, revoking access from a
+user involves modifying the DACL on each object and, if necessary, terminating the user's
+processes.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-8">17.8 Role-Based Access Control</h2>
+
+<p><strong>Role-Based Access Control (RBAC)</strong> is a protection model that
+associates access rights with <em>roles</em> rather than individual users. Users are
+assigned to roles, and roles are granted permissions. This indirection simplifies
+administration: instead of managing permissions for each user individually,
+administrators manage roles, and users inherit permissions from their roles. When a
+user's job changes, the administrator changes their role assignment, not dozens of
+individual permissions.</p>
+
+<p>For example, in a hospital system, roles might include <em>doctor</em>, <em>nurse</em>,
+<em>pharmacist</em>, and <em>administrator</em>. A doctor role might have permission to
+read and write patient records, prescribe medication, and order tests. A nurse role might
+have read access to records and permission to administer medication but not to prescribe.
+When a new doctor joins, they are assigned the doctor role and immediately have all the
+appropriate permissions—no need to configure each permission individually.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Role</th><th>Permissions</th><th>Example Users</th></tr>
+</thead>
+<tbody>
+<tr><td>Admin</td><td>All operations on all resources</td><td>sysadmin</td></tr>
+<tr><td>Developer</td><td>Read/write source, deploy to staging</td><td>alice, bob</td></tr>
+<tr><td>QA</td><td>Read source, deploy to test, run tests</td><td>carol</td></tr>
+<tr><td>Auditor</td><td>Read-only access to logs and configs</td><td>dave</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>RBAC supports <strong>role hierarchies</strong>: a senior role can inherit the
+permissions of a junior role. For example, a <em>senior developer</em> role might inherit
+all <em>developer</em> permissions and add the ability to approve pull requests and deploy
+to production. This reduces redundancy: the senior role does not need to re-list all
+developer permissions; it simply inherits them and adds its own.</p>
+
+<p>RBAC also supports <strong>constraints</strong> that enforce separation of duties.
+For example, a constraint might state that no user can hold both the <em>requester</em>
+and <em>approver</em> roles for the same transaction. This prevents a single user from
+both requesting and approving a purchase, reducing fraud. <em>Cardinality constraints</em>
+limit how many users can hold a role (e.g., at most 2 users can be <em>super-admin</em>).
+<em>Prerequisite roles</em> require a user to hold one role before being assigned another
+(e.g., must be <em>employee</em> before being <em>manager</em>).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ RBAC vs. DAC vs. MAC</div>
+<p>There are three major access control models:</p>
+<ul>
+<li><strong>DAC (Discretionary Access Control)</strong>: The owner of an object decides
+who can access it (e.g., Unix file permissions, Windows ACLs). Flexible but can lead to
+inconsistent policies.</li>
+<li><strong>MAC (Mandatory Access Control)</strong>: The system enforces a central
+policy that users cannot override (e.g., SELinux, classified data handling). Secure but
+inflexible.</li>
+<li><strong>RBAC (Role-Based Access Control)</strong>: Access is granted through roles,
+combining the flexibility of DAC with the central management of MAC. Most common in
+enterprise systems.</li>
+</ul>
+</div>
+
+<p>In Linux, RBAC is implemented through <em>groups</em> (users belong to groups, and
+file permissions include group rights) and through frameworks like <em>sudo</em> (which
+grants specific commands to specific users or groups). More sophisticated RBAC is
+provided by <em>SELinux</em> roles and <em>AppArmor</em> profiles. In Windows, RBAC is
+implemented through <em>security groups</em> and <em>role assignments</em> in Active
+Directory, where group membership determines access to resources.</p>
+
+<p>The <strong>NIST RBAC standard</strong> (INCITS 359) defines four levels of
+increasing complexity: <em>flat RBAC</em> (basic user-role-permission), <em>hierarchical
+RBAC</em> (role inheritance), <em>constrained RBAC</em> (separation of duties), and
+<em>symmetric RBAC</em> (permission review). Most real-world systems implement at least
+hierarchical RBAC, and enterprise systems often implement constrained RBAC for compliance.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-9">17.9 Mandatory Access Control</h2>
+
+<p><strong>Mandatory Access Control (MAC)</strong> is a protection model where access
+decisions are enforced by the system based on a central policy, <em>not</em> by the
+discretion of individual users. Unlike DAC, where a file owner can grant access to anyone,
+MAC policies cannot be overridden by users. This makes MAC suitable for environments
+with strict security requirements: military systems, government classified data,
+healthcare (HIPAA), and financial systems (PCI-DSS).</p>
+
+<p>The classic MAC model is <strong>Bell-LaPadula</strong>, designed for military
+multi-level security. It assigns each subject (process) and object (file) a
+<em>security level</em>: <em>Unclassified</em> &lt; <em>Confidential</em> &lt;
+<em>Secret</em> &lt; <em>Top Secret</em>. The rules are:</p>
+
+<ul>
+<li><strong>No read up (simple security)</strong>: A subject can only read objects at or
+below its security level. A Secret process cannot read a Top Secret file.</li>
+<li><strong>No write down (*-property)</strong>: A subject can only write to objects at
+or above its security level. A Top Secret process cannot write to a Secret file (to
+prevent leaking classified information downward).</li>
+</ul>
+
+<div class="code-block"><span class="comment">/* Bell-LaPadula rules */</span>
+
+<span class="comment">// Security levels: U < C < S < TS</span>
+
+<span class="comment">// Rule 1: No Read Up (Simple Security)</span>
+<span class="comment">//   subject_level >= object_level  →  read allowed</span>
+<span class="comment">//   subject_level <  object_level  →  read DENIED</span>
+
+<span class="comment">// Rule 2: No Write Down (*-Property)</span>
+<span class="comment">//   subject_level <= object_level  →  write allowed</span>
+<span class="comment">//   subject_level >  object_level  →  write DENIED</span>
+
+<span class="comment">// Result: information can flow UP but never DOWN</span>
+<span class="comment">// This protects confidentiality but not integrity</span></div>
+
+<p>The dual of Bell-LaPadula is <strong>Biba</strong>, which protects <em>integrity</em>
+rather than confidentiality. Biba's rules are the mirror image: <em>no read down</em> (a
+high-integrity process cannot read low-integrity data, which might be corrupted) and
+<em>no write up</em> (a low-integrity process cannot write to high-integrity data, which
+would corrupt it). Together, Bell-LaPadula and Biba can protect both confidentiality and
+integrity, though combining them is restrictive.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Conflict Between Confidentiality and Integrity</div>
+<p>Bell-LaPadula (confidentiality) says "no write down" (information flows up). Biba
+(integrity) says "no write up" (information flows down). If you apply both simultaneously,
+information can only flow between subjects and objects at the <em>same</em> level—making
+the system nearly unusable. Real systems that need both use more nuanced models, such as
+<em>Clark-Wilson</em> (which focuses on well-formed transactions and separation of
+duties) or <em>Type Enforcement</em> (which assigns types to subjects and objects and
+specifies allowed interactions in a matrix).</p>
+</div>
+
+<p>In Linux, MAC is implemented by <strong>SELinux</strong> (Security-Enhanced Linux),
+developed by the NSA. SELinux uses <em>type enforcement</em>: every subject (process) and
+object (file, socket, etc.) has a <em>type</em>, and a policy specifies which
+subject-object-type combinations are allowed. For example, a policy might state that
+<code class="code-inline">httpd_t</code> (the Apache process type) can read
+<code class="code-inline">httpd_sys_content_t</code> (web content files) but cannot read
+<code class="code-inline">shadow_t</code> (password hashes). Even if Apache is
+compromised, it cannot read <code class="code-inline">/etc/shadow</code> because the
+SELinux policy forbids it—regardless of Unix file permissions.</p>
+
+<div class="code-block"><span class="comment">/* SELinux policy example (type enforcement) */</span>
+
+<span class="comment">// Allow httpd to read web content</span>
+allow httpd_t httpd_sys_content_t:file { read getattr };
+
+<span class="comment">// Deny httpd access to shadow passwords (implicit deny)</span>
+<span class="comment">// No allow rule → access denied, even if Unix perms allow it</span>
+
+<span class="comment">// Allow httpd to connect to network</span>
+allow httpd_t http_port_t:tcp_socket { name_connect };
+
+<span class="comment">// Check status: getenforce → Enforcing / Permissive / Disabled</span></div>
+
+<p><strong>AppArmor</strong> is an alternative MAC system used in Ubuntu and SUSE. Unlike
+SELinux (which labels objects by type), AppArmor uses <em>path-based</em> profiles: a
+profile specifies which file paths a program can access and with what permissions.
+AppArmor is simpler to configure than SELinux but less expressive. Both are examples of
+MAC: the policy is enforced by the kernel and cannot be overridden by users.</p>
+
+<p><strong>Comparison with xv6</strong>: xv6 has no MAC (or DAC, or RBAC). All processes
+have full access to all files. Adding MAC to xv6 would require: (1) assigning security
+labels to processes and files, (2) checking labels on every file access in the kernel
+(in <code class="code-inline">sys_open</code>, <code class="code-inline">sys_read</code>,
+<code class="code-inline">sys_write</code>), and (3) defining a policy (which labels can
+access which). This would be a significant but instructive extension to the teaching OS.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-10">17.10 Capability-Based Systems</h2>
+
+<p>A <strong>capability</strong> is a token that both names a resource and confers
+specific access rights to it. Unlike an ACL entry (which is checked separately from the
+access), a capability <em>is</em> the authorization: holding the capability is sufficient
+to access the resource. This eliminates the <em>confused deputy</em> problem (Section
+17.2) because the caller passes the specific capability they are authorized to use, and
+the callee cannot use capabilities the caller did not provide.</p>
+
+<p>Capabilities can be implemented in software or hardware. <strong>Software
+capabilities</strong> are typically unforgeable tokens managed by the kernel. The kernel
+ensures that user processes cannot create or modify capabilities—only receive them
+through legitimate channels (e.g., opening a file, receiving a message). File
+descriptors are the most common example: a file descriptor is a capability for an open
+file, and the kernel ensures processes cannot forge file descriptors.</p>
+
+<div class="code-block"><span class="comment">/* File descriptors as capabilities */</span>
+
+<span class="comment">// Opening a file creates a capability</span>
+<span class="keyword">int</span> fd = open(<span class="string">"/tmp/data"</span>, O_RDONLY);
+<span class="comment">// fd is a capability: names the file, confers read right</span>
+
+<span class="comment">// Using the capability (no separate permission check)</span>
+read(fd, buf, 1024);  <span class="comment">// kernel checks fd is valid + readable</span>
+
+<span class="comment">// Passing the capability to a child process</span>
+<span class="keyword">if</span> (fork() == 0) {
+    <span class="comment">// Child inherits fd — can read /tmp/data</span>
+    read(fd, buf, 1024);
+}
+
+<span class="comment">// Cannot access a file without a capability</span>
+<span class="comment">// No fd → no access, even if path is known</span></div>
+
+<p>The <strong>Hydra</strong> operating system (1970s, Carnegie Mellon) was a pioneering
+capability-based system. In Hydra, every resource is an object, and access to objects is
+mediated by capabilities. Capabilities are stored in a <em>capability list</em>
+associated with each protection domain. Hydra introduced the concept of <em>rights
+amplification</em>: a procedure can be given a capability that grants more rights than
+the caller has, but only for the duration of the call and only through a verified code
+path. This allows trusted procedures to perform privileged operations on behalf of
+untrusted callers without giving the callers the underlying privileges.</p>
+
+<p>The <strong>CAP</strong> computer (Cambridge, 1970s) implemented capabilities in
+hardware. The CPU had special capability registers, and memory access required a valid
+capability in a register. Capabilities were tagged in memory (using a tag bit) so they
+could not be forged by user programs. The CAP system demonstrated that hardware
+capability support could provide fine-grained, efficient protection, but the hardware
+complexity limited its adoption.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Modern Capability Systems</div>
+<p>While pure capability hardware is rare, capabilities appear in many modern systems:</p>
+<ul>
+<li><strong>File descriptors</strong> (Unix): capabilities for open files, sockets, pipes</li>
+<li><strong>SeL4</strong>: a formally verified microkernel that uses capabilities for all
+resource access—every kernel operation requires a capability</li>
+<li><strong>WebAssembly (WASM)</strong>: capabilities for memory, tables, and functions</li>
+<li><strong>Android</strong>: <em>intents</em> and <em>content providers</em> use
+capability-like tokens for inter-app communication</li>
+<li><strong>Cloud</strong>: API tokens and IAM roles are capability-like</li>
+</ul>
+</div>
+
+<p>The <strong>seL4 microkernel</strong> is a modern example of a capability-based system.
+seL4 is <em>formally verified</em>: mathematical proofs guarantee that the kernel
+implementation matches its specification, and that the specification enforces the
+intended security properties. All access in seL4 is mediated by capabilities: to send a
+message, you need a capability for the endpoint; to map memory, you need a capability for
+the frame. This makes seL4 one of the most secure general-purpose kernels ever built.</p>
+
+<p><strong>Capability-based addressing</strong> extends the capability concept to memory.
+Instead of addressing memory by virtual address, a program addresses memory by capability:
+a (capability, offset) pair. The hardware checks the capability on each access, ensuring
+that the program can only access memory for which it holds valid capabilities. This
+provides fine-grained memory protection without page tables. The Plessey System 250 and
+the Intel iAPX 432 experimented with this approach, but it was too complex and slow for
+mainstream adoption.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Capabilities vs. ACLs: The Confused Deputy</div>
+<p>The <em>confused deputy</em> problem (Section 17.2) illustrates the key advantage of
+capabilities. A compiler (the deputy) has write access to a log file. A malicious user
+asks the compiler to compile a file named <code class="code-inline">/etc/passwd</code>
+and output to the log file path. In an ACL system, the compiler checks the user's
+permissions on the output file—but the <em>compiler</em> has write access, not the user,
+so the check passes, and the compiler overwrites <code class="code-inline">/etc/passwd</code>.
+In a capability system, the user passes a capability for the <em>specific</em> output
+file they are authorized to use. The compiler can only write to that file—it cannot
+write to <code class="code-inline">/etc/passwd</code> because it has no capability for
+it. The deputy cannot be confused because it can only act on the capabilities it is
+given.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-17-11">17.11 Language-Based Protection</h2>
+
+<p><strong>Language-based protection</strong> uses programming language features to
+enforce protection policies, rather than (or in addition to) OS-level mechanisms. The idea
+is that the compiler and runtime can enforce access rules at a finer granularity than the
+OS, because they understand the semantics of the program. For example, a language can
+enforce that a variable is only accessible within a certain module, or that a function
+can only be called by certain callers.</p>
+
+<p>The <strong>type system</strong> is the most common form of language-based protection.
+A type-safe language (like Java, Rust, or Go) guarantees that a program cannot access
+memory outside of its allocated objects. This eliminates entire classes of
+vulnerabilities: buffer overflows, use-after-free, and type confusion are impossible in
+a type-safe language (assuming the language runtime is correct). In contrast, C and C++
+are not type-safe: a pointer cast or buffer overflow can access arbitrary memory.</p>
+
+<div class="code-block"><span class="comment">/* Type safety prevents buffer overflows */</span>
+
+<span class="comment">// C (not type-safe): buffer overflow possible</span>
+<span class="keyword">char</span> buf[64];
+<span class="func">strcpy</span>(buf, user_input);  <span class="comment">// overflow if > 64!</span>
+
+<span class="comment">// Java (type-safe): bounds checked</span>
+<span class="keyword">byte</span>[] buf = <span class="keyword">new</span> <span class="keyword">byte</span>[64];
+System.arraycopy(input, 0, buf, 0, input.length);
+<span class="comment">// throws ArrayIndexOutOfBoundsException if input > 64</span>
+<span class="comment">// No memory corruption — the runtime enforces bounds</span>
+
+<span class="comment">// Rust (type-safe + ownership): no overflow, no use-after-free</span>
+<span class="keyword">let</span> <span class="keyword">mut</span> buf = [0u8; 64];
+buf[..input.len()].copy_from_slice(input);
+<span class="comment">// panics if input > 64, but no memory corruption</span></div>
+
+<p><strong>Access modifiers</strong> (public, private, protected) in object-oriented
+languages are a form of language-based protection. They control which code can access a
+class's fields and methods. <code class="code-inline">private</code> members are only
+accessible within the class, <code class="code-inline">protected</code> within the class
+and its subclasses, and <code class="code-inline">public</code> from anywhere. The
+compiler enforces these rules, preventing accidental or intentional access from outside
+the intended scope. This is analogous to OS-level access control but at the
+language/object level.</p>
+
+<p><strong>Java's security model</strong> is a comprehensive example of language-based
+protection. Java programs run in a <em>Java Virtual Machine (JVM)</em> that enforces type
+safety, memory safety, and a <em>security manager</em> that can restrict what code can
+do (read files, open network connections, etc.). <em>Signed code</em> can be granted
+different permissions based on the signer's identity. <em>Applets</em> (now deprecated)
+ran in a sandbox with no access to the local file system. While applets are gone, the
+principles live on in <em>WebAssembly</em>, <em>Android's app sandbox</em>, and
+<em>container runtimes</em>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Rust's Ownership System</div>
+<p>Rust takes language-based protection further with its <strong>ownership and
+borrowing</strong> system. The compiler enforces that:</p>
+<ul>
+<li>Each value has exactly one owner</li>
+<li>When the owner goes out of scope, the value is dropped (no leaks, no double-free)</li>
+<li>References must always point to valid data (no dangling pointers, no use-after-free)</li>
+<li>Mutable and immutable references cannot coexist (no data races)</li>
+</ul>
+<p>These rules are checked at compile time, eliminating memory safety bugs without runtime
+overhead. Rust demonstrates that language-level protection can replace some OS-level
+protection mechanisms—at least for memory safety.</p>
+</div>
+
+<p><strong>Proof-carrying code</strong> is an advanced form of language-based protection
+where the code producer provides a <em>proof</em> that the code satisfies certain safety
+properties, and the consumer (or the runtime) <em>verifies</em> the proof before running
+the code. This allows untrusted code to run safely without a full sandbox: if the proof
+checks out, the code is guaranteed to be safe. <em>Typed assembly language</em> and
+<em>WebAssembly validation</em> are practical applications of this idea.</p>
+
+<p>The relationship between language-based and OS-based protection is complementary, not
+competitive. Language-based protection is fine-grained and efficient but only works within
+a single language runtime. OS-based protection is coarser and has more overhead but works
+across all programs and languages. A secure system uses both: the OS provides the
+foundation (process isolation, privilege levels), and language-based protection adds
+fine-grained, type-safe access control within each process. For example, a web browser
+uses OS-level sandboxing to isolate tabs (process-level) and language-level sandboxing to
+isolate JavaScript from the browser's native code (language-level).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 The Future: Capability-Safe Languages</div>
+<p>Modern research in <em>object-capability languages</em> (like E, Pony, and some
+extensions of JavaScript) combines language-level safety with capability-based access
+control. In these languages, the only way to access a resource is to hold a reference
+(capability) to it—there is no global namespace or ambient authority. This makes the
+<em>principle of least privilege</em> automatic: a module can only access what it is
+explicitly given. This is the language-level analog of seL4's capability-based kernel
+architecture.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return; // skip links without data-target (e.g., part links)
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 5: Storage Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item active" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 11: Mass-Storage Structure</div>
+      <a class="nav-item" data-target="sec-11-1"><span class="nav-num">11.1</span>Overview</a>
+      <a class="nav-item" data-target="sec-11-2"><span class="nav-num">11.2</span>HDD Scheduling</a>
+      <a class="nav-item" data-target="sec-11-3"><span class="nav-num">11.3</span>NVM Scheduling</a>
+      <a class="nav-item" data-target="sec-11-4"><span class="nav-num">11.4</span>Error Detection</a>
+      <a class="nav-item" data-target="sec-11-5"><span class="nav-num">11.5</span>Storage Device Management</a>
+      <a class="nav-item" data-target="sec-11-6"><span class="nav-num">11.6</span>Swap-Space Management</a>
+      <a class="nav-item" data-target="sec-11-7"><span class="nav-num">11.7</span>Storage Attachment</a>
+      <a class="nav-item" data-target="sec-11-8"><span class="nav-num">11.8</span>RAID Structure</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 12: I/O Systems</div>
+      <a class="nav-item" data-target="sec-12-1"><span class="nav-num">12.1</span>Overview</a>
+      <a class="nav-item" data-target="sec-12-2"><span class="nav-num">12.2</span>I/O Hardware</a>
+      <a class="nav-item" data-target="sec-12-3"><span class="nav-num">12.3</span>Application I/O Interface</a>
+      <a class="nav-item" data-target="sec-12-4"><span class="nav-num">12.4</span>Kernel I/O Subsystem</a>
+      <a class="nav-item" data-target="sec-12-5"><span class="nav-num">12.5</span>Transforming I/O Requests</a>
+      <a class="nav-item" data-target="sec-12-6"><span class="nav-num">12.6</span>STREAMS</a>
+      <a class="nav-item" data-target="sec-12-7"><span class="nav-num">12.7</span>Performance</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 5: Storage Management</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 11–12 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers mass-storage structure, disk
+scheduling, RAID, I/O hardware, the kernel I/O subsystem, and I/O performance.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-11-1">11.1 Overview</a></li>
+<li><a href="#sec-11-2">11.2 HDD Scheduling</a></li>
+<li><a href="#sec-11-3">11.3 NVM Scheduling</a></li>
+<li><a href="#sec-11-4">11.4 Error Detection and Correction</a></li>
+<li><a href="#sec-11-5">11.5 Storage Device Management</a></li>
+<li><a href="#sec-11-6">11.6 Swap-Space Management</a></li>
+<li><a href="#sec-11-7">11.7 Storage Attachment</a></li>
+<li><a href="#sec-11-8">11.8 RAID Structure</a></li>
+<li><a href="#sec-12-1">12.1 Overview</a></li>
+<li><a href="#sec-12-2">12.2 I/O Hardware</a></li>
+<li><a href="#sec-12-3">12.3 Application I/O Interface</a></li>
+<li><a href="#sec-12-4">12.4 Kernel I/O Subsystem</a></li>
+<li><a href="#sec-12-5">12.5 Transforming I/O Requests</a></li>
+<li><a href="#sec-12-6">12.6 STREAMS</a></li>
+<li><a href="#sec-12-7">12.7 Performance</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-1">11.1 Overview</h2>
+
+<p>Mass storage is the foundation of persistent data in a computer system. While main memory
+(RAM) is fast but volatile and limited in size, mass storage provides large, non-volatile
+capacity for programs, data, and the operating system itself. The two dominant mass-storage
+technologies are <strong>hard disk drives</strong> (HDDs) and <strong>non-volatile memory</strong>
+(NVM) devices, primarily solid-state drives (SSDs).</p>
+
+<p>A <strong>hard disk drive</strong> (HDD) stores data on rotating magnetic platters. Data
+is organized into concentric <strong>tracks</strong> on each platter surface, and each track
+is divided into <strong>sectors</strong> (typically 512 bytes or 4 KB). A read/write head on
+a movable arm positions over the desired track, and as the platter rotates, the head reads
+or writes sectors. The performance of an HDD is dominated by three mechanical delays:
+<strong>seek time</strong> (moving the arm to the track), <strong>rotational latency</strong>
+(waiting for the sector to rotate under the head), and <strong>transfer time</strong>
+(reading/writing the data).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Parameter</th><th>Typical HDD</th><th>Typical SATA SSD</th><th>Typical NVMe SSD</th></tr>
+</thead>
+<tbody>
+<tr><td>Capacity</td><td>1–16 TB</td><td>256 GB–4 TB</td><td>512 GB–8 TB</td></tr>
+<tr><td>Sequential read</td><td>100–200 MB/s</td><td>500–600 MB/s</td><td>3,000–7,000 MB/s</td></tr>
+<tr><td>Random read (4 KB)</td><td>0.5–2 MB/s</td><td>20–80 MB/s</td><td>200–500 MB/s</td></tr>
+<tr><td>Latency</td><td>5–10 ms</td><td>50–150 μs</td><td>10–50 μs</td></tr>
+<tr><td>IOPS (random read)</td><td>100–200</td><td>10,000–90,000</td><td>100,000–1,000,000+</td></tr>
+<tr><td>Mechanical parts</td><td>Yes</td><td>No</td><td>No</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Non-volatile memory</strong> (NVM) devices, including SSDs based on NAND flash,
+have no moving parts. Data is stored in electrical cells organized into pages (typically
+4–16 KB) and blocks (typically 128–512 pages). NVM has a fundamental constraint: while
+pages can be written individually, they can only be erased in <strong>blocks</strong>. This
+means that overwriting data requires erasing the entire block, which is slow and wears out
+the flash. The <strong>flash translation layer</strong> (FTL) in the SSD firmware handles
+this by writing to new pages and marking old pages as invalid, a process called
+<strong>out-of-place update</strong>. The FTL also performs <strong>garbage collection</strong>
+to reclaim invalid pages and <strong>wear leveling</strong> to distribute writes evenly
+across the device.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ HDD vs. NVM</div>
+<p>The key difference is that HDD performance depends on <strong>physical location</strong>
+(seek time and rotational latency), so disk scheduling algorithms (FCFS, SSTF, SCAN, etc.)
+are important. NVM has uniform access time regardless of location, so scheduling is less
+critical, but <strong>write amplification</strong> and <strong>wear leveling</strong> become
+the key concerns. The OS must use different optimization strategies for each.</p>
+</div>
+
+<p>In xv6, mass storage is represented by a simple virtio disk driver
+(<code class="code-inline">kernel/virtio_disk.c</code>). The file system
+(<code class="code-inline">kernel/fs.c</code>) treats the disk as an array of 512-byte
+sectors and does not distinguish between HDD and SSD. There is no disk scheduling—the
+requests are processed in FIFO order. This is acceptable for a teaching OS but would be
+inefficient on a real HDD, where reordering requests could dramatically improve
+throughput.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-2">11.2 HDD Scheduling</h2>
+
+<p>Because HDD performance is dominated by seek time (moving the read/write head to the
+target track), disk scheduling algorithms aim to minimize head movement. The OS maintains
+a queue of disk I/O requests, each specifying a target cylinder (track). The scheduler
+chooses the order in which to service these requests to minimize total seek distance.</p>
+
+<h3>FCFS Scheduling</h3>
+
+<p><strong>First-Come, First-Served</strong> (FCFS) is the simplest algorithm: requests are
+serviced in the order they arrive. While fair, it can be very inefficient because
+consecutive requests may be far apart, causing large seek distances.</p>
+
+<div class="code-block"><span class="comment">/* FCFS disk scheduling */</span>
+
+<span class="comment">// Queue: 98, 183, 37, 122, 14, 124, 65, 67</span>
+<span class="comment">// Head starts at 53</span>
+
+<span class="label">FCFS order:</span>
+  53 → 98 → 183 → 37 → 122 → 14 → 124 → 65 → 67
+
+<span class="comment">// Total head movement:</span>
+<span class="comment">// |98-53| + |183-98| + |37-183| + |122-37|</span>
+<span class="comment">//   + |14-122| + |124-14| + |65-124| + |67-65|</span>
+<span class="comment">// = 45 + 85 + 146 + 85 + 108 + 110 + 59 + 2 = 640 cylinders</span></div>
+
+<h3>SSTF (Shortest Seek Time First)</h3>
+
+<p><strong>Shortest Seek Time First</strong> selects the request with the minimum seek
+distance from the current head position. This minimizes average seek time but can cause
+<strong>starvation</strong>: if requests keep arriving near the current position, distant
+requests may never be serviced.</p>
+
+<div class="code-block"><span class="comment">/* SSTF disk scheduling */</span>
+
+<span class="comment">// Queue: 98, 183, 37, 122, 14, 124, 65, 67</span>
+<span class="comment">// Head starts at 53</span>
+
+<span class="label">SSTF order:</span>
+  53 → 65 → 67 → 37 → 14 → 98 → 122 → 124 → 183
+
+<span class="comment">// From 53: nearest is 65 (dist 12)</span>
+<span class="comment">// From 65: nearest is 67 (dist 2)</span>
+<span class="comment">// From 67: nearest is 37 (dist 30)</span>
+<span class="comment">// ... total = 236 cylinders (much better than FCFS's 640)</span></div>
+
+<h3>SCAN (Elevator) and C-SCAN</h3>
+
+<p>The <strong>SCAN</strong> algorithm (also called the <em>elevator algorithm</em>) moves
+the head in one direction, servicing requests in that direction until it reaches the last
+request (or the end of the disk), then reverses direction. This is like an elevator: it
+services all requests in one direction before turning around. SCAN has good throughput and
+fairness—no request is starved because the head will eventually reach every position.</p>
+
+<p><strong>Circular SCAN</strong> (C-SCAN) is a variant that treats the disk as circular.
+The head moves in one direction servicing requests, but when it reaches the end, it jumps
+back to the beginning (seek to 0) and continues in the same direction. This provides more
+uniform wait times because the maximum wait is one full sweep, not two (as in SCAN).</p>
+
+<div class="code-block"><span class="comment">/* SCAN vs C-SCAN (head at 53, moving toward 0) */</span>
+
+<span class="comment">// Queue: 98, 183, 37, 122, 14, 124, 65, 67</span>
+
+<span class="label">SCAN (toward 0, then reverse):</span>
+  53 → 37 → 14 → [0] → 65 → 67 → 98 → 122 → 124 → 183
+  <span class="comment">// Services 14, 37 going down, then 65,67,98,... going up</span>
+
+<span class="label">C-SCAN (toward 0, jump to max, continue):</span>
+  53 → 37 → 14 → [0] → [199] → 183 → 124 → 122 → 98 → 67 → 65
+  <span class="comment">// Goes down to 0, jumps to 199, continues down</span></div>
+
+<h3>LOOK and C-LOOK</h3>
+
+<p><strong>LOOK</strong> is a practical optimization of SCAN: instead of going all the way
+to the end of the disk, the head reverses at the last request in the current direction.
+<strong>C-LOOK</strong> does the same for C-SCAN. These are the most commonly implemented
+variants because they avoid unnecessary travel to the disk edges.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Algorithm</th><th>Strategy</th><th>Starvation?</th><th>Typical Use</th></tr>
+</thead>
+<tbody>
+<tr><td>FCFS</td><td>Service in arrival order</td><td>No</td><td>Simple systems</td></tr>
+<tr><td>SSTF</td><td>Nearest request first</td><td>Yes (distant requests)</td><td>Light load</td></tr>
+<tr><td>SCAN</td><td>Elevator: sweep both directions</td><td>No</td><td>General purpose</td></tr>
+<tr><td>C-SCAN</td><td>Sweep one direction, jump back</td><td>No</td><td>Uniform wait time</td></tr>
+<tr><td>LOOK</td><td>SCAN but reverse at last request</td><td>No</td><td>Most common</td></tr>
+<tr><td>C-LOOK</td><td>C-SCAN but reverse at last request</td><td>No</td><td>Database servers</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Modern Disk Scheduling</div>
+<p>Modern OSes use more sophisticated schedulers. Linux's <strong>deadline scheduler</strong>
+sets a time limit for each request to prevent starvation. The <strong>CFQ</strong>
+(Completely Fair Queuing) scheduler assigns time slices to processes. Modern NVMe SSDs
+often bypass OS scheduling entirely because the device has uniform access time and its own
+internal scheduler. The OS may use a simple FIFO or a minimal scheduler for NVM devices.</p>
+</div>
+
+<p>In xv6, there is no disk scheduling. The virtio disk driver processes requests in FIFO
+order. For a teaching OS on a virtual disk, this is fine. On a real HDD, adding a LOOK
+scheduler would significantly improve performance under load. The implementation would
+involve maintaining a sorted request queue and reordering requests based on the current
+head position—a common advanced OS project.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-3">11.3 NVM Scheduling</h2>
+
+<p>Non-volatile memory devices (SSDs) have fundamentally different characteristics from
+HDDs. Because there are no moving parts, access time is uniform regardless of the logical
+block address (LBA). This means traditional seek-optimizing schedulers (SSTF, SCAN, etc.)
+provide no benefit. Instead, NVM scheduling focuses on different goals: maximizing
+throughput, minimizing latency, and reducing write amplification.</p>
+
+<p>The key performance metric for NVM is <strong>IOPS</strong> (Input/Output Operations Per
+Second) and <strong>queue depth</strong>. NVM devices can handle many concurrent I/O
+operations, so the OS should submit multiple requests in parallel rather than waiting for
+each to complete. The <strong>NVMe</strong> (Non-Volatile Memory Express) interface
+supports up to 65,535 submission queues, each with up to 65,536 entries, allowing massive
+parallelism. The OS distributes I/O across multiple queues (typically one per CPU core) to
+maximize throughput.</p>
+
+<div class="code-block"><span class="comment">/* NVM I/O submission (NVMe-style) */</span>
+
+<span class="comment">// Each CPU core has its own submission queue</span>
+<span class="label">submit_io(request, cpu):</span>
+  sq = nvme.submission_queue[cpu]
+  sq.push(request)          <span class="comment">// add to tail</span>
+  nvme.doorbell[cpu] = sq.tail  <span class="comment">// notify device</span>
+
+<span class="comment">// Device processes requests in parallel</span>
+<span class="comment">// and posts completions to completion queue</span>
+<span class="label">process_completion(cpu):</span>
+  cq = nvme.completion_queue[cpu]
+  <span class="keyword">while</span> (cq.has_new()):
+    cqe = cq.pop()
+    complete_request(cqe.request, cqe.status)</div>
+
+<p><strong>Write amplification</strong> is a critical concern for NVM. Because flash pages
+cannot be overwritten in place (they must be erased in blocks), a single 4 KB write may
+cause the FTL to copy an entire 128-page block, erase it, and write it back—amplifying the
+write by 128×. The OS can reduce write amplification by: (1) aligning writes to page and
+block boundaries, (2) batching small writes, (3) using <strong>TRIM</strong> (or
+<code class="code-inline">DEALLOCATE</code>) to inform the device about freed blocks, and
+(4) avoiding unnecessary writes (e.g., not writing unchanged data).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ TRIM/DISCARD</div>
+<p>When a file is deleted, the OS should send a <strong>TRIM</strong> command to the SSD,
+informing it that the freed blocks no longer contain valid data. This allows the FTL's
+garbage collector to skip copying those pages during block erasure, reducing write
+amplification and improving performance. Without TRIM, SSD performance degrades over time
+as the FTL runs out of free blocks. Linux enables TRIM via <code class="code-inline">fstrim</code>
+or continuous TRIM (<code class="code-inline">discard</code> mount option).</p>
+</div>
+
+<p><strong>Wear leveling</strong> is handled by the FTL, not the OS, but the OS can help by
+avoiding write patterns that concentrate writes on a few blocks. For example, a log-structured
+file system (like <code class="code-inline">f2fs</code> on Android) writes sequentially to
+the device, allowing the FTL to distribute wear naturally. The OS should also avoid
+unnecessary metadata writes (e.g., updating access times) on NVM to reduce wear.</p>
+
+<p>For NVM, the OS scheduler is typically much simpler than for HDDs. Linux's
+<strong>None</strong> scheduler (or <strong>noop</strong> in older kernels) simply passes
+requests to the device in FIFO order, letting the device's internal scheduler handle
+optimization. This is optimal for NVM because the device has better knowledge of its
+internal geometry (page and block layout) than the OS.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-4">11.4 Error Detection and Correction</h2>
+
+<p>Storage devices are not perfectly reliable. Bits can be corrupted by media degradation,
+electrical noise, firmware bugs, or cosmic rays. The OS and storage devices use
+<strong>error detection</strong> and <strong>error correction</strong> techniques to ensure
+data integrity.</p>
+
+<p>The most common error-detection mechanism is the <strong>checksum</strong> or
+<strong>CRC</strong> (Cyclic Redundancy Check). Each sector or page stores a checksum
+alongside the data. When data is read, the device (or OS) recomputes the checksum and
+compares it to the stored value. If they differ, an error is detected. A CRC can detect
+multi-bit errors but cannot correct them. Common CRCs include CRC-32 (4 bytes) and CRC-64
+(8 bytes).</p>
+
+<p><strong>Error-Correcting Codes</strong> (ECC) go further: they can detect and correct
+errors. The most common ECC for storage is <strong>Hamming code</strong> (for single-bit
+correction) and <strong>Reed-Solomon</strong> or <strong>BCH codes</strong> (for multi-bit
+correction). Modern SSDs store significant ECC data per page (typically 1 byte per 32–128
+bytes of data) to correct multiple bit errors. The ECC is computed and verified by the
+device controller, transparent to the OS.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Technique</th><th>Overhead</th><th>Detect</th><th>Correct</th><th>Used In</th></tr>
+</thead>
+<tbody>
+<tr><td>Parity bit</td><td>1 bit per word</td><td>Single-bit</td><td>No</td><td>Simple memory</td></tr>
+<tr><td>CRC-32</td><td>4 bytes per block</td><td>Multi-bit</td><td>No</td><td>Ethernet, HDD sectors</td></tr>
+<tr><td>Hamming code</td><td>~12.5%</td><td>Double-bit</td><td>Single-bit</td><td>ECC RAM</td></tr>
+<tr><td>Reed-Solomon</td><td>Variable</td><td>Multi-bit</td><td>Multi-bit</td><td>CD/DVD, QR codes</td></tr>
+<tr><td>BCH code</td><td>~3–13%</td><td>Multi-bit</td><td>Multi-bit</td><td>NAND flash (SSD)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>When an uncorrectable error is detected, the device returns an error status to the OS.
+The OS may then: (1) retry the read (transient errors may succeed on retry), (2) use
+redundant data from a RAID array (Section 11.8) to reconstruct the data, or (3) report the
+error to the application (e.g., <code class="code-inline">EIO</code> on Linux). For critical
+data, the OS may maintain its own checksums (e.g., ZFS, Btrfs) to detect
+<strong>silent data corruption</strong>—errors that the device does not report.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Silent Data Corruption</div>
+<p>Sometimes storage devices return data without error but the data is actually corrupted
+(e.g., due to a firmware bug or a bit flip in the device's buffer). This is called
+<strong>silent data corruption</strong> (SDC). File systems with end-to-end checksums
+(ZFS, Btrfs) detect this by verifying data checksums at every level: device, OS, and
+application. This is why enterprise storage uses end-to-end data integrity.</p>
+</div>
+
+<p>Storage devices also report <strong>S.M.A.R.T.</strong> (Self-Monitoring, Analysis, and
+Reporting Technology) data, which includes health metrics like reallocated sector count,
+temperature, and power-on hours. The OS can read S.M.A.R.T. data to predict impending
+failure and warn the user. Tools like <code class="code-inline">smartctl</code> on Linux
+expose this data. Enterprise systems use S.M.A.R.T. for predictive maintenance—replacing
+drives before they fail.</p>
+
+<p>In xv6, there is no error detection or correction beyond what the virtio disk provides.
+The <code class="code-inline">virtio_disk_rw()</code> function in
+<code class="code-inline">kernel/virtio_disk.c</code> simply checks the device's status
+field for errors and panics if an I/O fails. A production OS would retry failed I/O,
+log errors, and eventually mark the device as failed. Adding checksums to the xv6 file
+system would be a valuable exercise in understanding data integrity.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-5">11.5 Storage Device Management</h2>
+
+<p>Storage device management encompasses the low-level operations the OS performs to
+prepare and maintain storage devices: <strong>formatting</strong>,
+<strong>partitioning</strong>, and <strong>bad-block management</strong>.</p>
+
+<p><strong>Low-level formatting</strong> (physical formatting) divides the disk into
+sectors that the disk controller can read and write. Each sector consists of a header, a
+data area (typically 512 bytes or 4 KB), and a trailer containing the ECC. Low-level
+formatting is done at the factory for HDDs and is not normally performed by the OS. For
+NVM, the equivalent is the initial provisioning of the flash translation layer.</p>
+
+<p><strong>Partitioning</strong> divides a storage device into logical units called
+<strong>partitions</strong>. Each partition appears as a separate device (e.g.,
+<code class="code-inline">/dev/sda1</code>, <code class="code-inline">/dev/sda2</code> on
+Linux). The partition table is stored at the beginning of the device. Two common partition
+table formats are <strong>MBR</strong> (Master Boot Record, limited to 2 TB and 4 primary
+partitions) and <strong>GPT</strong> (GUID Partition Table, supports larger disks and more
+partitions). The OS treats each partition as an independent storage device and can place a
+different file system on each.</p>
+
+<div class="code-block"><span class="comment">/* Partition table (MBR layout) */</span>
+
+<span class="comment">// Sector 0: Master Boot Record</span>
+<span class="comment">//   446 bytes: bootstrap code</span>
+<span class="comment">//    64 bytes: 4 partition entries (16 bytes each)</span>
+<span class="comment">//     2 bytes: signature (0x55 0xAA)</span>
+
+<span class="label">struct partition_entry:</span>
+  status      <span class="comment">// 0x80 = bootable</span>
+  chs_first   <span class="comment">// CHS of first sector</span>
+  type        <span class="comment">// 0x83 = Linux, 0x07 = NTFS, etc.</span>
+  chs_last    <span class="comment">// CHS of last sector</span>
+  lba_first   <span class="comment">// LBA of first sector</span>
+  num_sectors <span class="comment">// number of sectors</span>
+
+<span class="comment">// GPT uses 128 entries, 128 bytes each</span>
+<span class="comment">// Supports disks > 2 TB</span></div>
+
+<p><strong>High-level formatting</strong> (logical formatting) creates a file system on a
+partition. This involves writing the file system's metadata structures: the superblock,
+inode table, free-space bitmap or list, and root directory. On Linux, this is done by
+<code class="code-inline">mkfs</code> (e.g., <code class="code-inline">mkfs.ext4</code>,
+<code class="code-inline">mkfs.xfs</code>). On Windows, it is done by the
+<code class="code-inline">format</code> command. The file system is then
+<strong>mounted</strong> to make it accessible.</p>
+
+<p><strong>Bad-block management</strong> handles sectors or pages that become unreliable.
+For HDDs, the OS or the disk controller maintains a list of bad blocks and avoids using
+them. When a bad block is detected during operation, the data is relocated (if possible)
+and the block is marked as bad. For NVM, the FTL handles bad blocks transparently: it
+maintains a bad-block table and remaps logical blocks to good physical pages. The OS
+typically does not see bad blocks on NVM devices, but the FTL may eventually run out of
+spare blocks, at which point the device fails.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Bad Blocks in xv6</div>
+<p>The xv6 file system (<code class="code-inline">kernel/fs.c</code>) does not handle bad
+blocks. If a disk sector goes bad, xv6 will either silently corrupt data or panic. A
+production file system must detect bad blocks (via read errors or checksums), mark them
+in a bad-block list, and relocate data. This is a significant gap between xv6 and real
+file systems.</p>
+</div>
+
+<p>Storage device management also includes <strong>mounting</strong> and
+<strong>unmounting</strong> file systems. When a file system is mounted, the OS reads its
+superblock, validates the file system structure, and makes it accessible at a
+<strong>mount point</strong> (a directory in the existing directory tree). When unmounted,
+the OS flushes all dirty buffers and metadata to the device, ensuring consistency. If a
+file system is not cleanly unmounted (e.g., due to a power failure), the OS must run a
+<strong>file system check</strong> (<code class="code-inline">fsck</code>) on the next
+boot to repair any inconsistencies.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-6">11.6 Swap-Space Management</h2>
+
+<p><strong>Swap space</strong> is the area on a storage device used to hold pages that have
+been evicted from memory (see Chapter 10, Swapping). The OS manages swap space to provide
+virtual memory that exceeds physical RAM. Swap-space management involves deciding where to
+place swap space, how to allocate it, and how to track which pages are where.</p>
+
+<p>Swap space can be a dedicated <strong>swap partition</strong> (a raw partition used
+only for swapping) or a <strong>swap file</strong> (a regular file within a file system).
+A swap partition is faster because it avoids file-system overhead, but it is inflexible
+(the size is fixed at partition time). A swap file is more flexible (can be created, resized,
+and deleted at runtime) but slightly slower. Modern Linux supports both and can use
+multiple swap areas simultaneously.</p>
+
+<div class="code-block"><span class="comment">/* Swap space management */</span>
+
+<span class="comment">// Linux swap area layout:</span>
+<span class="comment">//   Page 0: swap header (magic, version, bad blocks)</span>
+<span class="comment">//   Page 1..N: swap slots (4 KB each)</span>
+<span class="comment">//   Bitmap: tracks free/used slots</span>
+
+<span class="label">swap_out(page):</span>
+  slot = swap_alloc_slot()       <span class="comment">// find free slot</span>
+  write_to_swap(slot, page)      <span class="comment">// I/O to disk</span>
+  pte.frame = SWAP_MARKER
+  pte.swap_slot = slot
+  pte.valid = <span class="keyword">false</span>
+  pte.swap = <span class="keyword">true</span>
+
+<span class="label">swap_in(pte):</span>
+  page = alloc_frame()
+  read_from_swap(pte.swap_slot, page)
+  swap_free_slot(pte.swap_slot)
+  pte.frame = page
+  pte.valid = <span class="keyword">true</span>
+  pte.swap = <span class="keyword">false</span></div>
+
+<p>The OS tracks the mapping between virtual pages and swap slots. When a page is swapped
+out, the PTE is updated to indicate that the page is on swap (the valid bit is cleared and
+the swap slot index is stored in the PTE). When the page is referenced, a page fault occurs,
+and the OS reads the page from the swap slot back into a free frame. The swap slot is then
+freed for reuse.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Swap on SSD vs. HDD</div>
+<p>Swap performance depends heavily on the storage device. On an HDD, swap I/O is very slow
+(5–10 ms per page), so the OS must minimize swapping. On an NVMe SSD, swap is much faster
+(10–50 μs per page), making it more practical. However, swapping on flash wears the device,
+so mobile OSes avoid it. macOS and Windows 10+ use <strong>memory compression</strong>
+before swapping to reduce I/O.</p>
+</div>
+
+<p>Swap-space size is a trade-off. Too little swap limits the total virtual memory; too
+much wastes disk space. A common rule of thumb is to set swap to 1–2× the physical RAM,
+but modern systems with large RAM may use less. Linux's <code class="code-inline">swappiness</code>
+parameter (0–200) controls how aggressively the OS swaps: a low value prefers keeping
+anonymous pages in memory; a high value swaps more eagerly to free memory for file cache.</p>
+
+<p>In xv6, there is no swap space. All process pages are in memory, and
+<code class="code-inline">sbrk()</code> allocates physical frames eagerly. Adding swap to
+xv6 would require: (1) a swap area on the virtio disk, (2) a swap-slot allocator, (3)
+modifying the page-fault handler to swap in pages, (4) a page-replacement algorithm to
+select victims, and (5) modifying <code class="code-inline">sbrk()</code> to support lazy
+allocation. This is a common advanced xv6 lab.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-7">11.7 Storage Attachment</h2>
+
+<p>Storage devices are attached to a computer via various <strong>interfaces</strong> or
+<strong>buses</strong>. The interface determines the protocol, performance characteristics,
+and management model. Understanding storage attachment is important for OS design because
+the driver and I/O subsystem must adapt to the interface.</p>
+
+<p>The most common storage interfaces are:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Interface</th><th>Typical Use</th><th>Max Devices</th><th>Throughput</th><th>Hot-Plug?</th></tr>
+</thead>
+<tbody>
+<tr><td>SATA</td><td>Consumer HDD/SSD</td><td>1 per port</td><td>600 MB/s</td><td>Yes</td></tr>
+<tr><td>SAS</td><td>Enterprise HDD/SSD</td><td>256 per domain</td><td>1,200–2,400 MB/s</td><td>Yes</td></tr>
+<tr><td>NVMe (PCIe)</td><td>High-perf SSD</td><td>1 per PCIe slot</td><td>3,500–7,000+ MB/s</td><td>Yes</td></tr>
+<tr><td>USB</td><td>External drives</td><td>127 per controller</td><td>5–40 Gb/s</td><td>Yes</td></tr>
+<tr><td>iSCSI / FC</td><td>Network storage (SAN)</td><td>Many</td><td>Network-limited</td><td>Yes</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Direct-attached storage</strong> (DAS) is connected directly to the computer
+(SATA, SAS, NVMe, USB). The OS communicates with the device through a
+<strong>device driver</strong> that understands the interface protocol. The driver
+translates OS I/O requests into interface-specific commands (e.g., SATA
+<code class="code-inline">READ DMA EXT</code>, NVMe <code class="code-inline">READ</code>).</p>
+
+<p><strong>Network-attached storage</strong> (NAS) is accessed over a network using a file
+protocol (NFS, SMB/CIFS). The OS's NFS or SMB client translates file operations into network
+requests to a remote server. The server's OS handles the actual storage I/O. NAS appears to
+the user as a network drive.</p>
+
+<p><strong>Storage-area networks</strong> (SAN) provide block-level access over a network
+using protocols like <strong>iSCSI</strong> (SCSI over TCP/IP) or
+<strong>Fibre Channel</strong> (FC). The OS sees a SAN LUN (Logical Unit Number) as a
+local block device and can put a file system on it. SANs are used in enterprise data
+centers for centralized storage management, snapshots, and replication.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Hot-Plug and Hot-Swap</div>
+<p>Modern storage interfaces support <strong>hot-plug</strong>—connecting and disconnecting
+devices while the system is running. The OS must detect the change (via an interrupt or
+event), update its device list, and notify affected applications. For NVMe, hot-plug is
+handled via PCIe hot-plug events. For USB, the <code class="code-inline">udev</code> daemon
+on Linux automatically mounts new devices. This dynamic device management is a significant
+complexity in modern OS I/O subsystems.</p>
+</div>
+
+<p>In xv6, storage attachment is simplified: the virtio disk is present at boot and never
+changes. The <code class="code-inline">virtio_disk_init()</code> function in
+<code class="code-inline">kernel/virtio_disk.c</code> sets up the device during boot, and
+there is no hot-plug support. A real OS must handle dynamic device arrival and departure,
+which requires a device manager (like Linux's <code class="code-inline">udev</code> or
+Windows's PnP manager) that can load and unload drivers at runtime.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-11-8">11.8 RAID Structure</h2>
+
+<p><strong>RAID</strong> (Redundant Array of Independent Disks) is a technique that uses
+multiple physical disks to improve performance, reliability, or both. Data is
+<strong>striped</strong> across disks to increase throughput, and <strong>redundancy</strong>
+is added to tolerate disk failures. RAID can be implemented in hardware (a RAID
+controller) or in software (the OS's RAID subsystem, like Linux's
+<code class="code-inline">md</code>).</p>
+
+<p>RAID levels define different trade-offs between performance, redundancy, and capacity:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Level</th><th>Name</th><th>Description</th><th>Min Disks</th><th>Capacity</th><th>Fault Tolerance</th></tr>
+</thead>
+<tbody>
+<tr><td>RAID 0</td><td>Striping</td><td>Data split across disks, no redundancy</td><td>2</td><td>100%</td><td>None (failure = total loss)</td></tr>
+<tr><td>RAID 1</td><td>Mirroring</td><td>Data duplicated on each disk</td><td>2</td><td>50%</td><td>1 disk</td></tr>
+<tr><td>RAID 4</td><td>Parity disk</td><td>Striping + dedicated parity disk</td><td>3</td><td>(N−1)/N</td><td>1 disk</td></tr>
+<tr><td>RAID 5</td><td>Distributed parity</td><td>Striping + parity distributed across disks</td><td>3</td><td>(N−1)/N</td><td>1 disk</td></tr>
+<tr><td>RAID 6</td><td>Double parity</td><td>Striping + 2 parity blocks per stripe</td><td>4</td><td>(N−2)/N</td><td>2 disks</td></tr>
+<tr><td>RAID 10</td><td>1+0</td><td>Mirrored stripes (RAID 1 of RAID 0 arrays)</td><td>4</td><td>50%</td><td>1 per mirror</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>RAID 0</strong> (striping) splits data across all disks. A stripe of size
+<code class="code-inline">S</code> bytes is written as <code class="code-inline">S/N</code>
+bytes to each of <code class="code-inline">N</code> disks. This increases throughput
+<code class="code-inline">N</code>-fold for large sequential I/O. However, if any disk
+fails, all data is lost. RAID 0 is used for performance-critical, non-critical data (e.g.,
+scratch space, cache).</p>
+
+<p><strong>RAID 1</strong> (mirroring) writes identical data to two (or more) disks. Read
+performance can be improved by reading from either disk; write performance is limited by
+the slower disk. If one disk fails, the other continues to provide data. RAID 1 is simple
+and reliable but wastes 50% of capacity. It is used for boot disks and small critical
+volumes.</p>
+
+<div class="code-block"><span class="comment">/* RAID 4/5 parity calculation */</span>
+
+<span class="comment">// Parity is XOR of all data blocks in a stripe</span>
+<span class="label">compute_parity(blocks[]):</span>
+  parity = 0
+  <span class="keyword">for</span> b <span class="keyword">in</span> blocks:
+    parity = parity XOR b
+  <span class="keyword">return</span> parity
+
+<span class="comment">// If one block is lost, it can be reconstructed:</span>
+<span class="comment">//   lost = XOR of all remaining blocks (including parity)</span>
+
+<span class="label">reconstruct(remaining_blocks[]):</span>
+  lost = 0
+  <span class="keyword">for</span> b <span class="keyword">in</span> remaining_blocks:
+    lost = lost XOR b
+  <span class="keyword">return</span> lost</div>
+
+<p><strong>RAID 4</strong> uses a dedicated parity disk. Every write must update the parity
+disk, making it a bottleneck. <strong>RAID 5</strong> distributes parity across all disks,
+eliminating the bottleneck. RAID 5 can tolerate one disk failure. <strong>RAID 6</strong>
+uses two independent parity blocks (typically Reed-Solomon) and can tolerate two disk
+failures, which is important during rebuild (a second failure during rebuild would lose
+data in RAID 5).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ RAID Write Penalty</div>
+<p>RAID 4/5/6 have a <strong>write penalty</strong> for small random writes. A 4 KB write
+requires: (1) read old data, (2) read old parity, (3) compute new parity, (4) write new
+data, (5) write new parity. This is 4 I/Os for 1 write—a 4× penalty. For large sequential
+writes (full stripe), the penalty is lower because parity is computed once for the whole
+stripe. This is why RAID 5 is good for read-heavy workloads but poor for write-heavy ones.</p>
+</div>
+
+<p><strong>RAID rebuild</strong> is the process of reconstructing data after a disk
+failure. A new disk is inserted, and the RAID controller reads all surviving disks to
+recompute the missing data. Rebuild can take hours or days for large arrays, during which
+the array is vulnerable (no redundancy). During rebuild, performance is degraded because
+the controller is busy reading all disks. RAID 6 reduces the risk of data loss during
+rebuild by tolerating a second failure.</p>
+
+<p>Modern systems often use <strong>hybrid RAID</strong> levels like RAID 10 (mirrored
+stripes) for performance and reliability, or <strong>erasure coding</strong> (a
+generalization of RAID 6) for large-scale storage systems. Cloud storage systems (Amazon
+S3, Azure Blob) use erasure coding to achieve 11 nines of durability with minimal storage
+overhead.</p>
+
+<p>In xv6, there is no RAID support—the file system uses a single virtio disk. Implementing
+RAID in xv6 would involve: (1) a multi-disk driver that manages several virtio disks,
+(2) a striping layer for RAID 0, (3) a mirroring layer for RAID 1, and (4) a parity layer
+for RAID 5. This is a significant project but would demonstrate the core concepts of
+redundant storage.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-1">12.1 Overview</h2>
+
+<p>The I/O system is the part of the OS that manages input/output devices. It provides a
+uniform interface to a wide variety of devices—disks, network cards, keyboards, displays,
+GPUs—hiding their differences from applications and most of the kernel. The I/O system is
+one of the largest and most complex parts of a modern OS, often comprising the majority of
+the kernel source code (Linux has millions of lines of driver code).</p>
+
+<p>The I/O system has three main components: (1) <strong>I/O hardware</strong>—the devices
+themselves and their controllers; (2) the <strong>kernel I/O subsystem</strong>—the OS
+code that provides services like buffering, caching, and scheduling; and (3) the
+<strong>application I/O interface</strong>—the system calls and library functions that
+applications use to perform I/O.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ I/O System Goals</div>
+<p>The I/O system aims to: (1) provide <strong>uniformity</strong>—all devices should have
+a similar interface; (2) provide <strong>efficiency</strong>—minimize CPU involvement and
+maximize throughput; (3) provide <strong>correctness</strong>—handle errors gracefully;
+and (4) provide <strong>device independence</strong>—applications should not need to know
+device-specific details. These goals often conflict, and the OS must balance them.</p>
+</div>
+
+<p>A key challenge is the <strong>speed mismatch</strong> between CPUs and I/O devices. A
+CPU executes billions of instructions per second, while a disk I/O takes milliseconds. The
+OS uses <strong>interrupts</strong> to avoid making the CPU wait: it starts an I/O
+operation, continues executing other code, and is notified by an interrupt when the I/O
+completes. This enables <strong>concurrency</strong>—the CPU can do useful work while I/O
+is in progress.</p>
+
+<p>In xv6, the I/O system is minimal. The console driver
+(<code class="code-inline">kernel/console.c</code>) handles keyboard input and screen
+output. The virtio disk driver (<code class="code-inline">kernel/virtio_disk.c</code>)
+handles disk I/O. Both use interrupts to notify the kernel of completion. The
+<code class="code-inline">uart.c</code> driver handles serial I/O. These drivers are
+simple but demonstrate the core concepts: device registers, interrupts, and
+memory-mapped I/O.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-2">12.2 I/O Hardware</h2>
+
+<p>I/O hardware consists of devices and their controllers. A <strong>device controller</strong>
+is a hardware component that manages one or more devices. It has a set of
+<strong>registers</strong> that the CPU reads and writes to control the device: a
+<strong>control register</strong> (to issue commands), a <strong>status register</strong>
+(to check device state), a <strong>data-in register</strong> (to read data), and a
+<strong>data-out register</strong> (to write data). The CPU communicates with the
+controller through these registers.</p>
+
+<p>There are two ways the CPU accesses device registers: <strong>port I/O</strong> and
+<strong>memory-mapped I/O</strong>. In port I/O (used by x86), device registers are in a
+separate I/O address space, accessed by special instructions
+(<code class="code-inline">in</code> and <code class="code-inline">out</code> on x86). In
+memory-mapped I/O (used by ARM, RISC-V, and most modern architectures), device registers
+are mapped into the physical address space, and the CPU accesses them using normal
+load/store instructions. Memory-mapped I/O is more flexible and is the dominant approach
+in modern systems.</p>
+
+<div class="code-block"><span class="comment">/* Memory-mapped I/O (RISC-V / xv6) */</span>
+
+<span class="comment">// UART (16550) registers at physical address 0x10000000</span>
+<span class="label">#define UART0 0x10000000</span>
+<span class="label">#define RHR   0  </span><span class="comment">// Receive Holding Register (data-in)</span>
+<span class="label">#define THR   0  </span><span class="comment">// Transmit Holding Register (data-out)</span>
+<span class="label">#define LSR   5  </span><span class="comment">// Line Status Register</span>
+
+<span class="comment">// Write a character to the UART</span>
+<span class="label">uartputc(c):</span>
+  <span class="keyword">while</span> ((*(UART0 + LSR) & 0x20) == 0)
+    <span class="comment">;  // wait for transmit ready</span>
+  *(UART0 + THR) = c
+
+<span class="comment">// Read a character from the UART</span>
+<span class="label">uartgetc():</span>
+  <span class="keyword">if</span> (*(UART0 + LSR) & 0x01)
+    <span class="keyword">return</span> *(UART0 + RHR)
+  <span class="keyword">return</span> -1  <span class="comment">// no data</span></div>
+
+<p><strong>Polling</strong> is the simplest I/O method: the CPU repeatedly reads the
+device's status register until the device is ready, then reads or writes data. Polling is
+simple but wastes CPU cycles and prevents the CPU from doing other work. It is used for
+simple devices or when interrupts are not available.</p>
+
+<p><strong>Interrupts</strong> are more efficient: the CPU issues an I/O command and
+continues executing. When the device completes, it raises an interrupt, and the CPU jumps
+to an <strong>interrupt service routine</strong> (ISR) that handles the completion.
+Interrupts allow the CPU to do other work while waiting for I/O, dramatically improving
+throughput. However, interrupt handling has overhead (saving/restoring registers, context
+switch), so for very fast devices, polling may be more efficient.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Interrupt vs. Polling</div>
+<p>For <strong>slow devices</strong> (disks, network), interrupts are better because the
+wait time is long and the CPU can do other work. For <strong>fast devices</strong>
+(high-speed network cards), the overhead of interrupt processing may exceed the benefit,
+so <strong>NAPI</strong> (New API) in Linux uses a hybrid: switch to polling when the
+interrupt rate is high, and back to interrupts when it drops. This avoids
+<strong>livelock</strong> under high load.</p>
+</div>
+
+<p><strong>Direct Memory Access</strong> (DMA) is used for bulk data transfers. Instead of
+the CPU copying each byte between the device and memory, the DMA controller transfers
+data directly between the device and RAM. The CPU sets up the DMA transfer (source,
+destination, length), starts it, and is notified by an interrupt when it completes. DMA
+dramatically reduces CPU load for large transfers. Modern devices (NVMe, network cards)
+have built-in DMA engines and can perform <strong>scatter-gather</strong> DMA, transferring
+data to/from multiple memory regions in a single operation.</p>
+
+<p>In xv6, the virtio disk driver uses DMA. The
+<code class="code-inline">virtio_disk_rw()</code> function in
+<code class="code-inline">kernel/virtio_disk.c</code> sets up a descriptor with the buffer
+address and length, adds it to the virtqueue, and notifies the device. The device performs
+the DMA transfer and raises an interrupt when done. The interrupt handler
+(<code class="code-inline">virtio_disk_intr()</code>) wakes up the waiting process. This
+is a simplified version of how real DMA-based drivers work.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-3">12.3 Application I/O Interface</h2>
+
+<p>The <strong>application I/O interface</strong> is the set of system calls and library
+functions that applications use to perform I/O. The OS provides a uniform interface that
+hides device-specific details. The most important interface is the
+<strong>file descriptor</strong> abstraction: in Unix-like systems, all I/O devices are
+represented as <strong>files</strong>, and I/O is performed using
+<code class="code-inline">open()</code>, <code class="code-inline">read()</code>,
+<code class="code-inline">write()</code>, <code class="code-inline">close()</code>, and
+<code class="code-inline">ioctl()</code>.</p>
+
+<p>Devices are categorized into classes, each with a common interface:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Device Class</th><th>Examples</th><th>Key Operations</th><th>Characteristics</th></tr>
+</thead>
+<tbody>
+<tr><td>Block devices</td><td>Disk, SSD, USB drive</td><td>read(), write(), seek()</td><td>Random access, fixed-size blocks</td></tr>
+<tr><td>Character devices</td><td>Keyboard, serial, terminal</td><td>getchar(), putchar()</td><td>Sequential, byte stream</td></tr>
+<tr><td>Network devices</td><td>Ethernet, Wi-Fi</td><td>send(), recv(), socket()</td><td>Packet-based, no seek</td></tr>
+<tr><td>Clock/timer</td><td>System timer</td><td>gettimeofday(), sleep()</td><td>Generates interrupts</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The <strong>block device interface</strong> provides random access to fixed-size blocks
+(typically 512 bytes or 4 KB). The OS uses this interface for file systems: the file system
+reads and writes blocks via the block device driver. The <strong>character device
+interface</strong> provides sequential byte-stream access. Terminals, keyboards, and
+serial ports use this interface. The <strong>network device interface</strong> is different:
+it uses <strong>sockets</strong> and packet-based I/O rather than read/write.</p>
+
+<div class="code-block"><span class="comment">/* Unix I/O interface (POSIX) */</span>
+
+<span class="comment">// Block/character device: open, read, write, close</span>
+<span class="label">int fd = open("/dev/sda", O_RDONLY);</span>
+<span class="label">read(fd, buffer, 4096);</span>
+<span class="label">close(fd);</span>
+
+<span class="comment">// Network: socket, send, recv</span>
+<span class="label">int sock = socket(AF_INET, SOCK_STREAM, 0);</span>
+<span class="label">connect(sock, &addr, sizeof(addr));</span>
+<span class="label">send(sock, data, len, 0);</span>
+<span class="label">recv(sock, buf, len, 0);</span>
+
+<span class="comment">// ioctl: device-specific control</span>
+<span class="label">ioctl(fd, IOCTL_GET_SIZE, &size);</span></div>
+
+<p>The <code class="code-inline">ioctl()</code> (I/O control) system call is the
+<strong>escape hatch</strong> for operations that do not fit the read/write model. It takes
+a device-specific command code and an argument, allowing drivers to implement custom
+operations. For example, a disk driver might use
+<code class="code-inline">ioctl()</code> to get the disk size, eject the media, or perform
+a low-level format. The <code class="code-inline">ioctl()</code> interface is powerful but
+unstructured—each driver defines its own commands, making it a source of bugs and security
+issues.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Everything Is a File</div>
+<p>The Unix philosophy of "everything is a file" means that the same
+<code class="code-inline">read()</code>/<code class="code-inline">write()</code> interface
+works for disks, terminals, pipes, and network sockets (via
+<code class="code-inline">/dev/tcp</code> in some shells). This uniformity simplifies
+application programming and enables powerful composition (e.g., piping the output of one
+program to the input of another). However, network devices break this model (they use
+<code class="code-inline">socket()</code> instead of
+<code class="code-inline">open()</code>), which is a historical compromise.</p>
+</div>
+
+<p>In xv6, the I/O interface follows the Unix model. The
+<code class="code-inline">open()</code>, <code class="code-inline">read()</code>,
+<code class="code-inline">write()</code>, and <code class="code-inline">close()</code>
+system calls work on both files and devices. The console is accessed via file descriptor
+0 (stdin), 1 (stdout), and 2 (stderr). The file system is accessed via
+<code class="code-inline">open()</code> on a path like
+<code class="code-inline">"/file.txt"</code>. xv6 does not have
+<code class="code-inline">ioctl()</code> or socket interfaces, keeping the system simple.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-4">12.4 Kernel I/O Subsystem</h2>
+
+<p>The <strong>kernel I/O subsystem</strong> provides services that are common to all I/O
+devices, independent of the specific hardware. These services include
+<strong>buffering</strong>, <strong>caching</strong>, <strong>spooling</strong>,
+<strong>scheduling</strong>, and <strong>error handling</strong>. By providing these in the
+kernel, device drivers can be simpler and more uniform.</p>
+
+<p><strong>Buffering</strong> is the practice of holding data in memory while it is being
+transferred between a device and a process. Buffers serve several purposes: (1) they
+<strong>decouple</strong> producer and consumer speeds (a fast producer can fill a buffer
+while a slow consumer drains it); (2) they enable <strong>batching</strong> (many small
+writes can be coalesced into one large write); (3) they support <strong>copy semantics</strong>
+(if a process writes from a buffer and then modifies the buffer before the I/O completes,
+the OS must copy the data to a kernel buffer to ensure the correct data is written).</p>
+
+<div class="code-block"><span class="comment">/* Buffering in the kernel I/O subsystem */</span>
+
+<span class="comment">// Single buffer: data passes through one kernel buffer</span>
+<span class="label">write(fd, user_buf, len):</span>
+  copy_from_user(kernel_buf, user_buf, len)
+  start_io(kernel_buf, len)  <span class="comment">// async</span>
+
+<span class="comment">// Double buffer: one for reading, one for writing</span>
+<span class="comment">// While device reads into buf A, CPU processes buf B</span>
+<span class="comment">// Then swap. Used for streaming I/O (audio, video).</span>
+
+<span class="comment">// Circular buffer: ring of buffers</span>
+<span class="comment">// Producer fills slots, consumer empties them.</span>
+<span class="comment">// Used for serial I/O, network packets.</span></div>
+
+<p><strong>Caching</strong> is related to buffering but has a different goal: a cache keeps
+recently used data in memory to avoid re-reading it from the device. The OS maintains a
+<strong>buffer cache</strong> (or <strong>page cache</strong>) for disk blocks: when a
+block is read, it is stored in the cache; subsequent reads of the same block are served
+from memory. Writes may be <strong>write-through</strong> (written to both cache and device)
+or <strong>write-back</strong> (written to cache only, flushed to device later).
+Write-back is faster but risks data loss on crash.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Write-Back Caching Risk</div>
+<p>With <strong>write-back</strong> caching, data in the cache may not be on disk for
+seconds or minutes. If the system crashes, this data is lost. The OS periodically
+<strong>flushes</strong> dirty buffers to disk (e.g., every 5 seconds on Linux). File
+systems with <strong>journaling</strong> (ext4, NTFS) reduce the risk by writing metadata
+changes to a journal first, allowing recovery after a crash. Applications can force a
+flush with <code class="code-inline">fsync()</code>.</p>
+</div>
+
+<p><strong>Spooling</strong> is a specialized form of buffering for devices that cannot
+accept interleaved data streams. The classic example is a printer: if two processes try to
+print simultaneously, their output would interleave on the page. Instead, each process
+writes its output to a <strong>spool file</strong> (a temporary file on disk), and a
+<strong>spooler daemon</strong> sends the files to the printer one at a time. Spooling is
+also used for email (mail spool) and batch processing.</p>
+
+<p>The kernel I/O subsystem also provides <strong>device reservation</strong> (exclusive
+access to a device), <strong>error reporting</strong> (standardized error codes), and
+<strong>I/O scheduling</strong> (reordering requests for efficiency, as discussed in
+Section 11.2). These services make device drivers simpler: a driver only needs to handle
+device-specific commands, while the kernel handles buffering, caching, and scheduling.</p>
+
+<p>In xv6, the kernel I/O subsystem is minimal but present. The
+<code class="code-inline">buf</code> structure in
+<code class="code-inline">kernel/buf.h</code> represents a buffered disk block. The
+<code class="code-inline">bget()</code> and <code class="code-inline">brelse()</code>
+functions in <code class="code-inline">kernel/bio.c</code> implement a simple buffer cache:
+recently accessed blocks are kept in a linked list, and reads check the cache before
+accessing the disk. This is a simplified version of the buffer cache described by
+Silberschatz. There is no write-back caching—xv6 writes blocks to disk immediately
+(write-through), which is simpler but slower.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-5">12.5 Transforming I/O Requests</h2>
+
+<p>When an application performs an I/O operation, the request passes through several layers
+of the I/O subsystem before reaching the hardware. Understanding this
+<strong>I/O request lifecycle</strong> is essential for understanding OS I/O performance
+and debugging.</p>
+
+<p>The typical lifecycle of a <code class="code-inline">read()</code> request is:</p>
+
+<div class="code-block"><span class="comment">/* I/O request lifecycle (read example) */</span>
+
+<span class="comment">// 1. Application calls read()</span>
+<span class="label">read(fd, buf, len):</span>
+  <span class="comment">// 2. System call enters kernel</span>
+  syscall_read(fd, buf, len)
+
+<span class="comment">// 3. VFS resolves fd to file object</span>
+<span class="label">file = fd_table[fd]</span>
+
+<span class="comment">// 4. VFS calls file system's read method</span>
+<span class="label">file->f_op->read(file, buf, len, offset):</span>
+  <span class="comment">// 5. File system maps offset to disk block(s)</span>
+  block = inode_block(inode, offset)
+
+  <span class="comment">// 6. File system requests block from I/O subsystem</span>
+  <span class="label">bh = bread(dev, block):</span>
+    <span class="comment">// 7. Check buffer cache</span>
+    <span class="keyword">if</span> (cache_has(block))
+      <span class="keyword">return</span> cache[block]
+
+    <span class="comment">// 8. Cache miss: submit to device driver</span>
+    <span class="label">submit_bio(dev, block, READ):</span>
+      <span class="comment">// 9. Driver builds device command</span>
+      cmd = build_read_cmd(block)
+      <span class="comment">// 10. Driver writes to device registers (or DMA)</span>
+      write_dev_reg(CMD, cmd)
+      <span class="comment">// 11. Process sleeps waiting for interrupt</span>
+      sleep_on(&wait_queue)
+
+<span class="comment">// 12. Device completes, raises interrupt</span>
+<span class="label">interrupt_handler():</span>
+  <span class="comment">// 13. ISR reads status, wakes process</span>
+  wake_up(&wait_queue)
+
+<span class="comment">// 14. Data copied from kernel buffer to user space</span>
+copy_to_user(buf, bh->data, len)
+<span class="comment">// 15. read() returns to application</span></div>
+
+<p>Each layer adds functionality: the <strong>VFS</strong> (Virtual File System) provides a
+uniform interface; the <strong>file system</strong> translates file offsets to disk blocks;
+the <strong>I/O subsystem</strong> provides caching and scheduling; the
+<strong>device driver</strong> translates to device-specific commands; and the
+<strong>hardware</strong> performs the actual I/O. This layering allows new file systems
+and devices to be added without changing the application interface.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Layered I/O</div>
+<p>The layered I/O architecture is a classic example of <strong>separation of concerns</strong>.
+Each layer has a well-defined interface and can be replaced independently. For example,
+Linux can read ext4, XFS, and FAT file systems through the same VFS, and can access SATA,
+NVMe, and USB storage through the same block layer. This modularity is essential for
+supporting the vast diversity of I/O devices.</p>
+</div>
+
+<p>The <strong>write path</strong> is similar but may involve additional steps: the data
+is copied from user space to a kernel buffer, the buffer is marked dirty, and the I/O may
+be deferred (write-back caching). The <code class="code-inline">fsync()</code> system call
+forces all dirty buffers for a file to be written to disk, ensuring durability. The
+<code class="code-inline">sync()</code> system call flushes all dirty buffers system-wide.</p>
+
+<p>In xv6, the I/O request path is simpler but follows the same pattern. A
+<code class="code-inline">read()</code> system call goes through
+<code class="code-inline">sysfile.c</code> → <code class="code-inline">file.c</code> →
+<code class="code-inline">fs.c</code> (which calls <code class="code-inline">bread()</code>)
+→ <code class="code-inline">bio.c</code> (buffer cache) →
+<code class="code-inline">virtio_disk.c</code> (device driver). The
+<code class="code-inline">bread()</code> function checks the buffer cache and, on a miss,
+calls <code class="code-inline">virtio_disk_rw()</code> to read from disk. The driver
+submits the request and sleeps until the interrupt handler wakes it. This is a clear,
+teachable example of the layered I/O architecture.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-6">12.6 STREAMS</h2>
+
+<p><strong>STREAMS</strong> is a mechanism, originating in UNIX System V, for building
+modular, bidirectional data paths between a process and a device driver. A STREAM is a
+full-duplex pipeline of <strong>modules</strong>, each of which performs a specific
+processing function on the data flowing through it. Modules can be pushed and popped at
+runtime, allowing flexible configuration of I/O processing.</p>
+
+<p>A STREAM consists of: a <strong>stream head</strong> (the interface to user space),
+zero or more <strong>modules</strong> (processing stages), and a
+<strong>stream end</strong> (the device driver). Data flows down the STREAM (write) and up
+the STREAM (read), passing through each module. Each module has a
+<strong>read queue</strong> and a <strong>write queue</strong>. A module can transform,
+filter, or buffer data as it passes through.</p>
+
+<div class="code-block"><span class="comment">/* STREAMS architecture */</span>
+
+<span class="comment">// Process ↔ Stream Head ↔ Module 1 ↔ Module 2 ↔ Driver</span>
+
+<span class="label">write(fd, data):</span>
+  stream_head.write_queue.push(data)
+  <span class="comment">// Data flows down through modules:</span>
+  module1.write(data)  →  module2.write(data)  →  driver.write(data)
+
+<span class="label">read(fd):</span>
+  <span class="comment">// Data flows up from driver:</span>
+  driver.read()  →  module2.read()  →  module1.read()  →  stream_head
+  <span class="keyword">return</span> stream_head.read_queue.pop()
+
+<span class="comment">// Push a module onto a STREAM</span>
+<span class="label">ioctl(fd, I_PUSH, "module_name")</span>
+
+<span class="comment">// Pop a module</span>
+<span class="label">ioctl(fd, I_POP)</span></div>
+
+<p>Common STREAMS modules include <strong>line discipline</strong> modules (handling
+terminal line editing, echo, etc.), <strong>protocol modules</strong> (implementing
+network protocols like TCP/IP), and <strong>encryption modules</strong>. The modular
+design allows protocols to be composed: for example, a TCP module can be stacked on an IP
+module, which is stacked on an Ethernet driver module.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ STREAMS in Practice</div>
+<p>STREAMS was widely used in System V UNIX and Solaris for networking (the TCP/IP stack
+was implemented as STREAMS modules). Linux did not adopt STREAMS for its networking stack,
+preferring a more tightly integrated design (the <strong>sk_buff</strong> architecture).
+However, the concept of modular, stackable processing lives on in Linux's
+<strong>netfilter</strong> (iptables) framework and in the <strong>BPF</strong> (Berkeley
+Packet Filter) programs that can be attached to various points in the networking stack.</p>
+</div>
+
+<p>The advantage of STREAMS is <strong>modularity</strong>: new functionality can be added
+by pushing a module, without modifying the driver or the application. The disadvantage is
+<strong>overhead</strong>: each module adds a context switch and data copy, which can be
+significant for high-speed networking. Modern systems prefer in-kernel, zero-copy
+architectures for performance-critical paths.</p>
+
+<p>In xv6, there is no STREAMS mechanism. The console driver handles line editing directly
+in <code class="code-inline">kernel/console.c</code>. There is no networking stack at all.
+Implementing a STREAMS-like architecture in xv6 would be a significant project but would
+demonstrate the concept of modular I/O processing. A simpler exercise would be to add a
+line-discipline module that can be inserted between the console driver and the user
+process, handling backspace, arrow keys, and command history.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-12-7">12.7 Performance</h2>
+
+<p>I/O performance is often the bottleneck in system performance because I/O devices are
+orders of magnitude slower than CPUs. The OS employs many techniques to improve I/O
+performance, and understanding these is crucial for system design and tuning.</p>
+
+<p>The key strategies for improving I/O performance are:</p>
+
+<ul>
+<li><strong>Buffering and caching:</strong> Keep recently accessed data in memory to avoid
+re-reading from the device. The buffer cache (or page cache) can satisfy 90%+ of reads
+from memory for workloads with good locality.</li>
+<li><strong>Asynchronous I/O:</strong> Allow the process to continue executing while I/O
+is in progress. POSIX <code class="code-inline">aio_read()</code> and
+<code class="code-inline">aio_write()</code>, or Linux's <code class="code-inline">io_uring</code>,
+enable this. The process is notified when the I/O completes.</li>
+<li><strong>I/O scheduling:</strong> Reorder I/O requests to minimize seek time (for HDDs)
+or maximize parallelism (for NVM). See Section 11.2.</li>
+<li><strong>DMA and zero-copy:</strong> Use DMA to transfer data directly between devices
+and memory, avoiding CPU copies. <code class="code-inline">sendfile()</code> and
+<code class="code-inline">splice()</code> on Linux enable zero-copy file-to-network
+transfers.</li>
+<li><strong>Interrupt coalescing:</strong> Instead of raising an interrupt for every I/O
+completion, the device raises one interrupt for a batch of completions, reducing interrupt
+overhead.</li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Technique</th><th>Benefit</th><th>Trade-off</th></tr>
+</thead>
+<tbody>
+<tr><td>Buffer cache</td><td>Avoids disk reads</td><td>Uses RAM; crash risk (write-back)</td></tr>
+<tr><td>Async I/O</td><td>Overlaps CPU and I/O</td><td>Complex programming</td></tr>
+<tr><td>I/O scheduling</td><td>Reduces seek / increases parallelism</td><td>Latency for individual requests</td></tr>
+<tr><td>DMA / zero-copy</td><td>Reduces CPU load</td><td>Requires hardware support</td></tr>
+<tr><td>Interrupt coalescing</td><td>Reduces interrupt overhead</td><td>Increases latency</td></tr>
+<tr><td>Scatter-gather</td><td>Single I/O for multiple buffers</td><td>Driver complexity</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 io_uring: Modern Async I/O</div>
+<p>Linux's <strong>io_uring</strong> (introduced in 2019) is a high-performance async I/O
+interface that uses shared-memory ring buffers between user space and kernel. It avoids
+system calls for submission and completion, enabling millions of I/O operations per second.
+io_uring has become the standard for high-performance I/O in databases, storage engines,
+and network servers, replacing older interfaces like <code class="code-inline">aio</code>
+and <code class="code-inline">epoll</code>.</p>
+</div>
+
+<p><strong>Network I/O performance</strong> deserves special attention. Network packets
+are small and frequent, so the per-packet overhead (interrupt, context switch, copy) can
+dominate. Techniques to improve network performance include: (1) <strong>NAPI</strong>
+(hybrid interrupt/polling), (2) <strong>receive-side scaling</strong> (RSS, distributing
+packets across CPU cores), (3) <strong>zero-copy</strong> (avoiding data copies between
+kernel and user space), (4) <strong>TCP offload</strong> (letting the NIC handle TCP
+segmentation and checksums), and (5) <strong>BPF/XDP</strong> (executing packet-processing
+programs in the kernel or even on the NIC).</p>
+
+<p>In xv6, I/O performance is not optimized. The buffer cache
+(<code class="code-inline">kernel/bio.c</code>) provides basic caching, but there is no
+async I/O, no I/O scheduling, no zero-copy, and no interrupt coalescing. The virtio disk
+driver processes one request at a time, sleeping until it completes. This is adequate for
+a teaching OS but would be far too slow for production. Adding a request queue with
+batching and async completion would be a valuable exercise in I/O performance
+optimization.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return;
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS - Assembly Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Assembly Handbook</h1>
+    <a class="subtitle" href="../main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Foundations</div>
+      <a class="nav-item active" data-target="ch01"><span class="nav-num">01</span>What Is Assembly?</a>
+      <a class="nav-item" data-target="ch02"><span class="nav-num">02</span>Registers & Memory</a>
+      <a class="nav-item" data-target="ch03"><span class="nav-num">03</span>Instruction Formats</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">RISC-V</div>
+      <a class="nav-item" data-target="ch04"><span class="nav-num">04</span>RISC-V Registers</a>
+      <a class="nav-item" data-target="ch05"><span class="nav-num">05</span>RISC-V Instructions</a>
+      <a class="nav-item" data-target="ch06"><span class="nav-num">06</span>RISC-V Pseudo-Instructions</a>
+      <a class="nav-item" data-target="ch07"><span class="nav-num">07</span>RISC-V Calling Convention</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">x86-64</div>
+      <a class="nav-item" data-target="ch08"><span class="nav-num">08</span>x86-64 Registers</a>
+      <a class="nav-item" data-target="ch09"><span class="nav-num">09</span>x86-64 Instructions</a>
+      <a class="nav-item" data-target="ch10"><span class="nav-num">10</span>x86-64 Calling Convention</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">ARM64</div>
+      <a class="nav-item" data-target="ch11"><span class="nav-num">11</span>ARM64 Registers</a>
+      <a class="nav-item" data-target="ch12"><span class="nav-num">12</span>ARM64 Instructions</a>
+      <a class="nav-item" data-target="ch13"><span class="nav-num">13</span>ARM64 Calling Convention</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">MIPS</div>
+      <a class="nav-item" data-target="ch14"><span class="nav-num">14</span>MIPS Registers</a>
+      <a class="nav-item" data-target="ch15"><span class="nav-num">15</span>MIPS Instructions</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Cross-ISA</div>
+      <a class="nav-item" data-target="ch16"><span class="nav-num">16</span>Side-by-Side Comparison</a>
+      <a class="nav-item" data-target="ch17"><span class="nav-num">17</span>Syscalls & Traps</a>
+      <a class="nav-item" data-target="ch18"><span class="nav-num">18</span>Quick Reference Card</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../books/handbook/part1-overview.html">Silberschatz Handbook</a>
+      <a class="nav-item" href="../../books/handbook/xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Assembly Language Handbook</h1>
+<p style="color:var(--text-dim);font-size:14px">A beginner-friendly guide to RISC-V, x86-64, ARM64, and MIPS assembly.
+Explained step by step, from the ground up.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#ch01">What Is Assembly Language?</a></li>
+<li><a href="#ch02">Registers and Memory</a></li>
+<li><a href="#ch03">Instruction Formats</a></li>
+<li><a href="#ch04">RISC-V Registers</a></li>
+<li><a href="#ch05">RISC-V Instructions</a></li>
+<li><a href="#ch06">RISC-V Pseudo-Instructions</a></li>
+<li><a href="#ch07">RISC-V Calling Convention</a></li>
+<li><a href="#ch08">x86-64 Registers</a></li>
+<li><a href="#ch09">x86-64 Instructions</a></li>
+<li><a href="#ch10">x86-64 Calling Convention</a></li>
+<li><a href="#ch11">ARM64 Registers</a></li>
+<li><a href="#ch12">ARM64 Instructions</a></li>
+<li><a href="#ch13">ARM64 Calling Convention</a></li>
+<li><a href="#ch14">MIPS Registers</a></li>
+<li><a href="#ch15">MIPS Instructions</a></li>
+<li><a href="#ch16">Side-by-Side Comparison</a></li>
+<li><a href="#ch17">Syscalls and Traps</a></li>
+<li><a href="#ch18">Quick Reference Card</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch01">1. What Is Assembly Language?</h2>
+<p>Imagine you have a robot. The robot only understands very simple commands like
+"move forward 1 step" or "turn left 90 degrees." You cannot tell the robot "go to the kitchen"
+because that is too complex. You must break it down into tiny steps.</p>
+
+<p>A CPU (the brain of your computer) is that robot. It only understands <strong>machine code</strong>:
+sequences of 0s and 1s like <code class="code-inline">10110000 01100001</code>. That is hard for humans to read.</p>
+
+<p><strong>Assembly language</strong> is a human-readable version of machine code. Instead of
+<code class="code-inline">10110000 01100001</code>, you write:</p>
+
+<div class="code-block"><span class="keyword">mov</span> <span class="reg">al</span>, <span class="number">61</span>   <span class="comment"># put the number 61 into register al</span></div>
+
+<p>An <strong>assembler</strong> translates assembly into machine code. A <strong>compiler</strong> (like gcc)
+translates C/C++ into assembly, and then the assembler turns that into machine code.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea</div>
+<p style="margin:0">Assembly is the <strong>lowest-level human-readable language</strong>. Each assembly instruction
+typically maps to exactly one CPU instruction. C is higher-level: one C line may become 5-10 assembly instructions.</p>
+</div>
+
+<h3>Why Learn Assembly?</h3>
+<ul>
+<li><strong>Understand what the computer actually does</strong> - C hides details; assembly shows everything</li>
+<li><strong>Debug crashes</strong> - when your program crashes, the debugger shows assembly</li>
+<li><strong>Write OS code</strong> - operating systems need assembly for traps, context switches, and booting</li>
+<li><strong>Optimize performance</strong> - understand what the compiler does with your C code</li>
+<li><strong>Reverse engineering</strong> - security researchers read assembly to find vulnerabilities</li>
+</ul>
+
+<h3>The Compilation Pipeline</h3>
+<div class="code-block"><span class="comment"># Your C code:</span>
+<span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b)
+{
+    <span class="keyword">return</span> a + b;
+}
+
+<span class="comment"># Step 1: Compiler (gcc) translates C -> Assembly:</span>
+add:
+    <span class="keyword">add</span> <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>
+    <span class="keyword">ret</span>
+
+<span class="comment"># Step 2: Assembler translates Assembly -> Object file (machine code):</span>
+<span class="comment"># 00000033 (binary: 0000000 01011 01011 000 01010 0110011)</span>
+
+<span class="comment"># Step 3: Linker combines object files -> Executable:</span>
+<span class="comment"># ./a.out</span></div>
+
+<!-- ============================================================ -->
+<h2 id="ch02">2. Registers and Memory</h2>
+<p>Think of registers as the CPU's <strong>hands</strong>. The CPU can only work with things
+it holds in its hands. If something is in memory (like a shelf), the CPU must first pick it up
+(load it into a register), do something with it, then put it back (store it to memory).</p>
+
+<p>Registers are <strong>inside the CPU</strong>. They are extremely fast (1 cycle) but there are
+very few of them (16-32 depending on the ISA). Memory (RAM) is outside the CPU, much slower
+(100+ cycles), but can hold billions of bytes.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Analogy</div>
+<p style="margin:0"><strong>Registers</strong> = your hands (fast, but only 2 of them).
+<strong>Memory</strong> = a shelf (slow to reach, but holds everything).
+<strong>Cache</strong> = your desk (between hands and shelf, faster than shelf).</p>
+</div>
+
+<h3>Register Sizes</h3>
+<table>
+<thead><tr><th>Name</th><th>Size</th><th>Bits</th><th>Range (signed)</th></tr></thead>
+<tbody>
+<tr><td>Byte</td><td>1 byte</td><td>8 bits</td><td>-128 to 127</td></tr>
+<tr><td>Halfword</td><td>2 bytes</td><td>16 bits</td><td>-32,768 to 32,767</td></tr>
+<tr><td>Word</td><td>4 bytes</td><td>32 bits</td><td>-2B to 2B</td></tr>
+<tr><td>Double word</td><td>8 bytes</td><td>64 bits</td><td>-9.2Q to 9.2Q</td></tr>
+</tbody>
+</table>
+
+<h3>Memory Layout</h3>
+<p>Memory is a giant array of bytes. Each byte has an <strong>address</strong> (a number).
+The CPU reads and writes bytes at specific addresses.</p>
+
+<div class="code-block"><span class="comment"># Memory address   Content</span>
+<span class="comment"># 0x1000           0x48  ('H')</span>
+<span class="comment"># 0x1001           0x65  ('e')</span>
+<span class="comment"># 0x1002           0x6C  ('l')</span>
+<span class="comment"># 0x1003           0x6C  ('l')</span>
+<span class="comment"># 0x1004           0x6F  ('o')</span>
+
+<span class="comment"># To read "Hello" from memory into a register:</span>
+<span class="keyword">la</span> <span class="reg">a0</span>, 0x1000     <span class="comment"># a0 = address 0x1000</span>
+<span class="keyword">lb</span> <span class="reg">t0</span>, 0(<span class="reg">a0</span>)      <span class="comment"># t0 = 0x48 ('H')</span></div>
+
+<h3>Endianness</h3>
+<p>When storing a multi-byte value (like a 4-byte integer), which byte goes first?</p>
+<ul>
+<li><strong>Little-endian</strong> (x86, ARM default, RISC-V default): least significant byte first.
+The number <code class="code-inline">0x12345678</code> is stored as <code class="code-inline">78 56 34 12</code>.</li>
+<li><strong>Big-endian</strong> (MIPS default, network byte order): most significant byte first.
+The number <code class="code-inline">0x12345678</code> is stored as <code class="code-inline">12 34 56 78</code>.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="ch03">3. Instruction Formats</h2>
+<p>Every assembly instruction has the same basic shape:</p>
+
+<div class="code-block"><span class="keyword">operation</span>  <span class="reg">destination</span>, <span class="reg">source1</span>, <span class="reg">source2</span>
+<span class="comment"># "Take source1 and source2, do the operation, put the result in destination"</span></div>
+
+<p>For example:</p>
+<div class="code-block"><span class="keyword">add</span> <span class="reg">a0</span>, <span class="reg">a1</span>, <span class="reg">a2</span>   <span class="comment"># a0 = a1 + a2</span></div>
+
+<p>But <strong>x86-64 is different</strong> - it uses two-operand form:</p>
+<div class="code-block"><span class="keyword">add</span> <span class="reg">rax</span>, <span class="reg">rbx</span>   <span class="comment"># rax = rax + rbx (destination is also a source!)</span></div>
+
+<h3>RISC Instruction Types (RISC-V)</h3>
+<p>RISC-V has exactly 4 core instruction formats. All are 32 bits (4 bytes) wide:</p>
+<table>
+<thead><tr><th>Format</th><th>Use</th><th>Fields</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>R-type</td><td>Register-register</td><td>opcode, rd, funct3, rs1, rs2, funct7</td><td>add a0, a1, a2</td></tr>
+<tr><td>I-type</td><td>Immediate</td><td>opcode, rd, funct3, rs1, imm[11:0]</td><td>addi a0, a1, 10</td></tr>
+<tr><td>S-type</td><td>Store</td><td>opcode, funct3, rs1, rs2, imm[11:5|4:0]</td><td>sw a0, 8(sp)</td></tr>
+<tr><td>B-type</td><td>Branch</td><td>opcode, funct3, rs1, rs2, imm[12|10:5|4:1|11]</td><td>beq a0, a1, label</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-info">
+<div class="callout-title">RISC vs CISC</div>
+<p style="margin:0"><strong>RISC</strong> (RISC-V, ARM, MIPS): Fixed 4-byte instructions. Simple, regular, easy to decode.
+<strong>CISC</strong> (x86): Variable-length instructions (1-15 bytes). Complex, compact, harder to decode.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch04">4. RISC-V Registers</h2>
+<p>RISC-V has <strong>32 registers</strong> named x0 through x31. But they also have
+<strong>ABI names</strong> (nicknames) that describe their job. Think of it like people:
+everyone has a legal name (x0, x1...) and a nickname (zero, ra, sp...) that tells you their role.</p>
+
+<table>
+<thead><tr><th>Register</th><th>ABI Name</th><th>Role</th><th>Convention</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">x0</td><td class="reg-name">zero</td><td>Hardwired zero (always 0)</td><td>-</td></tr>
+<tr><td class="reg-name">x1</td><td class="reg-name">ra</td><td>Return address</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x2</td><td class="reg-name">sp</td><td>Stack pointer</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x3</td><td class="reg-name">gp</td><td>Global pointer</td><td>-</td></tr>
+<tr><td class="reg-name">x4</td><td class="reg-name">tp</td><td>Thread pointer</td><td>-</td></tr>
+<tr><td class="reg-name">x5-x7</td><td class="reg-name">t0-t2</td><td>Temporaries</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x8</td><td class="reg-name">s0/fp</td><td>Frame pointer</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x9</td><td class="reg-name">s1</td><td>Saved register</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x10-x11</td><td class="reg-name">a0-a1</td><td>Args / return value</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x12-x17</td><td class="reg-name">a2-a7</td><td>Arguments</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x18-x27</td><td class="reg-name">s2-s11</td><td>Saved registers</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x28-x31</td><td class="reg-name">t3-t6</td><td>Temporaries</td><td>Caller-saved</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warn">
+<div class="callout-title">Important Rules</div>
+<ul style="margin:0">
+<li><strong>x0 is ALWAYS zero.</strong> Writing to it does nothing. Reading it always gives 0.</li>
+<li><strong>sp must be 16-byte aligned</strong> at function entry.</li>
+<li><strong>a0-a7</strong> hold the first 8 arguments to a function.</li>
+<li><strong>a0</strong> holds the return value.</li>
+<li><strong>ra</strong> holds the return address (where to go after the function returns).</li>
+</ul>
+</div>
+
+<h3>Caller-Saved vs Callee-Saved</h3>
+<p>This is one of the most important concepts in assembly. It is a <strong>contract</strong> between
+the caller and the callee (the function being called):</p>
+<ul>
+<li><strong>Caller-saved (t0-t6, a0-a7)</strong>: The caller must save these if it needs them after a call.
+The callee is free to trash them.</li>
+<li><strong>Callee-saved (ra, sp, s0-s11)</strong>: The callee must save these before using them and
+restore them before returning. The caller can rely on them being unchanged.</li>
+</ul>
+
+<div class="callout callout-tip">
+<div class="callout-title">Memory Aid</div>
+<p style="margin:0"><strong>a</strong> = <strong>a</strong>rguments (a0-a7). <strong>s</strong> = <strong>s</strong>aved (s0-s11).
+<strong>t</strong> = <strong>t</strong>emporary (t0-t6). <strong>ra</strong> = <strong>r</strong>eturn <strong>a</strong>ddress.
+<strong>sp</strong> = <strong>s</strong>tack <strong>p</strong>ointer.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch05">5. RISC-V Instructions</h2>
+
+<h3>Arithmetic and Logic</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">add rd, rs1, rs2</td><td>rd = rs1 + rs2</td><td>add a0, a1, a2</td></tr>
+<tr><td class="reg-name">sub rd, rs1, rs2</td><td>rd = rs1 - rs2</td><td>sub a0, a1, a2</td></tr>
+<tr><td class="reg-name">mul rd, rs1, rs2</td><td>rd = rs1 * rs2</td><td>mul a0, a1, a2</td></tr>
+<tr><td class="reg-name">div rd, rs1, rs2</td><td>rd = rs1 / rs2</td><td>div a0, a1, a2</td></tr>
+<tr><td class="reg-name">rem rd, rs1, rs2</td><td>rd = rs1 % rs2</td><td>rem a0, a1, a2</td></tr>
+<tr><td class="reg-name">and rd, rs1, rs2</td><td>rd = rs1 &amp; rs2</td><td>and a0, a1, a2</td></tr>
+<tr><td class="reg-name">or rd, rs1, rs2</td><td>rd = rs1 | rs2</td><td>or a0, a1, a2</td></tr>
+<tr><td class="reg-name">xor rd, rs1, rs2</td><td>rd = rs1 ^ rs2</td><td>xor a0, a1, a2</td></tr>
+<tr><td class="reg-name">sll rd, rs1, rs2</td><td>rd = rs1 &lt;&lt; rs2</td><td>sll a0, a1, a2</td></tr>
+<tr><td class="reg-name">srl rd, rs1, rs2</td><td>rd = rs1 &gt;&gt; rs2 (logical)</td><td>srl a0, a1, a2</td></tr>
+<tr><td class="reg-name">sra rd, rs1, rs2</td><td>rd = rs1 &gt;&gt; rs2 (arithmetic)</td><td>sra a0, a1, a2</td></tr>
+<tr><td class="reg-name">slt rd, rs1, rs2</td><td>rd = (rs1 &lt; rs2) ? 1 : 0</td><td>slt a0, a1, a2</td></tr>
+</tbody>
+</table>
+
+<h3>Immediate Arithmetic</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">addi rd, rs1, imm</td><td>rd = rs1 + imm</td><td>addi sp, sp, -16</td></tr>
+<tr><td class="reg-name">andi rd, rs1, imm</td><td>rd = rs1 &amp; imm</td><td>andi a0, a1, 0xFF</td></tr>
+<tr><td class="reg-name">ori rd, rs1, imm</td><td>rd = rs1 | imm</td><td>ori a0, a1, 0x10</td></tr>
+<tr><td class="reg-name">xori rd, rs1, imm</td><td>rd = rs1 ^ imm</td><td>xori a0, a1, -1</td></tr>
+<tr><td class="reg-name">slti rd, rs1, imm</td><td>rd = (rs1 &lt; imm) ? 1 : 0</td><td>slti a0, a1, 10</td></tr>
+<tr><td class="reg-name">li rd, imm</td><td>rd = imm (pseudo)</td><td>li a0, 42</td></tr>
+<tr><td class="reg-name">lui rd, imm</td><td>rd = imm &lt;&lt; 12</td><td>lui a0, 0x12345</td></tr>
+</tbody>
+</table>
+
+<h3>Load and Store</h3>
+<p>Memory access uses the format: <code class="code-inline">load rd, offset(base)</code></p>
+<table>
+<thead><tr><th>Instruction</th><th>Size</th><th>Signed?</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">lb rd, off(rs1)</td><td>1 byte</td><td>Yes</td><td>lb a0, 0(sp)</td></tr>
+<tr><td class="reg-name">lbu rd, off(rs1)</td><td>1 byte</td><td>No (unsigned)</td><td>lbu a0, 0(sp)</td></tr>
+<tr><td class="reg-name">lh rd, off(rs1)</td><td>2 bytes</td><td>Yes</td><td>lh a0, 0(sp)</td></tr>
+<tr><td class="reg-name">lhu rd, off(rs1)</td><td>2 bytes</td><td>No</td><td>lhu a0, 0(sp)</td></tr>
+<tr><td class="reg-name">lw rd, off(rs1)</td><td>4 bytes</td><td>Yes</td><td>lw a0, 0(sp)</td></tr>
+<tr><td class="reg-name">lwu rd, off(rs1)</td><td>4 bytes</td><td>No</td><td>lwu a0, 0(sp)</td></tr>
+<tr><td class="reg-name">ld rd, off(rs1)</td><td>8 bytes</td><td>Yes</td><td>ld a0, 0(sp)</td></tr>
+<tr><td class="reg-name">sb rs2, off(rs1)</td><td>1 byte</td><td>-</td><td>sb a0, 0(sp)</td></tr>
+<tr><td class="reg-name">sh rs2, off(rs1)</td><td>2 bytes</td><td>-</td><td>sh a0, 0(sp)</td></tr>
+<tr><td class="reg-name">sw rs2, off(rs1)</td><td>4 bytes</td><td>-</td><td>sw a0, 0(sp)</td></tr>
+<tr><td class="reg-name">sd rs2, off(rs1)</td><td>8 bytes</td><td>-</td><td>sd a0, 0(sp)</td></tr>
+</tbody>
+</table>
+
+<h3>Branches</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th><th>Branch if...</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">beq rs1, rs2, label</td><td>Branch if equal</td><td>rs1 == rs2</td></tr>
+<tr><td class="reg-name">bne rs1, rs2, label</td><td>Branch if not equal</td><td>rs1 != rs2</td></tr>
+<tr><td class="reg-name">blt rs1, rs2, label</td><td>Branch if less than</td><td>rs1 &lt; rs2</td></tr>
+<tr><td class="reg-name">bge rs1, rs2, label</td><td>Branch if greater or equal</td><td>rs1 &gt;= rs2</td></tr>
+<tr><td class="reg-name">bltu rs1, rs2, label</td><td>Branch if less (unsigned)</td><td>rs1 &lt; rs2 (unsigned)</td></tr>
+<tr><td class="reg-name">bgeu rs1, rs2, label</td><td>Branch if ge (unsigned)</td><td>rs1 &gt;= rs2 (unsigned)</td></tr>
+</tbody>
+</table>
+
+<h3>Jumps</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">jal rd, offset</td><td>rd = pc+4; pc = pc + offset</td><td>jal ra, func</td></tr>
+<tr><td class="reg-name">jalr rd, rs1, offset</td><td>rd = pc+4; pc = rs1 + offset</td><td>jalr ra, 0(t0)</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch06">6. RISC-V Pseudo-Instructions</h2>
+
+<p>Pseudo-instructions are <strong>shortcuts</strong>. They are not real CPU instructions -
+the assembler expands them into one or more real instructions.</p>
+
+<table>
+<thead><tr><th>Pseudo</th><th>Expands To</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">li rd, imm</td><td>lui + addi</td><td>Load immediate</td></tr>
+<tr><td class="reg-name">mv rd, rs</td><td>addi rd, rs, 0</td><td>Move register</td></tr>
+<tr><td class="reg-name">la rd, symbol</td><td>auipc + addi</td><td>Load address</td></tr>
+<tr><td class="reg-name">nop</td><td>addi x0, x0, 0</td><td>No operation</td></tr>
+<tr><td class="reg-name">neg rd, rs</td><td>sub rd, x0, rs</td><td>Negate</td></tr>
+<tr><td class="reg-name">not rd, rs</td><td>xori rd, rs, -1</td><td>Bitwise NOT</td></tr>
+<tr><td class="reg-name">j label</td><td>jal x0, label</td><td>Jump (no return)</td></tr>
+<tr><td class="reg-name">call func</td><td>jal ra, func</td><td>Call function</td></tr>
+<tr><td class="reg-name">ret</td><td>jalr x0, ra, 0</td><td>Return</td></tr>
+<tr><td class="reg-name">jr rs</td><td>jalr x0, rs, 0</td><td>Jump register</td></tr>
+<tr><td class="reg-name">beqz rs, label</td><td>beq rs, x0, label</td><td>Branch if zero</td></tr>
+<tr><td class="reg-name">bnez rs, label</td><td>bne rs, x0, label</td><td>Branch if not zero</td></tr>
+<tr><td class="reg-name">blez rs, label</td><td>bge x0, rs, label</td><td>Branch if &lt;= 0</td></tr>
+<tr><td class="reg-name">bgez rs, label</td><td>bge rs, x0, label</td><td>Branch if &gt;= 0</td></tr>
+<tr><td class="reg-name">bltz rs, label</td><td>blt rs, x0, label</td><td>Branch if &lt; 0</td></tr>
+<tr><td class="reg-name">bgtz rs, label</td><td>blt x0, rs, label</td><td>Branch if &gt; 0</td></tr>
+<tr><td class="reg-name">ble rs1, rs2, label</td><td>bge rs2, rs1, label</td><td>Branch if rs1 &lt;= rs2</td></tr>
+<tr><td class="reg-name">bgt rs1, rs2, label</td><td>blt rs2, rs1, label</td><td>Branch if rs1 &gt; rs2</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch07">7. RISC-V Calling Convention</h2>
+<p>Imagine you and your friend are working together. You have some tools on your desk.
+When you ask your friend to do a task, you both need rules:</p>
+<ul>
+<li>"I will put the inputs in these specific spots (a0-a7)"</li>
+<li>"I will look for the result in this spot (a0)"</li>
+<li>"If I need my desk tools after you finish, I will save them first (caller-saved)"</li>
+<li>"If you use my permanent tools, you must put them back (callee-saved)"</li>
+</ul>
+
+<h3>The Rules</h3>
+<ol>
+<li><strong>Arguments</strong>: Pass in a0-a7 (first 8). Extra args go on the stack.</li>
+<li><strong>Return value</strong>: In a0 (and a1 for 16-byte returns).</li>
+<li><strong>Stack alignment</strong>: sp must be 16-byte aligned at function entry.</li>
+<li><strong>Return address</strong>: ra (x1) holds the return address.</li>
+<li><strong>Frame pointer</strong>: s0/fp (x8) optionally points to the top of the frame.</li>
+</ol>
+
+<h3>Standard Prologue and Epilogue</h3>
+<div class="code-block"><span class="comment"># Function prologue - set up the stack frame</span>
+<span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, -<span class="number">32</span>    <span class="comment"># allocate 32 bytes</span>
+<span class="keyword">sd</span>    <span class="reg">ra</span>, <span class="number">24</span>(<span class="reg">sp</span>)       <span class="comment"># save return address</span>
+<span class="keyword">sd</span>    <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">sp</span>)       <span class="comment"># save frame pointer</span>
+<span class="keyword">sd</span>    <span class="reg">s1</span>, <span class="number">8</span>(<span class="reg">sp</span>)        <span class="comment"># save s1</span>
+<span class="keyword">addi</span>  <span class="reg">s0</span>, <span class="reg">sp</span>, <span class="number">16</span>      <span class="comment"># set frame pointer</span>
+
+<span class="comment"># ... function body ...</span>
+
+<span class="comment"># Function epilogue - tear down the stack frame</span>
+<span class="keyword">ld</span>    <span class="reg">ra</span>, <span class="number">24</span>(<span class="reg">sp</span>)       <span class="comment"># restore return address</span>
+<span class="keyword">ld</span>    <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">sp</span>)       <span class="comment"># restore frame pointer</span>
+<span class="keyword">ld</span>    <span class="reg">s1</span>, <span class="number">8</span>(<span class="reg">sp</span>)        <span class="comment"># restore s1</span>
+<span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">32</span>      <span class="comment"># deallocate stack</span>
+<span class="keyword">ret</span>                     <span class="comment"># return to caller</span></div>
+
+<!-- ============================================================ -->
+<h2 id="ch08">8. x86-64 Registers</h2>
+<p>x86-64 has <strong>16 registers</strong>. They evolved from the old 8086 CPU (1978) which had
+just 4 registers (AX, BX, CX, DX). Over time, more were added. The names are historical:
+AX = Accumulator, BX = Base, CX = Count, DX = Data.</p>
+
+<p>Each 64-bit register has multiple names for different sizes:</p>
+<table>
+<thead><tr><th>64-bit</th><th>32-bit</th><th>16-bit</th><th>8-bit</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">rax</td><td class="reg-name">eax</td><td class="reg-name">ax</td><td class="reg-name">al</td><td>Return value / accumulator</td></tr>
+<tr><td class="reg-name">rbx</td><td class="reg-name">ebx</td><td class="reg-name">bx</td><td class="reg-name">bl</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">rcx</td><td class="reg-name">ecx</td><td class="reg-name">cx</td><td class="reg-name">cl</td><td>4th argument / loop count</td></tr>
+<tr><td class="reg-name">rdx</td><td class="reg-name">edx</td><td class="reg-name">dx</td><td class="reg-name">dl</td><td>3rd argument</td></tr>
+<tr><td class="reg-name">rsi</td><td class="reg-name">esi</td><td class="reg-name">si</td><td class="reg-name">sil</td><td>2nd argument (source index)</td></tr>
+<tr><td class="reg-name">rdi</td><td class="reg-name">edi</td><td class="reg-name">di</td><td class="reg-name">dil</td><td>1st argument (dest index)</td></tr>
+<tr><td class="reg-name">rbp</td><td class="reg-name">ebp</td><td class="reg-name">bp</td><td class="reg-name">bpl</td><td>Frame pointer (callee-saved)</td></tr>
+<tr><td class="reg-name">rsp</td><td class="reg-name">esp</td><td class="reg-name">sp</td><td class="reg-name">spl</td><td>Stack pointer</td></tr>
+<tr><td class="reg-name">r8</td><td class="reg-name">r8d</td><td class="reg-name">r8w</td><td class="reg-name">r8b</td><td>5th argument</td></tr>
+<tr><td class="reg-name">r9</td><td class="reg-name">r9d</td><td class="reg-name">r9w</td><td class="reg-name">r9b</td><td>6th argument</td></tr>
+<tr><td class="reg-name">r10</td><td class="reg-name">r10d</td><td class="reg-name">r10w</td><td class="reg-name">r10b</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">r11</td><td class="reg-name">r11d</td><td class="reg-name">r11w</td><td class="reg-name">r11b</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">r12</td><td class="reg-name">r12d</td><td class="reg-name">r12w</td><td class="reg-name">r12b</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">r13</td><td class="reg-name">r13d</td><td class="reg-name">r13w</td><td class="reg-name">r13b</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">r14</td><td class="reg-name">r14d</td><td class="reg-name">r14w</td><td class="reg-name">r14b</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">r15</td><td class="reg-name">r15d</td><td class="reg-name">r15w</td><td class="reg-name">r15b</td><td>Callee-saved</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warn">
+<div class="callout-title">x86-64 has NO zero register!</div>
+<p style="margin:0">Unlike RISC-V (x0) and ARM64 (xzr), x86-64 has no hardwired zero register.
+To zero a register, use <code class="code-inline">xor eax, eax</code> (shorter than <code class="code-inline">mov eax, 0</code>).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch09">9. x86-64 Instructions</h2>
+
+<h3>Arithmetic (Two-Operand Form!)</h3>
+<div class="callout callout-info">
+<div class="callout-title">Key Difference from RISC-V</div>
+<p style="margin:0">x86-64 uses <strong>two-operand form</strong>: <code class="code-inline">op dest, src</code>.
+The destination is ALSO a source. <code class="code-inline">add rax, rbx</code> means <code class="code-inline">rax = rax + rbx</code>.</p>
+</div>
+
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">mov dest, src</td><td>dest = src</td></tr>
+<tr><td class="reg-name">add dest, src</td><td>dest = dest + src</td></tr>
+<tr><td class="reg-name">sub dest, src</td><td>dest = dest - src</td></tr>
+<tr><td class="reg-name">imul dest, src</td><td>dest = dest * src</td></tr>
+<tr><td class="reg-name">and dest, src</td><td>dest = dest &amp; src</td></tr>
+<tr><td class="reg-name">or dest, src</td><td>dest = dest | src</td></tr>
+<tr><td class="reg-name">xor dest, src</td><td>dest = dest ^ src</td></tr>
+<tr><td class="reg-name">shl dest, count</td><td>dest = dest &lt;&lt; count</td></tr>
+<tr><td class="reg-name">shr dest, count</td><td>dest = dest &gt;&gt; count (logical)</td></tr>
+<tr><td class="reg-name">sar dest, count</td><td>dest = dest &gt;&gt; count (arithmetic)</td></tr>
+<tr><td class="reg-name">inc dest</td><td>dest = dest + 1</td></tr>
+<tr><td class="reg-name">dec dest</td><td>dest = dest - 1</td></tr>
+<tr><td class="reg-name">neg dest</td><td>dest = -dest</td></tr>
+<tr><td class="reg-name">lea dest, [addr]</td><td>dest = address (no memory access!)</td></tr>
+</tbody>
+</table>
+
+<h3>Memory Addressing</h3>
+<p>x86-64's most powerful feature: <strong>any instruction can access memory</strong>.
+No need for separate load/store instructions.</p>
+<div class="code-block"><span class="comment"># Format: [base + index*scale + displacement]</span>
+<span class="comment"># scale can be 1, 2, 4, or 8</span>
+
+<span class="keyword">mov</span> <span class="reg">rax</span>, [<span class="reg">rbx</span>]            <span class="comment"># rax = *rbx (load)</span>
+<span class="keyword">mov</span> [<span class="reg">rbx</span>], <span class="reg">rax</span>            <span class="comment"># *rbx = rax (store)</span>
+<span class="keyword">mov</span> <span class="reg">eax</span>, [<span class="reg">rbx</span> + <span class="number">8</span>]        <span class="comment"># eax = *(rbx + 8)</span>
+<span class="keyword">mov</span> <span class="reg">eax</span>, [<span class="reg">rbx</span> + <span class="reg">rcx</span>*<span class="number">4</span>]   <span class="comment"># eax = rbx[rcx] (array access)</span>
+<span class="keyword">lea</span> <span class="reg">rax</span>, [<span class="reg">rdi</span> + <span class="reg">rsi</span>]       <span class="comment"># rax = rdi + rsi (no memory access!)</span></div>
+
+<h3>Branches and Jumps</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">cmp a, b</td><td>Set flags based on a - b</td></tr>
+<tr><td class="reg-name">test a, b</td><td>Set flags based on a &amp; b</td></tr>
+<tr><td class="reg-name">je label</td><td>Jump if equal (ZF=1)</td></tr>
+<tr><td class="reg-name">jne label</td><td>Jump if not equal (ZF=0)</td></tr>
+<tr><td class="reg-name">jl label</td><td>Jump if less (signed)</td></tr>
+<tr><td class="reg-name">jle label</td><td>Jump if less or equal</td></tr>
+<tr><td class="reg-name">jg label</td><td>Jump if greater (signed)</td></tr>
+<tr><td class="reg-name">jge label</td><td>Jump if greater or equal</td></tr>
+<tr><td class="reg-name">jmp label</td><td>Unconditional jump</td></tr>
+<tr><td class="reg-name">call func</td><td>Push return addr; jump to func</td></tr>
+<tr><td class="reg-name">ret</td><td>Pop return addr; jump to it</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch10">10. x86-64 Calling Convention</h2>
+
+<h3>System V AMD64 (Linux, macOS)</h3>
+<table>
+<thead><tr><th>Argument</th><th>Register</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>1st</td><td class="reg-name">rdi</td><td>Destination index</td></tr>
+<tr><td>2nd</td><td class="reg-name">rsi</td><td>Source index</td></tr>
+<tr><td>3rd</td><td class="reg-name">rdx</td><td>Data</td></tr>
+<tr><td>4th</td><td class="reg-name">rcx</td><td>Count</td></tr>
+<tr><td>5th</td><td class="reg-name">r8</td><td>-</td></tr>
+<tr><td>6th</td><td class="reg-name">r9</td><td>-</td></tr>
+<tr><td>7+</td><td>Stack</td><td>Pushed right-to-left</td></tr>
+<tr><td>Return</td><td class="reg-name">rax</td><td>-</td></tr>
+</tbody>
+</table>
+<p><strong>Callee-saved</strong>: rbx, rbp, r12, r13, r14, r15<br>
+<strong>Caller-saved</strong>: rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Memory Aid for Argument Order</div>
+<p style="margin:0"><strong>D</strong>id <strong>S</strong>teve <strong>D</strong>rink <strong>C</strong>offee <strong>8</strong> times <strong>9</strong> times?
+= <strong>D</strong>i, <strong>S</strong>i, <strong>D</strong>x, <strong>C</strong>x, <strong>R8</strong>, <strong>R9</strong></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch11">11. ARM64 Registers</h2>
+<p>ARM64 (also called AArch64) has <strong>31 general-purpose registers</strong> (x0-x30).
+Why 31 and not 32? Because register 31 is special: it is the <strong>zero register</strong> (xzr)
+that always reads as 0, OR the stack pointer (sp) depending on the instruction.</p>
+
+<table>
+<thead><tr><th>Register</th><th>Role</th><th>Convention</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">x0</td><td>Arg 0 / return value</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x1-x7</td><td>Args 1-7</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x8</td><td>Indirect result reg</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x9-x15</td><td>Temporaries</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x16-x17</td><td>IP0, IP1 (inter-proc)</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x18</td><td>Platform register</td><td>Caller-saved</td></tr>
+<tr><td class="reg-name">x19-x28</td><td>Callee-saved</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x29</td><td>Frame pointer (FP)</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">x30</td><td>Link register (LR)</td><td>Callee-saved</td></tr>
+<tr><td class="reg-name">xzr/wzr</td><td>Zero register</td><td>Special</td></tr>
+<tr><td class="reg-name">sp</td><td>Stack pointer</td><td>Special</td></tr>
+</tbody>
+</table>
+
+<p>Use <strong>Wn</strong> for the lower 32 bits of Xn (e.g., w0 = lower 32 bits of x0).</p>
+
+<!-- ============================================================ -->
+<h2 id="ch12">12. ARM64 Instructions</h2>
+
+<h3>Arithmetic</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">add xd, xn, xm</td><td>xd = xn + xm</td></tr>
+<tr><td class="reg-name">sub xd, xn, xm</td><td>xd = xn - xm</td></tr>
+<tr><td class="reg-name">mul xd, xn, xm</td><td>xd = xn * xm</td></tr>
+<tr><td class="reg-name">and xd, xn, xm</td><td>xd = xn &amp; xm</td></tr>
+<tr><td class="reg-name">orr xd, xn, xm</td><td>xd = xn | xm</td></tr>
+<tr><td class="reg-name">eor xd, xn, xm</td><td>xd = xn ^ xm</td></tr>
+<tr><td class="reg-name">mov xd, xn</td><td>xd = xn</td></tr>
+<tr><td class="reg-name">cmp xn, xm</td><td>Set flags from xn - xm</td></tr>
+</tbody>
+</table>
+
+<h3>Unique ARM64 Features</h3>
+<div class="code-block"><span class="comment"># Conditional Select - ARM64's superpower!</span>
+<span class="keyword">csel</span> <span class="reg">x0</span>, <span class="reg">x1</span>, <span class="reg">x2</span>, <span class="keyword">GE</span>
+<span class="comment"># if GE flag set: x0 = x1, else: x0 = x2</span>
+<span class="comment"># This is a branchless if-else in ONE instruction!</span>
+
+<span class="comment"># Set condition flag</span>
+<span class="keyword">cset</span> <span class="reg">x0</span>, <span class="keyword">EQ</span>   <span class="comment"># x0 = 1 if EQ, else 0</span>
+
+<span class="comment"># Load pair / store pair (two registers at once)</span>
+<span class="keyword">stp</span> <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>, -<span class="number">16</span>]!  <span class="comment"># push FP and LR</span>
+<span class="keyword">ldp</span> <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>], <span class="number">16</span>   <span class="comment"># pop FP and LR</span></div>
+
+<h3>Branches</h3>
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">b label</td><td>Unconditional branch</td></tr>
+<tr><td class="reg-name">bl func</td><td>Branch with link (call)</td></tr>
+<tr><td class="reg-name">ret</td><td>Return (branch to x30)</td></tr>
+<tr><td class="reg-name">b.eq label</td><td>Branch if equal</td></tr>
+<tr><td class="reg-name">b.ne label</td><td>Branch if not equal</td></tr>
+<tr><td class="reg-name">b.lt label</td><td>Branch if less than</td></tr>
+<tr><td class="reg-name">b.ge label</td><td>Branch if greater or equal</td></tr>
+<tr><td class="reg-name">cbz xn, label</td><td>Compare and branch if zero</td></tr>
+<tr><td class="reg-name">cbnz xn, label</td><td>Compare and branch if not zero</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch13">13. ARM64 Calling Convention</h2>
+
+<table>
+<thead><tr><th>Argument</th><th>Register</th></tr></thead>
+<tbody>
+<tr><td>1-8</td><td class="reg-name">x0-x7</td></tr>
+<tr><td>9+</td><td>Stack</td></tr>
+<tr><td>Return</td><td class="reg-name">x0</td></tr>
+<tr><td>Return addr</td><td class="reg-name">x30 (LR)</td></tr>
+<tr><td>Frame pointer</td><td class="reg-name">x29 (FP)</td></tr>
+</tbody>
+</table>
+<p><strong>Callee-saved</strong>: x19-x28, x29, x30<br>
+<strong>Stack alignment</strong>: 16 bytes, fully descending</p>
+
+<div class="code-block"><span class="comment"># ARM64 function prologue</span>
+<span class="keyword">stp</span>  <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>, -<span class="number">16</span>]!  <span class="comment"># save FP, LR, alloc 16 bytes</span>
+<span class="keyword">mov</span>  <span class="reg">x29</span>, <span class="reg">sp</span>                  <span class="comment"># set frame pointer</span>
+
+<span class="comment"># ... body ...</span>
+
+<span class="comment"># ARM64 function epilogue</span>
+<span class="keyword">ldp</span>  <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>], <span class="number">16</span>   <span class="comment"># restore FP, LR, dealloc 16 bytes</span>
+<span class="keyword">ret</span>                              <span class="comment"># return</span></div>
+
+<!-- ============================================================ -->
+<h2 id="ch14">14. MIPS Registers</h2>
+<p>MIPS has <strong>32 registers</strong> named $0 to $31. Like RISC-V, register $0 is always zero.
+MIPS was designed in 1985 and heavily influenced RISC-V (which came in 2010).</p>
+
+<table>
+<thead><tr><th>Register</th><th>Name</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">$0</td><td class="reg-name">$zero</td><td>Hardwired zero</td></tr>
+<tr><td class="reg-name">$1</td><td class="reg-name">$at</td><td>Assembler temporary</td></tr>
+<tr><td class="reg-name">$2-$3</td><td class="reg-name">$v0-$v1</td><td>Return values</td></tr>
+<tr><td class="reg-name">$4-$7</td><td class="reg-name">$a0-$a3</td><td>Arguments (first 4)</td></tr>
+<tr><td class="reg-name">$8-$15</td><td class="reg-name">$t0-$t7</td><td>Temporaries</td></tr>
+<tr><td class="reg-name">$16-$23</td><td class="reg-name">$s0-$s7</td><td>Saved registers</td></tr>
+<tr><td class="reg-name">$24-$25</td><td class="reg-name">$t8-$t9</td><td>Temporaries</td></tr>
+<tr><td class="reg-name">$26-$27</td><td class="reg-name">$k0-$k1</td><td>Kernel reserved</td></tr>
+<tr><td class="reg-name">$28</td><td class="reg-name">$gp</td><td>Global pointer</td></tr>
+<tr><td class="reg-name">$29</td><td class="reg-name">$sp</td><td>Stack pointer</td></tr>
+<tr><td class="reg-name">$30</td><td class="reg-name">$fp</td><td>Frame pointer</td></tr>
+<tr><td class="reg-name">$31</td><td class="reg-name">$ra</td><td>Return address</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch15">15. MIPS Instructions</h2>
+
+<table>
+<thead><tr><th>Instruction</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="reg-name">daddu rd, rs, rt</td><td>rd = rs + rt (no overflow trap)</td></tr>
+<tr><td class="reg-name">dsubu rd, rs, rt</td><td>rd = rs - rt</td></tr>
+<tr><td class="reg-name">dmul rd, rs, rt</td><td>rd = rs * rt</td></tr>
+<tr><td class="reg-name">ddiv rs, rt</td><td>rs / rt (lo=quotient, hi=remainder)</td></tr>
+<tr><td class="reg-name">and rd, rs, rt</td><td>rd = rs &amp; rt</td></tr>
+<tr><td class="reg-name">or rd, rs, rt</td><td>rd = rs | rt</td></tr>
+<tr><td class="reg-name">lw rt, off(rs)</td><td>rt = *(rs + off) (32-bit)</td></tr>
+<tr><td class="reg-name">sw rt, off(rs)</td><td>*(rs + off) = rt (32-bit)</td></tr>
+<tr><td class="reg-name">ld rt, off(rs)</td><td>rt = *(rs + off) (64-bit)</td></tr>
+<tr><td class="reg-name">sd rt, off(rs)</td><td>*(rs + off) = rt (64-bit)</td></tr>
+<tr><td class="reg-name">beq rs, rt, label</td><td>Branch if rs == rt</td></tr>
+<tr><td class="reg-name">bne rs, rt, label</td><td>Branch if rs != rt</td></tr>
+<tr><td class="reg-name">jal label</td><td>Call function (ra = pc+8)</td></tr>
+<tr><td class="reg-name">jr rs</td><td>Jump to rs (return)</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warn">
+<div class="callout-title">MIPS Branch Delay Slot</div>
+<p style="margin:0">MIPS has a <strong>branch delay slot</strong>: the instruction after a branch/jump is
+<strong>always executed</strong> before the branch takes effect. This is a pipeline optimization.
+Modern MIPS and RISC-V do NOT have delay slots (RISC-V never did).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch16">16. Side-by-Side Comparison</h2>
+
+<h3>The Same Function: int add(int a, int b)</h3>
+<p>Here is the same simple C function compiled to four different ISAs. The function just adds two integers and returns the result.</p>
+<div class="code-block"><span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b)
+{
+    <span class="keyword">return</span> a + b;
+}</div>
+<div class="code-block"><span class="comment"># --- RISC-V (RV64) ---</span>
+add:
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>      <span class="comment"># a0 = a0 + a1</span>
+    <span class="keyword">ret</span>                     <span class="comment"># return</span>
+
+<span class="comment"># --- ARM64 (AArch64) ---</span>
+add:
+    <span class="keyword">add</span>  <span class="reg">x0</span>, <span class="reg">x0</span>, <span class="reg">x1</span>      <span class="comment">// x0 = x0 + x1</span>
+    <span class="keyword">ret</span>                     <span class="comment">// return</span>
+
+<span class="comment"># --- x86-64 ---</span>
+add:
+    <span class="keyword">lea</span>  <span class="reg">eax</span>, [<span class="reg">rdi</span> + <span class="reg">rsi</span>]  <span class="comment"># eax = rdi + rsi (clever!)</span>
+    <span class="keyword">ret</span>                     <span class="comment"># return</span>
+
+<span class="comment"># --- MIPS (MIPS64) ---</span>
+add:
+    <span class="keyword">daddu</span> <span class="reg">$v0</span>, <span class="reg">$a0</span>, <span class="reg">$a1</span>  <span class="comment"># v0 = a0 + a1</span>
+    <span class="keyword">jr</span>   <span class="reg">$ra</span>              <span class="comment"># return</span>
+    <span class="keyword">nop</span>                     <span class="comment"># delay slot</span></div>
+
+<h3>Feature Comparison Table</h3>
+<table>
+<thead><tr><th>Feature</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th><th>MIPS</th></tr></thead>
+<tbody>
+<tr><td>Type</td><td>RISC</td><td>RISC</td><td>CISC</td><td>RISC</td></tr>
+<tr><td>Instruction length</td><td>4 bytes</td><td>4 bytes</td><td>1-15 bytes</td><td>4 bytes</td></tr>
+<tr><td># GP registers</td><td>32</td><td>31</td><td>16</td><td>32</td></tr>
+<tr><td>Zero register</td><td class="yes">x0</td><td class="yes">xzr</td><td class="no">None</td><td class="yes">$zero</td></tr>
+<tr><td>Return address</td><td>ra (x1)</td><td>x30 (LR)</td><td>Stack</td><td>$ra ($31)</td></tr>
+<tr><td>Stack pointer</td><td>sp (x2)</td><td>sp</td><td>rsp</td><td>$sp ($29)</td></tr>
+<tr><td>Arguments</td><td>a0-a7</td><td>x0-x7</td><td>rdi,rsi,...</td><td>$a0-$a3</td></tr>
+<tr><td>Return value</td><td>a0</td><td>x0</td><td>rax</td><td>$v0</td></tr>
+<tr><td>Memory operands</td><td>Load/store only</td><td>Load/store only</td><td>Any instruction</td><td>Load/store only</td></tr>
+<tr><td>Condition flags</td><td class="no">None</td><td>NZCV</td><td>ZF,CF,SF,OF</td><td class="no">None</td></tr>
+<tr><td>Syscall</td><td>ecall</td><td>svc #0</td><td>syscall</td><td>syscall</td></tr>
+<tr><td>Branch delay slot</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ch17">17. Syscalls and Traps</h2>
+<p>Your program runs in <strong>user mode</strong> (unprivileged). It cannot directly access
+hardware, network, or files. When it needs to do something privileged (like writing to screen),
+it must <strong>ask the kernel</strong> to do it. This request is called a <strong>system call</strong>
+(or syscall). The mechanism to switch from user mode to kernel mode is called a <strong>trap</strong>.</p>
+
+<h3>Syscall Numbers (Linux)</h3>
+<table>
+<thead><tr><th>Operation</th><th>RISC-V</th><th>x86-64</th><th>ARM64</th></tr></thead>
+<tbody>
+<tr><td>read</td><td>63</td><td>0</td><td>63</td></tr>
+<tr><td>write</td><td>64</td><td>1</td><td>64</td></tr>
+<tr><td>open</td><td>1024</td><td>2</td><td>1024</td></tr>
+<tr><td>close</td><td>57</td><td>3</td><td>57</td></tr>
+<tr><td>exit</td><td>93</td><td>60</td><td>93</td></tr>
+<tr><td>brk</td><td>214</td><td>12</td><td>214</td></tr>
+<tr><td>mmap</td><td>222</td><td>9</td><td>222</td></tr>
+</tbody>
+</table>
+
+<h3>Making a Syscall in Assembly</h3>
+<div class="code-block"><span class="comment"># --- RISC-V: write(1, msg, 14) then exit(0) ---</span>
+<span class="keyword">li</span>   <span class="reg">a7</span>, <span class="number">64</span>        <span class="comment"># syscall number: write = 64</span>
+<span class="keyword">li</span>   <span class="reg">a0</span>, <span class="number">1</span>         <span class="comment"># fd = stdout</span>
+<span class="keyword">la</span>   <span class="reg">a1</span>, msg        <span class="comment"># buffer</span>
+<span class="keyword">li</span>   <span class="reg">a2</span>, <span class="number">14</span>        <span class="comment"># length</span>
+<span class="keyword">ecall</span>                 <span class="comment"># trap into kernel</span>
+
+<span class="keyword">li</span>   <span class="reg">a7</span>, <span class="number">93</span>        <span class="comment"># syscall number: exit = 93</span>
+<span class="keyword">li</span>   <span class="reg">a0</span>, <span class="number">0</span>         <span class="comment"># status = 0</span>
+<span class="keyword">ecall</span>
+
+<span class="comment"># --- x86-64: write(1, msg, 14) then exit(0) ---</span>
+<span class="keyword">mov</span>  <span class="reg">rax</span>, <span class="number">1</span>         <span class="comment"># syscall number: write = 1</span>
+<span class="keyword">mov</span>  <span class="reg">rdi</span>, <span class="number">1</span>         <span class="comment"># fd = stdout</span>
+<span class="keyword">mov</span>  <span class="reg">rsi</span>, msg        <span class="comment"># buffer</span>
+<span class="keyword">mov</span>  <span class="reg">rdx</span>, <span class="number">14</span>        <span class="comment"># length</span>
+<span class="keyword">syscall</span>                <span class="comment"># trap into kernel</span>
+
+<span class="keyword">mov</span>  <span class="reg">rax</span>, <span class="number">60</span>        <span class="comment"># syscall number: exit = 60</span>
+<span class="keyword">xor</span>  <span class="reg">rdi</span>, <span class="reg">rdi</span>      <span class="comment"># status = 0</span>
+<span class="keyword">syscall</span></div>
+
+<!-- ============================================================ -->
+<h2 id="ch18">18. Quick Reference Card</h2>
+
+<h3>Common Patterns Across All ISAs</h3>
+
+<h4>Function Call</h4>
+<div class="code-block"><span class="comment"># RISC-V</span>          <span class="comment"># ARM64</span>           <span class="comment"># x86-64</span>
+<span class="keyword">call</span> func        <span class="keyword">bl</span> func           <span class="keyword">call</span> func
+<span class="keyword">ret</span>              <span class="keyword">ret</span>               <span class="keyword">ret</span></div>
+
+<h4>Loop (sum 1 to 10)</h4>
+<div class="code-block"><span class="comment"># RISC-V</span>
+<span class="keyword">li</span>   <span class="reg">t0</span>, <span class="number">0</span>          <span class="comment"># sum = 0</span>
+<span class="keyword">li</span>   <span class="reg">t1</span>, <span class="number">1</span>          <span class="comment"># i = 1</span>
+loop:
+<span class="keyword">bge</span>  <span class="reg">t1</span>, <span class="number">11</span>, done
+<span class="keyword">add</span>  <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="reg">t1</span>
+<span class="keyword">addi</span> <span class="reg">t1</span>, <span class="reg">t1</span>, <span class="number">1</span>
+<span class="keyword">j</span>    loop
+done:</div>
+
+<h4>Stack Frame Setup</h4>
+<div class="code-block"><span class="comment"># RISC-V</span>                    <span class="comment"># ARM64</span>
+<span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, -<span class="number">16</span>          <span class="keyword">stp</span>  <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>, -<span class="number">16</span>]!
+<span class="keyword">sd</span>   <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)             <span class="keyword">mov</span>  <span class="reg">x29</span>, <span class="reg">sp</span>
+<span class="keyword">sd</span>   <span class="reg">s0</span>, <span class="number">0</span>(<span class="reg">sp</span>)
+<span class="comment"># ... body ...</span>
+<span class="keyword">ld</span>   <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)             <span class="keyword">ldp</span>  <span class="reg">x29</span>, <span class="reg">x30</span>, [<span class="reg">sp</span>], <span class="number">16</span>
+<span class="keyword">ld</span>   <span class="reg">s0</span>, <span class="number">0</span>(<span class="reg">sp</span>)             <span class="keyword">ret</span>
+<span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">16</span>
+<span class="keyword">ret</span></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Study Tip</div>
+<p style="margin:0">The best way to learn assembly is to <strong>write it</strong>. Open the
+<a href="simulator/main.html">Compiler Explorer simulator</a>, type C code, and see what
+assembly the compiler generates. Then try modifying the assembly and running it.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Assembly Handbook - August 2026<br>
+Use the sidebar to navigate. Use the search box to find topics.
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = this.dataset.target;
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      // Hide section if all items hidden
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../sidebar.js"></script>
+</body>
+</html>

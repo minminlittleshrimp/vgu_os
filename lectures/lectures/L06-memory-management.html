@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Memory Management - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Memory Management</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Physical allocation . Sv39 page tables . kernel/user address spaces . copyin/copyout</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:820px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How does xv6 allocate physical memory, how does Sv39 three-level paging translate virtual to physical addresses, and how do kernel/user address spaces and copyin/copyout enforce isolation?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION BREAK - PHYSICAL MEMORY -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>Physical Memory Allocation</h2>
+<p>kalloc, kfree, and the free list</p>
+</div>
+
+<!-- SLIDE 3: PHYSICAL MEMORY LAYOUT -->
+<div class="slide">
+<h2 class="st">Physical memory layout</h2>
+<div class="cols cols-2">
+<div>
+<div class="block"><h4>From <code>memlayout.h</code></h4>
+<ul>
+<li><code>KERNBASE = 0x80000000</code> - start of kernel in RAM</li>
+<li><code>PHYSTOP = KERNBASE + 128*1024*1024</code> (128 MB) - end of managed RAM</li>
+<li>Physical memory from <code>end</code> (end of kernel image) to <code>PHYSTOP</code> is managed by <code>kalloc.c</code></li>
+<li>Below <code>KERNBASE</code> is I/O space (UART, VIRTIO, PLIC)</li>
+</ul>
+</div>
+<div class="block note"><h4>Why 0x80000000?</h4><p>On RISC-V (QEMU), RAM starts at <code>0x80000000</code>. The first part holds the kernel image (loaded by the bootloader). Everything after <code>end</code> is free for <code>kalloc()</code> to hand out as 4 KB pages.</p></div>
+</div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- Memory map vertical -->
+<rect class="cl-bad" x="120" y="20" width="280" height="50" rx="8"/>
+<text class="cl-title" x="260" y="40">Kernel code &amp; data</text>
+<text class="cl-small" x="260" y="56">KERNBASE -> end</text>
+<rect class="cl-tag" x="120" y="80" width="280" height="120" rx="8"/>
+<text class="cl-title" x="260" y="130">Free pages (kalloc pool)</text>
+<text class="cl-small" x="260" y="148">managed by kalloc.c</text>
+<text class="cl-small" x="260" y="164">4 KB each, linked list</text>
+<rect class="cl-box" x="120" y="210" width="280" height="50" rx="8"/>
+<text class="cl-title" x="260" y="230">Beyond PHYSTOP</text>
+<text class="cl-small" x="260" y="246">unmanaged / device</text>
+<!-- Address labels -->
+<text class="cl-label" x="20" y="45">0x80000000</text>
+<text class="cl-label" x="20" y="95">end</text>
+<text class="cl-label" x="20" y="235">0x88000000</text>
+<text class="cl-label" x="20" y="265">PHYSTOP</text>
+<!-- Arrows -->
+<path class="cl-arr" d="M100 45 H120" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M100 95 H120" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M100 235 H120" marker-end="url(#a1)"/>
+</svg>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: KALLOC / KFREE -->
+<div class="slide">
+<h2 class="st">kalloc / kfree - the free list</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">kalloc.c - core allocator</p>
+<pre><code class="language-c">struct run {
+  struct run *next;
+};
+
+struct {
+  struct spinlock lock;
+  struct run *freelist;
+} kmem;
+
+void *
+kalloc(void) {
+  struct run *r;
+  acquire(&amp;kmem.lock);
+  r = kmem.freelist;
+  if (r)
+    kmem.freelist = r->next;
+  release(&amp;kmem.lock);
+  if (r)
+    memset(r, 5, PGSIZE); // junk fill
+  return (void*)r;
+}
+
+void
+kfree(void *pa) {
+  struct run *r;
+  r = (struct run*)pa;
+  memset(r, 1, PGSIZE);  // junk fill
+  acquire(&amp;kmem.lock);
+  r->next = kmem.freelist;
+  kmem.freelist = r;
+  release(&amp;kmem.lock);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>How it works</h4>
+<ul>
+<li><code>kalloc()</code> - acquire lock, pop first page from <code>freelist</code>, <code>memset</code> to <code>0x05</code>, return pointer.</li>
+<li><code>kfree()</code> - <code>memset</code> to <code>0x01</code>, push page back onto <code>freelist</code> head.</li>
+<li><code>kinit()</code> calls <code>freerange(end, PHYSTOP)</code> - adds every 4 KB page between <code>end</code> and <code>PHYSTOP</code> to the free list.</li>
+<li>One global <code>spinlock</code> protects the list.</li>
+</ul>
+</div>
+<div class="block ok"><h4>Simple by design</h4><p>The allocator is a single linked list of 4 KB pages. No coalescing, no size classes - every allocation is exactly one page. This is fine for a teaching OS.</p></div>
+<div class="block note"><h4>PGSIZE = 4096</h4><p>From <code>riscv.h</code>: <code>PGSIZE = 4096</code>, <code>PGSHIFT = 12</code>. Every page is 4 KB, aligned to 4 KB.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 5: WHY JUNK FILL -->
+<div class="slide">
+<h2 class="st">Why junk fill?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn"><h4>kalloc fills with 0x05</h4><p>When <code>kalloc()</code> returns a page, it fills it with <code>0x05</code> bytes. If you see <code>0x05050505</code> in a debugger, you are reading <strong>freshly allocated but uninitialized</strong> memory.</p></div>
+<div class="block warn"><h4>kfree fills with 0x01</h4><p>When <code>kfree()</code> reclaims a page, it fills it with <code>0x01</code> bytes. If you see <code>0x01010101</code> in a pointer, you are reading <strong>freed memory</strong> - a use-after-free bug.</p></div>
+</div>
+<div>
+<div class="block ok"><h4>Debugging aid</h4><p>These junk patterns are <strong>not</strong> required for correctness. They exist to make bugs visible. In a debugger or crash dump, the pattern immediately tells you the state of the memory.</p></div>
+<div class="block note"><h4>Real-world analogy</h4><p>Linux uses <code>0x6b</code> for allocated and <code>0x6a</code> for freed (KASAN/KMEMLEAK). Same idea: recognizable poison patterns catch dangling references and uninitialized reads.</p></div>
+<div class="mono-box">
+<span class="r">0x05050505</span> -> freshly allocated (uninitialized)<br>
+<span class="r">0x01010101</span> -> freed (use-after-free!)
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION BREAK - SV39 -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>Sv39 Page Tables</h2>
+<p>Three-level paging on RISC-V</p>
+</div>
+
+<!-- SLIDE 7: SV39 THREE-LEVEL PAGE TABLE -->
+<div class="slide">
+<h2 class="st">Sv39 three-level page table</h2>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- VA bits -->
+<rect class="cl-bad" x="40" y="30" width="90" height="40" rx="6"/>
+<text class="cl-title" x="85" y="50">VPN[2]</text>
+<text class="cl-small" x="85" y="64">bits 30-38</text>
+<rect class="cl-key" x="135" y="30" width="90" height="40" rx="6"/>
+<text class="cl-title" x="180" y="50">VPN[1]</text>
+<text class="cl-small" x="180" y="64">bits 21-29</text>
+<rect class="cl-data" x="230" y="30" width="90" height="40" rx="6"/>
+<text class="cl-title" x="275" y="50">VPN[0]</text>
+<text class="cl-small" x="275" y="64">bits 12-20</text>
+<rect class="cl-tag" x="325" y="30" width="150" height="40" rx="6"/>
+<text class="cl-title" x="400" y="50">offset</text>
+<text class="cl-small" x="400" y="64">bits 0-11 (12 bits)</text>
+<!-- Labels -->
+<text class="cl-label" x="85" y="22">9 bits</text>
+<text class="cl-label" x="180" y="22">9 bits</text>
+<text class="cl-label" x="275" y="22">9 bits</text>
+<text class="cl-label" x="400" y="22">12 bits</text>
+<!-- Level walk -->
+<rect class="cl-box" x="40" y="110" width="200" height="50" rx="8"/>
+<text class="cl-title" x="140" y="130">L2 table (512 PTEs)</text>
+<text class="cl-small" x="140" y="146">indexed by VPN[2]</text>
+<path class="cl-arr" d="M140 160 V185" marker-end="url(#a2)"/>
+<rect class="cl-box" x="40" y="185" width="200" height="50" rx="8"/>
+<text class="cl-title" x="140" y="205">L1 table (512 PTEs)</text>
+<text class="cl-small" x="140" y="221">indexed by VPN[1]</text>
+<path class="cl-arr" d="M140 235 V260" marker-end="url(#a2)"/>
+<rect class="cl-box" x="40" y="260" width="200" height="50" rx="8"/>
+<text class="cl-title" x="140" y="280">L0 table (512 PTEs)</text>
+<text class="cl-small" x="140" y="296">indexed by VPN[0]</text>
+<path class="cl-arr" d="M140 310 V335" marker-end="url(#a2)"/>
+<rect class="cl-final" x="40" y="335" width="200" height="20" rx="6"/>
+<text class="cl-title" style="fill:#fff" x="140" y="345">PTE -> physical page</text>
+</svg>
+</div>
+</div>
+<div>
+<div class="block"><h4>39-bit virtual address</h4>
+<p>Sv39 splits a 39-bit VA into three 9-bit VPN fields and a 12-bit offset. Each 9-bit index selects one of <strong>512 entries</strong> in a page table page.</p></div>
+<div class="block ok"><h4>From <code>riscv.h</code></h4>
+<p><code>PX(level, va)</code> extracts the 9-bit index for a given level:<br>
+<code>(((va) >> 12 + (level)*9) &amp; 0x1FF)</code></p>
+</div>
+<div class="block note"><h4>Page table size</h4>
+<p>Each page table = 512 PTEs x 8 bytes = <strong>4096 bytes</strong> = one 4 KB page. So every page table itself occupies exactly one physical page.</p></div>
+<div class="block"><h4>Address space size</h4>
+<ul>
+<li>VA range: <code>0</code> to <code>2^39 - 1</code> = 512 GB</li>
+<li>Pages per table: 512 x 512 x 512 = 134M leaf PTEs</li>
+<li>Full table tree: 3 pages deep, allocated lazily</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: PAGE TABLE ENTRY -->
+<div class="slide">
+<h2 class="st">Page table entry (PTE)</h2>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg">
+<!-- PTE format: 64-bit -->
+<rect class="cl-box" x="20" y="40" width="60" height="50" rx="6"/>
+<text class="cl-title" x="50" y="60">reserved</text>
+<text class="cl-small" x="50" y="76">10 bits</text>
+<rect class="cl-data" x="85" y="40" width="280" height="50" rx="6"/>
+<text class="cl-title" x="225" y="60">PPN (physical page number)</text>
+<text class="cl-small" x="225" y="76">44 bits</text>
+<rect class="cl-bad" x="370" y="40" width="130" height="50" rx="6"/>
+<text class="cl-title" x="435" y="60">flags</text>
+<text class="cl-small" x="435" y="76">10 bits</text>
+<!-- Bit labels -->
+<text class="cl-label" x="20" y="30">bit 63</text>
+<text class="cl-label" x="370" y="30">bit 9</text>
+<text class="cl-label" x="470" y="30">bit 0</text>
+<!-- Flag table -->
+<rect class="cl-key" x="20" y="120" width="480" height="140" rx="8"/>
+<text class="cl-title" x="260" y="138">PTE flags (from riscv.h)</text>
+<text class="cl-small" style="text-anchor:start" x="40" y="160">PTE_V  = 1 &lt;&lt; 0  (valid)</text>
+<text class="cl-small" style="text-anchor:start" x="40" y="180">PTE_R  = 1 &lt;&lt; 1  (readable)</text>
+<text class="cl-small" style="text-anchor:start" x="40" y="200">PTE_W  = 1 &lt;&lt; 2  (writable)</text>
+<text class="cl-small" style="text-anchor:start" x="40" y="220">PTE_X  = 1 &lt;&lt; 3  (executable)</text>
+<text class="cl-small" style="text-anchor:start" x="40" y="240">PTE_U  = 1 &lt;&lt; 4  (user-accessible)</text>
+</svg>
+</div>
+</div>
+<div>
+<div class="block"><h4>PTE format (64 bits)</h4>
+<ul>
+<li><strong>Flags</strong> (bits 0-9): V, R, W, X, U, plus RISC-V reserved bits</li>
+<li><strong>PPN</strong> (bits 10-53): physical page number - the upper 44 bits of the physical address, shifted right by 12</li>
+<li><strong>Reserved</strong> (bits 54-63): unused by Sv39</li>
+</ul>
+</div>
+<div class="block ok"><h4>Key macros (from <code>riscv.h</code>)</h4>
+<p><code>PA2PTE(pa)</code> = <code>((pa) >> 12) &lt;&lt; 10</code><br>
+<code>PTE2PA(pte)</code> = <code>(pte >> 10) &lt;&lt; 12</code><br>
+<code>MAKE_SATP(pagetable)</code> = <code>SATP_SV39 | ((pagetable) >> 12)</code></p>
+</div>
+<div class="block note"><h4>SATP register</h4><p>The <code>satp</code> CSR holds the mode (Sv39 = 8) and the physical address of the root (L2) page table, right-shifted by 12. Writing <code>satp</code> switches address spaces.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 9: WALK FUNCTION -->
+<div class="slide">
+<h2 class="st">walk() - the core translation function</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - walk()</p>
+<pre><code class="language-c">pte_t *
+walk(pagetable_t pagetable,
+     uint64 va, int alloc)
+{
+  if (va >= MAXVA)
+    panic("walk");
+
+  for (int level = 2; level > 0; level--) {
+    pte_t *pte = &amp;pagetable[PX(level, va)];
+    if (*pte &amp; PTE_V) {
+      // follow to next level
+      pagetable = (pagetable_t)PTE2PA(*pte);
+    } else {
+      if (!alloc ||
+          (pagetable = (pte_t*)kalloc()) == 0)
+        return 0;
+      memset(pagetable, 0, PGSIZE);
+      *pte = PA2PTE(pagetable) | PTE_V;
+    }
+  }
+  // return pointer to L0 PTE
+  return &amp;pagetable[PX(0, va)];
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What walk() does</h4>
+<ul>
+<li>Iterates from level 2 down to level 1.</li>
+<li>At each level, looks up <code>pagetable[PX(level, va)]</code>.</li>
+<li>If the PTE is valid (<code>PTE_V</code>), follows it to the next-level table.</li>
+<li>If not valid and <code>alloc</code> is set, <code>kalloc()</code>s a new page, zeros it, and installs it as a valid PTE.</li>
+<li>Returns a <strong>pointer to the level-0 PTE</strong> - the leaf entry that maps the page.</li>
+</ul>
+</div>
+<div class="block warn"><h4>Kernel-only function</h4><p><code>walk()</code> is called <strong>only in supervisor mode</strong>. User code cannot invoke it directly - the hardware MMU does the same walk internally on every memory access.</p></div>
+<div class="block ok"><h4>Why it matters</h4><p>This is the software equivalent of what the MMU does in hardware. <code>copyin</code>, <code>copyout</code>, and <code>mappages</code> all rely on <code>walk()</code> to find or create PTEs.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 10: MAPPAGES -->
+<div class="slide">
+<h2 class="st">mappages() - mapping VA to PA</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - mappages()</p>
+<pre><code class="language-c">int
+mappages(pagetable_t pagetable,
+         uint64 va, uint64 size,
+         uint64 pa, int perm)
+{
+  uint64 a, last;
+  pte_t *pte;
+
+  a = PGROUNDDOWN(va);
+  last = PGROUNDDOWN(va + size - 1);
+  for (;;) {
+    if ((pte = walk(pagetable, a, 1)) == 0)
+      return -1;
+    if (*pte &amp; PTE_V)
+      panic("mappages: remap");
+    *pte = PA2PTE(pa) | perm | PTE_V;
+    if (a == last)
+      break;
+    a += PGSIZE;
+    pa += PGSIZE;
+  }
+  return 0;
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What mappages() does</h4>
+<ul>
+<li>Maps a VA range <code>[va, va+size)</code> to a PA range starting at <code>pa</code>.</li>
+<li>For each 4 KB page in the range: calls <code>walk()</code> to get (or create) the L0 PTE.</li>
+<li>Sets <code>*pte = PA2PTE(pa) | perm | PTE_V</code>.</li>
+<li><strong>Panics on remap</strong> - if the PTE is already valid, that's a bug (double mapping).</li>
+</ul>
+</div>
+<div class="block ok"><h4>Permission parameter</h4><p><code>perm</code> is a combination of <code>PTE_R | PTE_W | PTE_X | PTE_U</code>. <code>PTE_V</code> is always OR'd in by <code>mappages</code> itself.</p></div>
+<div class="block note"><h4>PGROUNDDOWN</h4><p><code>PGROUNDDOWN(a)</code> = <code>a &amp; ~(PGSIZE-1)</code> - aligns down to a page boundary. <code>PGROUNDUP</code> aligns up. Both ensure page-aligned addresses.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 11: SECTION BREAK - KERNEL ADDRESS SPACE -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Kernel Address Space</h2>
+<p>Direct-mapped, with device and trampoline regions</p>
+</div>
+
+<!-- SLIDE 12: KERNEL PAGE TABLE -->
+<div class="slide">
+<h2 class="st">Kernel page table - kvmmake()</h2>
+<div class="cols cols-2">
+<div>
+<div class="block"><h4>kvmmake() creates the kernel page table</h4>
+<p>Called once during boot (<code>kvminit()</code>). Creates a single page table shared by all kernel-mode code.</p>
+</div>
+<table class="tbl">
+<tr><th>Region</th><th>VA range</th><th>Perm</th></tr>
+<tr><td>UART0</td><td>0x10000000</td><td>R | W</td></tr>
+<tr><td>VIRTIO0</td><td>0x10001000</td><td>R | W</td></tr>
+<tr><td>PLIC</td><td>0x0C000000</td><td>R | W</td></tr>
+<tr><td>Kernel text</td><td>KERNBASE -> etext</td><td>R | X</td></tr>
+<tr><td>Kernel data</td><td>etext -> PHYSTOP</td><td>R | W</td></tr>
+<tr><td>Trampoline</td><td>TRAMPOLINE</td><td>R | X</td></tr>
+</table>
+</div>
+<div>
+<div class="block ok"><h4>Direct mapping (identity map)</h4>
+<p>Most of kernel memory is <strong>direct-mapped</strong>: VA == PA. So <code>0x80000000</code> in kernel VA points to the same physical address. This simplifies kernel code - no translation needed for most pointers.</p></div>
+<div class="block note"><h4>Kernel text: R | X (no W)</h4>
+<p>Kernel code is <strong>read + execute</strong> but not writable. This prevents accidental corruption of kernel instructions. The data section is <strong>read + write</strong> but not executable.</p></div>
+<div class="block warn"><h4>Trampoline</h4>
+<p><code>TRAMPOLINE</code> = <code>MAXVA - PGSIZE</code>. It maps to the <code>trampoline.S</code> code page, used for user/kernel transitions. Mapped with <code>R | X</code> in both kernel and user page tables.</p></div>
+<div class="block"><h4>Device registers</h4>
+<p>UART0, VIRTIO0, PLIC are memory-mapped I/O. They are mapped with <code>R | W</code> so the kernel can read/write device registers at their physical addresses.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: KERNEL VIRTUAL ADDRESS SPACE -->
+<div class="slide">
+<h2 class="st">Kernel virtual address space</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- Vertical address space -->
+<rect class="cl-bad" x="200" y="20" width="300" height="60" rx="8"/>
+<text class="cl-title" x="350" y="42">Kernel text (R | X)</text>
+<text class="cl-small" x="350" y="60">KERNBASE -> etext</text>
+<rect class="cl-key" x="200" y="90" width="300" height="60" rx="8"/>
+<text class="cl-title" x="350" y="112">Kernel data (R | W)</text>
+<text class="cl-small" x="350" y="130">etext -> PHYSTOP</text>
+<rect class="cl-lane" x="200" y="160" width="300" height="40" rx="8"/>
+<text class="cl-small" x="350" y="180">free memory (direct-mapped)</text>
+<rect class="cl-aad" x="200" y="210" width="300" height="50" rx="8"/>
+<text class="cl-title" x="350" y="230">Per-process kernel stacks</text>
+<text class="cl-small" x="350" y="248">KSTACK(p) for each proc</text>
+<rect class="cl-data" x="200" y="270" width="300" height="40" rx="8"/>
+<text class="cl-title" x="350" y="290">TRAPFRAME</text>
+<rect class="cl-tag" x="200" y="320" width="300" height="40" rx="8"/>
+<text class="cl-title" x="350" y="340">TRAMPOLINE (MAXVA - PGSIZE)</text>
+<!-- Address labels -->
+<text class="cl-label" x="20" y="45">0x80000000</text>
+<text class="cl-label" x="20" y="115">etext</text>
+<text class="cl-label" x="20" y="185">PHYSTOP</text>
+<text class="cl-label" x="20" y="290">TRAPFRAME</text>
+<text class="cl-label" x="20" y="360">MAXVA</text>
+<!-- Right side: KSTACK formula -->
+<rect class="cl-box" x="560" y="200" width="480" height="120" rx="8"/>
+<text class="cl-title" x="800" y="225">Per-process kernel stack layout</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="250">KSTACK(p) = TRAMPOLINE - (p+1) * 2 * PGSIZE</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="275">Each proc gets 2 pages (8 KB) for kernel stack</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="295">Guard page between stacks catches overflow</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="315">p = process index (0, 1, 2, ... NPROC-1)</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 14: SECTION BREAK - USER ADDRESS SPACE -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>User Address Space</h2>
+<p>Per-process page tables, sbrk, fork copy</p>
+</div>
+
+<!-- SLIDE 15: USER PAGE TABLE -->
+<div class="slide">
+<h2 class="st">User page table - proc_pagetable()</h2>
+<div class="cols cols-2">
+<div>
+<div class="block"><h4>proc_pagetable() creates a per-process page table</h4>
+<p>Each process gets its <strong>own page table</strong>. This is how isolation works - process A's VA 0x1000 maps to a different physical page than process B's VA 0x1000.</p>
+</div>
+<div class="block"><h4>What it maps</h4>
+<ul>
+<li><strong>TRAMPOLINE</strong> - <code>R | X</code>, <strong>no PTE_U</strong> (kernel-only). Same trampoline code as kernel table.</li>
+<li><strong>TRAPFRAME</strong> - <code>R | W</code>, <strong>no PTE_U</strong>. Per-process trapframe page (saved registers on syscall/trap).</li>
+<li><strong>User text</strong> - <code>R | X | U</code>. The program's instructions.</li>
+<li><strong>User data/heap</strong> - <code>R | W | U</code>. Globals, then heap (grows via <code>sbrk</code>).</li>
+<li><strong>User stack</strong> - <code>R | W | U</code>. At the top of the user VA, just below TRAPFRAME.</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block ok"><h4>Why no PTE_U on trampoline/trapframe?</h4>
+<p>The trampoline and trapframe pages are <strong>kernel-managed</strong>. If they had <code>PTE_U</code>, user code could read or corrupt saved register state. The <code>PTE_U</code> bit is the key isolation mechanism - without it, only supervisor mode can access that page.</p></div>
+<div class="block note"><h4>proc_pagetable() source</h4>
+<p>Allocates a root page table via <code>uvmcreate()</code>, then <code>mappages()</code> the trampoline and trapframe pages. If any step fails, it <code>uvmfree()</code>s and returns 0.</p></div>
+<div class="block warn"><h4>Switching address spaces</h4>
+<p><code>proc_pagetable()</code> returns the root PA. The scheduler writes it into <code>satp</code> via <code>w_satp()</code> + <code>sfence.vma</code> to flush TLB. This is the actual "context switch" for memory.</p></div>
+<div class="block note"><h4>RISC-V super pages (not used by xv6)</h4>
+<p>RISC-V Sv39 supports <strong>super pages</strong>: 2 MB (leaf at L1) and 1 GB (leaf at L2). These map large regions with a single PTE, reducing TLB pressure. xv6 does <strong>not</strong> use super pages - all pages are 4 KB - but Linux and other production OSes do.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: USER MEMORY LAYOUT -->
+<div class="slide">
+<h2 class="st">User memory layout</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- Vertical address space -->
+<rect class="cl-bad" x="200" y="20" width="300" height="50" rx="8"/>
+<text class="cl-title" x="350" y="40">text (R | X | U)</text>
+<text class="cl-small" x="350" y="58">program instructions</text>
+<rect class="cl-key" x="200" y="80" width="300" height="50" rx="8"/>
+<text class="cl-title" x="350" y="100">data (R | W | U)</text>
+<text class="cl-small" x="350" y="118">globals, bss</text>
+<rect class="cl-lane" x="200" y="140" width="300" height="80" rx="8"/>
+<text class="cl-title" x="350" y="175">heap (grows up)</text>
+<text class="cl-small" x="350" y="193">sbrk(n) -> uvmalloc()</text>
+<rect class="cl-bad" x="200" y="230" width="300" height="30" rx="8"/>
+<text class="cl-small" style="fill:#ef4444" x="350" y="245">guard page (unmapped)</text>
+<rect class="cl-tag" x="200" y="270" width="300" height="50" rx="8"/>
+<text class="cl-title" x="350" y="290">user stack (R | W | U)</text>
+<text class="cl-small" x="350" y="308">grows down</text>
+<rect class="cl-data" x="200" y="330" width="300" height="30" rx="8"/>
+<text class="cl-title" x="350" y="345">TRAPFRAME</text>
+<rect class="cl-aad" x="200" y="370" width="300" height="25" rx="8"/>
+<text class="cl-title" x="350" y="383">TRAMPOLINE</text>
+<!-- Address labels -->
+<text class="cl-label" x="20" y="45">0</text>
+<text class="cl-label" x="20" y="105">data start</text>
+<text class="cl-label" x="20" y="180">heap -></text>
+<text class="cl-label" x="20" y="295">USERSTACK</text>
+<text class="cl-label" x="20" y="383">MAXVA</text>
+<!-- Right side: sbrk -->
+<rect class="cl-box" x="560" y="140" width="480" height="160" rx="8"/>
+<text class="cl-title" x="800" y="165">sbrk(n) - grow/shrink heap</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="190">sbrk(n): grow heap by n bytes</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="210">  n > 0: uvmalloc() - alloc + map pages</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="230">  n < 0: uvmdealloc() - unmap + free pages</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="255">Returns old heap break (top of heap)</text>
+<text class="cl-small" style="text-anchor:start" x="580" y="280">Guard page prevents stack/heap collision</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 17: UVMALLOC / UVMDEALLOC -->
+<div class="slide">
+<h2 class="st">uvmalloc / uvmdealloc - sbrk internals</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - uvmalloc()</p>
+<pre><code class="language-c">uint64
+uvmalloc(pagetable_t pagetable,
+         uint64 oldsz, uint64 newsz,
+         int xperm)
+{
+  char *mem;
+  uint64 a, last;
+
+  a = PGROUNDUP(oldsz);
+  last = PGROUNDUP(newsz - 1);
+  for (;;) {
+    if (a >= last) break;
+    mem = kalloc();
+    if (mem == 0) {
+      uvmdealloc(pagetable, a, oldsz, 0);
+      return 0;
+    }
+    memset(mem, 0, PGSIZE);
+    if (mappages(pagetable, a, PGSIZE,
+                 (uint64)mem,
+                 PTE_R|PTE_U|xperm) != 0) {
+      kfree(mem);
+      uvmdealloc(pagetable, a, oldsz, 0);
+      return 0;
+    }
+    a += PGSIZE;
+  }
+  return newsz;
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>uvmalloc()</h4>
+<ul>
+<li>Grows the process from <code>oldsz</code> to <code>newsz</code>.</li>
+<li>For each new page: <code>kalloc()</code> a 4 KB page, <code>memset</code> to 0, <code>mappages()</code> with <code>PTE_R | PTE_U | xperm</code>.</li>
+<li><code>xperm</code> is typically <code>PTE_X</code> for text, 0 for data.</li>
+<li>If any allocation fails, rolls back via <code>uvmdealloc()</code>.</li>
+</ul>
+</div>
+<div class="block warn"><h4>uvmdealloc()</h4>
+<ul>
+<li>Shrinks from <code>oldsz</code> to <code>newsz</code>.</li>
+<li>For each page removed: <code>uvmunmap()</code> (clears PTE), then <code>kfree()</code> (returns to free list).</li>
+<li><code>sbrk(n)</code> calls <code>growproc(n)</code> which calls these two.</li>
+</ul>
+</div>
+<div class="block ok"><h4>Zero-fill guarantee</h4>
+<p><code>uvmalloc</code> always <code>memset</code>s new pages to 0. This ensures new heap memory doesn't leak data from a previous process - important for security.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: UVMCOPY (FORK) -->
+<div class="slide">
+<h2 class="st">uvmcopy() - why fork is expensive</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - uvmcopy()</p>
+<pre><code class="language-c">int
+uvmcopy(pagetable_t old, pagetable_t new,
+        uint64 sz)
+{
+  pte_t *pte;
+  uint64 pa, i;
+  char *mem;
+
+  for (i = 0; i < sz; i += PGSIZE) {
+    if ((pte = walk(old, i, 0)) == 0)
+      panic("uvmcopy: pte");
+    if ((*pte &amp; PTE_V) == 0)
+      panic("uvmcopy: page not present");
+    pa = PTE2PA(*pte);
+    if ((mem = kalloc()) == 0)
+      goto err;
+    memmove(mem, (char*)pa, PGSIZE);
+    if (mappages(new, i, PGSIZE,
+                 (uint64)mem,
+                 PTE_R|PTE_W|PTE_X|PTE_U) != 0) {
+      kfree(mem);
+      goto err;
+    }
+  }
+  return 0;
+
+err:
+  uvmunmap(new, 0, i / PGSIZE, 1);
+  return -1;
+}</code></pre>
+</div>
+<div>
+<div class="block warn"><h4>Deep copy - every page is copied</h4>
+<p><code>uvmcopy()</code> is called by <code>fork()</code>. For <strong>every valid page</strong> in the parent's page table, it:</p>
+<ul>
+<li><code>walk()</code> to find the parent PTE.</li>
+<li><code>kalloc()</code> a new physical page for the child.</li>
+<li><code>memmove()</code> copies all 4 KB from parent to child.</li>
+<li><code>mappages()</code> installs the new PTE in the child's table with the same flags.</li>
+</ul>
+</div>
+<div class="block ok"><h4>Why this is expensive</h4>
+<p>If a process has 1000 pages (4 MB), <code>fork()</code> copies all 1000 pages. This is <strong>O(n)</strong> in the number of pages. For large processes, <code>fork()</code> is dominated by this copy.</p></div>
+<div class="block note"><h4>Copy-on-write (CoW)</h4>
+<p>Real OSes use <strong>copy-on-write</strong>: both parent and child share the same physical pages (read-only), and only copy when one of them writes. xv6 does <strong>not</strong> implement CoW - it always copies eagerly. This is a known simplification for teaching.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 19: SECTION BREAK - DATA TRANSFER -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>User/Kernel Data Transfer</h2>
+<p>copyin, copyout, copyinstr</p>
+</div>
+
+<!-- SLIDE 20: COPYIN / COPYOUT -->
+<div class="slide">
+<h2 class="st">copyin / copyout - safe data transfer</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - copyin()</p>
+<pre><code class="language-c">int
+copyin(pagetable_t pagetable,
+       char *dst, uint64 srcva, uint64 len)
+{
+  uint64 n, va0, pa0;
+
+  while (len > 0) {
+    va0 = PGROUNDDOWN(srcva);
+    pa0 = PTE2PA(*walk(pagetable, va0, 0));
+    n = PGSIZE - (srcva - va0);
+    if (n > len) n = len;
+    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+
+    len -= n;
+    dst += n;
+    srcva += n;
+  }
+  return 0;
+}</code></pre>
+<p class="code-label" style="margin-top:8px">vm.c - copyout()</p>
+<pre><code class="language-c">int
+copyout(pagetable_t pagetable,
+        uint64 dstva, char *src, uint64 len)
+{
+  uint64 n, va0, pa0;
+
+  while (len > 0) {
+    va0 = PGROUNDDOWN(dstva);
+    pa0 = PTE2PA(*walk(pagetable, va0, 0));
+    n = PGSIZE - (dstva - va0);
+    if (n > len) n = len;
+    memmove((void *)(pa0 + (dstva - va0)), src, n);
+
+    len -= n;
+    src += n;
+    dstva += n;
+  }
+  return 0;
+}</code></pre>
+</div>
+<div>
+<div class="block warn"><h4>Never dereference user pointers directly!</h4>
+<p>The kernel runs with the <strong>kernel page table</strong> active. A user VA (e.g. <code>0x1000</code>) in the kernel's address space points to <strong>completely different</strong> physical memory - or may be unmapped. Dereferencing it is a security hole or a crash.</p></div>
+<div class="block ok"><h4>copyin()</h4>
+<ul>
+<li>Copies <code>len</code> bytes from <strong>user VA</strong> <code>srcva</code> to <strong>kernel buffer</strong> <code>dst</code>.</li>
+<li>Uses <code>walk()</code> to translate each user VA to a PA.</li>
+<li>Handles page boundaries - copies page by page.</li>
+<li>Used by <code>sys_read</code>, <code>sys_exec</code>, etc.</li>
+</ul>
+</div>
+<div class="block ok"><h4>copyout()</h4>
+<ul>
+<li>Copies <code>len</code> bytes from <strong>kernel buffer</strong> <code>src</code> to <strong>user VA</strong> <code>dstva</code>.</li>
+<li>Same page-by-page walk + <code>memmove</code>.</li>
+<li>Used by <code>sys_write</code>, <code>sys_pipe</code>, etc.</li>
+</ul>
+</div>
+<div class="block note"><h4>Security check</h4><p>In real xv6, <code>copyin</code>/<code>copyout</code> also verify the PTE has <code>PTE_U</code> set and the right R/W permissions. The simplified version above omits the error checks for clarity.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: COPYINSTR -->
+<div class="slide">
+<h2 class="st">copyinstr - copying strings from user space</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">vm.c - copyinstr()</p>
+<pre><code class="language-c">int
+copyinstr(pagetable_t pagetable,
+          char *dst, uint64 srcva,
+          uint64 max)
+{
+  uint64 n, va0, pa0;
+  int got_null = 0;
+
+  while (got_null == 0 &amp;&amp; max > 0) {
+    va0 = PGROUNDDOWN(srcva);
+    pa0 = PTE2PA(*walk(pagetable, va0, 0));
+    n = PGSIZE - (srcva - va0);
+    if (n > max) n = max;
+
+    char *p = (char *)(pa0 + (srcva - va0));
+    while (n > 0) {
+      if ((*p = *p) == '\0') {
+        got_null = 1;
+        break;
+      }
+      p++;
+      n--;
+    }
+    max -= n;
+    srcva += n;
+  }
+  return got_null ? 0 : -1;
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What copyinstr() does</h4>
+<ul>
+<li>Copies a <strong>null-terminated string</strong> from user VA <code>srcva</code> to kernel buffer <code>dst</code>.</li>
+<li>Like <code>copyin</code>, but stops at <code>'\0'</code> or <code>max</code> bytes.</li>
+<li>Uses <code>walk()</code> to translate each page, handles page boundaries.</li>
+<li>Returns 0 on success (found <code>'\0'</code>), -1 if <code>max</code> reached without null.</li>
+</ul>
+</div>
+<div class="block ok"><h4>Where it's used</h4>
+<p><code>exec()</code> uses <code>copyinstr</code> to copy <code>argv</code> strings from user space into the kernel, then places them on the new user stack. Also used by <code>sys_open</code>, <code>sys_chdir</code>, etc. to copy path strings.</p></div>
+<div class="block warn"><h4>Why not just strcpy?</h4>
+<p><code>strcpy</code> dereferences the pointer directly. In kernel mode, a user pointer is invalid. <code>copyinstr</code> translates through the <strong>user's page table</strong>, not the kernel's. This is the safe path.</p></div>
+<div class="block note"><h4>max parameter</h4>
+<p><code>max</code> prevents a malicious user from passing an extremely long non-null-terminated string, which could overflow kernel buffers. Always pass <code>MAXPATH</code> (or similar) as the limit.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 22: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key takeaways</h2>
+<div class="tiles tiles-2">
+<div class="tile b"><h4>1. Sv39 three-level paging</h4><p>39-bit VA -> 3 x 9-bit VPN + 12-bit offset. 512 PTEs per table, 4 KB per table. <code>walk()</code> traverses the tree.</p></div>
+<div class="tile g"><h4>2. PTE flags = protection</h4><p>V, R, W, X, U. <code>PTE_U</code> is the user/kernel gate. Kernel pages have no <code>PTE_U</code>; user pages must have it.</p></div>
+<div class="tile o"><h4>3. Kernel = direct-mapped</h4><p>VA == PA for most kernel memory. Device registers and trampoline are separately mapped. One shared kernel page table.</p></div>
+<div class="tile r"><h4>4. User = per-process</h4><p>Each process has its own page table. <code>satp</code> switch = address space switch. <code>sbrk</code> grows/shrinks via <code>uvmalloc</code>/<code>uvmdealloc</code>.</p></div>
+<div class="tile p"><h4>5. fork copies all pages</h4><p><code>uvmcopy()</code> deep-copies every page - O(n) in pages. No copy-on-write in xv6. This is why fork is expensive.</p></div>
+<div class="tile b"><h4>6. Always use copyin/copyout</h4><p>Never dereference user pointers in kernel mode. <code>copyin</code>, <code>copyout</code>, <code>copyinstr</code> translate through the user's page table safely.</p></div>
+</div>
+</div>
+
+<!-- SLIDE 23: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div class="ref-item"><span class="ref-badge">xv6</span><div><h4>xv6 source: kernel/vm.c</h4><p>Virtual memory implementation: kalloc, walk, mappages, uvmalloc, uvmdealloc, uvmcopy, copyin, copyout, copyinstr. <code>https://github.com/mit-pdos/xv6-riscv</code></p></div></div>
+<div class="ref-item"><span class="ref-badge">xv6</span><div><h4>xv6 source: kernel/riscv.h</h4><p>PTE flags (PTE_V, PTE_R, PTE_W, PTE_X, PTE_U), PX() macro, PA2PTE/PTE2PA, MAKE_SATP, PGSIZE, MAXVA.</p></div></div>
+<div class="ref-item"><span class="ref-badge">xv6</span><div><h4>xv6 source: kernel/memlayout.h</h4><p>KERNBASE, PHYSTOP, TRAMPOLINE, TRAPFRAME, KSTACK definitions.</p></div></div>
+<div class="ref-item"><span class="ref-badge">MIT 6.1810</span><div><h4>Lecture 4: Page Tables</h4><p>MIT 6.1810 Operating Systems, 2025. Sv39 paging, kernel/user address spaces, copyin/copyout.</p></div></div>
+<div class="ref-item"><span class="ref-badge">RISC-V</span><div><h4>RISC-V Privileged ISA Manual</h4><p>Sv39 page table format, SATP CSR, sfence.vma instruction. Chapter 4 (Sv39).</p></div></div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 23</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L06 MEMORY MANAGEMENT</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

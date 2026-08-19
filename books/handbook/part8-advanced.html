@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 8: Advanced Topics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item active" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 18: Virtual Machines</div>
+      <a class="nav-item" data-target="sec-18-1"><span class="nav-num">18.1</span>Overview</a>
+      <a class="nav-item" data-target="sec-18-2"><span class="nav-num">18.2</span>History</a>
+      <a class="nav-item" data-target="sec-18-3"><span class="nav-num">18.3</span>Benefits and Features</a>
+      <a class="nav-item" data-target="sec-18-4"><span class="nav-num">18.4</span>Building Blocks</a>
+      <a class="nav-item" data-target="sec-18-5"><span class="nav-num">18.5</span>Types of VMs</a>
+      <a class="nav-item" data-target="sec-18-6"><span class="nav-num">18.6</span>Virtualization and OS Components</a>
+      <a class="nav-item" data-target="sec-18-7"><span class="nav-num">18.7</span>Examples (VMware/JVM)</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 19: Networks &amp; Distributed Systems</div>
+      <a class="nav-item" data-target="sec-19-1"><span class="nav-num">19.1</span>Advantages of Distributed Systems</a>
+      <a class="nav-item" data-target="sec-19-2"><span class="nav-num">19.2</span>Network Structure</a>
+      <a class="nav-item" data-target="sec-19-3"><span class="nav-num">19.3</span>Communication Structure</a>
+      <a class="nav-item" data-target="sec-19-4"><span class="nav-num">19.4</span>Network &amp; Distributed OS</a>
+      <a class="nav-item" data-target="sec-19-5"><span class="nav-num">19.5</span>Design Issues</a>
+      <a class="nav-item" data-target="sec-19-6"><span class="nav-num">19.6</span>Distributed File Systems</a>
+      <a class="nav-item" data-target="sec-19-7"><span class="nav-num">19.7</span>DFS Naming &amp; Transparency</a>
+      <a class="nav-item" data-target="sec-19-8"><span class="nav-num">19.8</span>Remote File Access</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 8: Advanced Topics</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 18–19 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers virtual machines (architecture,
+building blocks, types, examples) and networks/distributed systems (structure,
+communication, distributed file systems).</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-18-1">18.1 Overview</a></li>
+<li><a href="#sec-18-2">18.2 History</a></li>
+<li><a href="#sec-18-3">18.3 Benefits and Features</a></li>
+<li><a href="#sec-18-4">18.4 Building Blocks</a></li>
+<li><a href="#sec-18-5">18.5 Types of Virtual Machines</a></li>
+<li><a href="#sec-18-6">18.6 Virtualization and OS Components</a></li>
+<li><a href="#sec-18-7">18.7 Examples: VMware and JVM</a></li>
+<li><a href="#sec-19-1">19.1 Advantages of Distributed Systems</a></li>
+<li><a href="#sec-19-2">19.2 Network Structure</a></li>
+<li><a href="#sec-19-3">19.3 Communication Structure</a></li>
+<li><a href="#sec-19-4">19.4 Network and Distributed Operating Systems</a></li>
+<li><a href="#sec-19-5">19.5 Design Issues</a></li>
+<li><a href="#sec-19-6">19.6 Distributed File Systems</a></li>
+<li><a href="#sec-19-7">19.7 DFS Naming and Transparency</a></li>
+<li><a href="#sec-19-8">19.8 Remote File Access Methods</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-1">18.1 Overview</h2>
+
+<p>A <strong>virtual machine (VM)</strong> is a software emulation of a computer system
+that provides a complete, isolated environment in which an operating system (or
+application) can run as if it had its own dedicated hardware. The software that creates
+and manages VMs is called a <strong>virtual machine monitor (VMM)</strong> or
+<strong>hypervisor</strong>. The VMM runs on the physical hardware (or on a host OS) and
+allocates resources—CPU, memory, I/O devices—to one or more <em>guest</em> operating
+systems. Each guest believes it is running on real hardware and is unaware that it is
+virtualized.</p>
+
+<p>The fundamental idea of virtualization is <strong>abstraction</strong>: the VMM
+presents each guest with a <em>virtual machine</em>—a virtual CPU, virtual memory,
+virtual disks, and virtual network interfaces. The guest OS uses these virtual resources
+exactly as it would use physical ones. The VMM intercepts the guest's hardware accesses
+and translates them to operations on the real hardware. This indirection allows multiple
+guests to share the same physical hardware safely and efficiently.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Key Virtualization Concepts</div>
+<ul>
+<li><strong>Host</strong>: the physical machine (or the OS running the VMM)</li>
+<li><strong>Guest</strong>: the OS running inside a VM</li>
+<li><strong>Hypervisor / VMM</strong>: the software that creates and manages VMs</li>
+<li><strong>Virtual hardware</strong>: the emulated CPU, memory, and devices presented to the guest</li>
+<li><strong>Trap</strong>: the mechanism by which the guest's privileged operations are caught by the VMM</li>
+</ul>
+</div>
+
+<p>Virtualization relies on the same <strong>privilege levels</strong> that protect the
+kernel from user processes (see Chapter 17). In a virtualized system, the hypervisor runs
+at the highest privilege level (sometimes called "ring -1"), and the guest OS runs at a
+lower level. When the guest OS attempts a privileged operation (like modifying page
+tables or disabling interrupts), the hardware <em>traps</em> to the hypervisor, which
+emulates the operation. This is the <em>trap-and-emulate</em> model, the foundation of
+classical virtualization.</p>
+
+<p>The relationship to xv6 is direct: xv6 runs in RISC-V S-mode (supervisor mode) and
+user processes run in U-mode. A hypervisor would run in a new <strong>H-mode</strong>
+(RISC-V Hypervisor Extension) above S-mode, and xv6 would run as a guest in a modified
+S-mode that traps privileged operations to the hypervisor. The same trap mechanism that
+xv6 uses to catch user-mode system calls (<code class="code-inline">ecall</code>) is
+extended one level up to catch guest-OS privileged operations.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Virtualization vs. Containers</div>
+<p><strong>Virtual machines</strong> virtualize the hardware: each VM has its own kernel
+and full OS. <strong>Containers</strong> (like Docker) virtualize the OS: all containers
+share the host kernel but have isolated user spaces. VMs provide stronger isolation (a
+VM compromise does not affect the host) but are heavier (each VM runs a full OS).
+Containers are lighter and faster to start but provide weaker isolation (a kernel
+vulnerability can affect all containers). Many systems use both: containers inside VMs
+for defense in depth.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-2">18.2 History</h2>
+
+<p>Virtualization is not a new idea—it predates personal computers by decades. The
+concept originated in the 1960s at IBM with the <strong>CP-40</strong> and
+<strong>CP-67</strong> systems, which evolved into <strong>VM/370</strong> (1972). The
+IBM VM family allowed multiple users to each have their own virtual machine running a
+copy of the CMS operating system. This was remarkable: in an era when a mainframe cost
+millions of dollars, VM/370 let dozens of users share it while each believing they had
+their own machine.</p>
+
+<p>The key innovation was the <strong>CP (Control Program)</strong>, the hypervisor that
+ran directly on the IBM System/370 hardware. CP created virtual machines by intercepting
+the guest's privileged instructions and emulating them. The System/370 architecture was
+designed to support this: it had a <em>start interpretive execution</em> (SIE)
+instruction that allowed the CPU to run a guest in a virtualized mode, trapping
+privileged operations to CP. This is an early example of <em>hardware-assisted
+virtualization</em>.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Era</th><th>System</th><th>Significance</th></tr>
+</thead>
+<tbody>
+<tr><td>1960s</td><td>IBM CP-40 / CP-67</td><td>First hypervisor; virtualized IBM System/360</td></tr>
+<tr><td>1972</td><td>IBM VM/370</td><td>Commercial virtualization; SIE instruction</td></tr>
+<tr><td>1990s</td><td>VMware (1999)</td><td>x86 virtualization via binary translation</td></tr>
+<tr><td>2005–2006</td><td>Intel VT-x, AMD-V</td><td>Hardware-assisted x86 virtualization</td></tr>
+<tr><td>2010s</td><td>KVM, Xen, Hyper-V</td><td>Open-source and OS-integrated hypervisors</td></tr>
+<tr><td>2010s</td><td>Containers (Docker)</td><td>OS-level virtualization</td></tr>
+<tr><td>2020s</td><td>Cloud VMs, serverless</td><td>Virtualization as infrastructure</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>After the mainframe era, virtualization fell out of favor in the 1980s and 1990s as
+personal computers became cheap enough that each user could have their own machine. The
+x86 architecture, designed for single-user PCs, was not virtualizable using the
+trap-and-emulate model because certain privileged instructions did not trap in user
+mode—they failed silently or had different behavior. This made x86 virtualization seem
+impossible.</p>
+
+<p>The breakthrough came in 1999 with <strong>VMware</strong>, which used <em>binary
+translation</em> to virtualize x86. Instead of relying on hardware traps, VMware scanned
+the guest's code at runtime and <em>rewrote</em> privileged instructions into calls to
+the VMM. This was slow but worked, enabling x86 virtualization for the first time. In
+2005–2006, Intel (VT-x) and AMD (AMD-V) introduced hardware-assisted virtualization
+extensions that made x86 properly virtualizable, eliminating the need for binary
+translation in most cases and dramatically improving performance.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Popek and Goldberg Requirements</div>
+<p>In 1974, Gerald Popek and Robert Goldberg formalized the requirements for
+virtualization. A architecture is <em>virtualizable</em> if:</p>
+<ol>
+<li><strong>Equivalence</strong>: programs running in a VM behave identically to running
+on bare hardware (except for timing).</li>
+<li><strong>Resource control</strong>: the VMM has complete control over virtual
+resources.</li>
+<li><strong>Efficiency</strong>: most guest instructions execute directly on hardware
+without VMM intervention.</li>
+</ol>
+<p>The key technical requirement is that <em>all sensitive instructions must trap</em>.
+The original x86 violated this (some sensitive instructions did not trap), which is why
+binary translation was needed until VT-x/AMD-V.</p>
+</div>
+
+<p>The modern era of virtualization began with the cloud. Amazon EC2 (2006) offered
+virtual machines as a service, enabling companies to rent computing power by the hour.
+This would not have been possible without efficient x86 virtualization. Today,
+virtualization is the foundation of cloud computing: every cloud instance is a VM, and
+technologies like <em>serverless</em> (AWS Lambda) build on VMs (often using
+<em>micro-VMs</em> like Firecracker for fast startup and strong isolation).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-3">18.3 Benefits and Features</h2>
+
+<p>Virtualization offers numerous benefits that have made it ubiquitous in data centers,
+cloud computing, and development. The most important is <strong>consolidation</strong>:
+running multiple VMs on a single physical server. Before virtualization, servers
+typically ran at 5–15% CPU utilization (one application per server). With virtualization,
+a single physical server can run 10–50 VMs, each running a different application,
+raising utilization to 60–80% and dramatically reducing hardware costs, power
+consumption, and data-center footprint.</p>
+
+<p><strong>Isolation</strong> is a critical benefit. Each VM is completely isolated from
+others: a crash, security breach, or misconfiguration in one VM does not affect others
+on the same host. This is stronger than process-level isolation (a kernel bug can affect
+all processes) because each VM has its own kernel. This makes virtualization ideal for
+multi-tenant cloud environments, where different customers' workloads run on the same
+physical hardware.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Key Benefits of Virtualization</div>
+<ul>
+<li><strong>Consolidation</strong>: run many VMs on one server, improving utilization</li>
+<li><strong>Isolation</strong>: each VM is independent; faults don't spread</li>
+<li><strong>Encapsulation</strong>: a VM is a file (or set of files) that can be copied, moved, backed up</li>
+<li><strong>Snapshots</strong>: save VM state and roll back if needed</li>
+<li><strong>Migration</strong>: move a running VM to another host (live migration)</li>
+<li><strong>Testing</strong>: run multiple OS versions or configurations on one machine</li>
+<li><strong>Legacy support</strong>: run old OSes on new hardware</li>
+<li><strong>Disaster recovery</strong>: replicate VMs to a remote site</li>
+</ul>
+</div>
+
+<p><strong>Encapsulation</strong> is a powerful feature: a VM is represented as a set of
+files (disk image, configuration, memory state). This means a VM can be <em>copied</em>,
+<em>cloned</em>, <em>backed up</em>, and <em>moved</em> like any other file. A
+<strong>snapshot</strong> captures the VM's complete state (CPU, memory, disk) at a
+point in time, allowing rollback if something goes wrong. This is invaluable for
+testing: take a snapshot, install a risky update, and if it breaks, revert to the
+snapshot in seconds.</p>
+
+<p><strong>Live migration</strong> allows a running VM to be moved from one physical host
+to another with minimal or no downtime. The hypervisor copies the VM's memory to the
+destination while the VM continues running, then briefly pauses to transfer the final
+state and switch execution. This enables <em>load balancing</em> (move VMs off busy
+hosts), <em>maintenance</em> (evacuate a host before servicing it), and <em>power
+saving</em> (consolidate VMs onto fewer hosts and power down idle servers). VMware
+vMotion, KVM live migration, and Xen live migration all implement this.</p>
+
+<div class="code-block"><span class="comment">/* Live migration (conceptual) */</span>
+
+<span class="comment">// 1. Pre-copy phase: copy memory pages to destination while VM runs</span>
+<span class="keyword">while</span> (dirty_pages > threshold) {
+    copy_dirty_pages(dest, src);
+    <span class="comment">// VM continues running; pages may be re-dirtied</span>
+}
+
+<span class="comment">// 2. Stop-and-copy: brief pause to transfer final state</span>
+pause_vm();
+copy_remaining_pages(dest, src);
+copy_cpu_state(dest, src);
+
+<span class="comment">// 3. Resume on destination</span>
+resume_vm(dest);
+<span class="comment">// Total downtime: typically 50-500 ms</span></div>
+
+<p><strong>Hardware independence</strong> is another benefit: the VM sees virtual
+hardware, so it can run on any physical host that the hypervisor supports. A VM created
+on an Intel server can be migrated to an AMD server (if the hypervisor presents the same
+virtual CPU). This decouples the OS from the hardware, enabling flexible resource
+allocation and avoiding vendor lock-in. In the cloud, this means a workload can run on
+whatever hardware is available, with the hypervisor abstracting the differences.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Virtualization in Development</div>
+<p>For developers, virtualization is invaluable. Tools like <em>Vagrant</em> and
+<em>VirtualBox</em> let developers create reproducible development environments as VMs.
+A new team member can <code class="code-inline">vagrant up</code> and have the exact same
+environment as everyone else. <em>CI/CD</em> pipelines use VMs to run tests in clean,
+isolated environments. And if you're studying xv6, you're likely running it in QEMU—a
+virtual machine emulator—which lets you develop and debug an OS without dedicated
+hardware.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-4">18.4 Building Blocks</h2>
+
+<p>Virtualization is implemented using three primary techniques: <strong>trap-and-emulate</strong>,
+<strong>binary translation</strong>, and <strong>hardware assistance</strong>. Different
+hypervisors use different combinations of these, depending on the architecture and
+performance requirements.</p>
+
+<p><strong>Trap-and-emulate</strong> is the classical virtualization model, described by
+Popek and Goldberg. The guest OS runs in a de-privileged mode (e.g., ring 1 on x86, or a
+guest mode on RISC-V). When the guest executes a privileged instruction (like modifying
+page tables or disabling interrupts), the hardware traps to the hypervisor. The
+hypervisor examines the trapped instruction, emulates its effect on the virtual machine,
+and resumes the guest. Non-privileged instructions (most of the guest's code) execute
+directly on the hardware at native speed.</p>
+
+<div class="code-block"><span class="comment">/* Trap-and-emulate flow */</span>
+
+<span class="comment">// Guest OS tries to disable interrupts</span>
+<span class="label">guest_kernel:</span>
+    cli                    <span class="comment">// clear interrupt flag (privileged!)</span>
+    <span class="comment">// → TRAP to hypervisor</span>
+
+<span class="comment">// Hypervisor handles the trap</span>
+<span class="label">hypervisor_trap_handler:</span>
+    <span class="keyword">if</span> (trap_cause == PRIVILEGED_INSTRUCTION) {
+        <span class="keyword">if</span> (instruction == <span class="string">"cli"</span>) {
+            guest_vm.eflags.IF = 0;  <span class="comment">// emulate: disable vIRQs</span>
+            advance_guest_pc();      <span class="comment">// skip the instruction</span>
+        }
+    }
+    resume_guest();  <span class="comment">// return to guest</span></div>
+
+<p>The challenge with trap-and-emulate is that it requires <em>all</em> sensitive
+instructions to trap. The original x86 violated this: instructions like
+<code class="code-inline">POPF</code> (pop flags) and <code class="code-inline">SGDT</code>
+(store GDT) did not trap in user mode—they silently ignored the privileged bits or
+returned different values. This meant a guest OS running in ring 1 could detect it was
+virtualized (by executing <code class="code-inline">SGDT</code> and seeing a different
+value) or could bypass the hypervisor's control. This is why x86 was not classically
+virtualizable.</p>
+
+<p><strong>Binary translation</strong> solves this by <em>rewriting</em> the guest's code
+at runtime. The hypervisor scans the guest's instruction stream, identifies sensitive
+instructions, and replaces them with calls to emulation routines. The translated code is
+cached for reuse. This was VMware's breakthrough: it made x86 virtualization possible
+without hardware support. The downside is <em>overhead</em>: translation adds latency,
+especially for code that executes many sensitive instructions (like kernel code). VMware
+optimized this by translating only kernel code and letting user code run natively.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Binary Translation Overhead</div>
+<p>Binary translation can slow down guest code by 2–10× for instruction-heavy workloads.
+The overhead is worst for code that frequently executes sensitive instructions (kernel
+code, drivers). User-mode code (applications) runs at near-native speed because it rarely
+uses sensitive instructions. This is why early VMware was fast for I/O-bound workloads
+but slow for CPU-bound kernel operations. Modern hardware-assisted virtualization
+(VT-x/AMD-V) largely eliminates this overhead.</p>
+</div>
+
+<p><strong>Hardware assistance</strong> is the modern solution. Intel VT-x (2005) and
+AMD-V (2006) added a new CPU mode—<em>VMX root</em> (hypervisor) and <em>VMX non-root</em>
+(guest)—and instructions to switch between them: <code class="code-inline">VMLAUNCH</code>
+(enter guest) and <code class="code-inline">VMRESUME</code> (resume guest). In VMX
+non-root mode, <em>all</em> sensitive instructions trap to the hypervisor, satisfying
+the Popek-Goldberg requirements. The hardware also provides a <em>VMCS</em> (Virtual
+Machine Control Structure) that stores the guest and host state, making context switches
+efficient. RISC-V has the <em>Hypervisor Extension</em> (H-mode) for the same purpose.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Technique</th><th>How It Works</th><th>Performance</th><th>Used By</th></tr>
+</thead>
+<tbody>
+<tr><td>Trap-and-emulate</td><td>Guest runs de-privileged; sensitive ops trap</td><td>Native (if arch supports it)</td><td>IBM VM/370, RISC-V H-ext</td></tr>
+<tr><td>Binary translation</td><td>Rewrite sensitive instructions at runtime</td><td>2–10× slower for kernel code</td><td>Early VMware, QEMU (TCG)</td></tr>
+<tr><td>Hardware assistance</td><td>CPU has guest mode; all sensitive ops trap</td><td>Near-native</td><td>KVM, VMware (ESXi), Hyper-V</td></tr>
+<tr><td>Paravirtualization</td><td>Guest is modified to call hypervisor</td><td>Near-native</td><td>Xen (originally)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Paravirtualization</strong> is a fourth approach where the guest OS is
+<em>modified</em> to cooperate with the hypervisor. Instead of executing sensitive
+instructions and trapping, the guest makes explicit <em>hypercalls</em> to the
+hypervisor, like a system call. This avoids the overhead of trapping and emulation. The
+original <strong>Xen</strong> hypervisor used paravirtualization: Linux was modified to
+run as a Xen guest, replacing sensitive instructions with hypercalls. The downside is
+that the guest must be modified, so closed-source OSes (like Windows) could not run
+unmodified. Modern Xen supports hardware-assisted virtualization (HVM) for unmodified
+guests, making paravirtualization optional.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Memory Virtualization</div>
+<p>Virtualizing memory is a key challenge. The guest OS has its own page tables (guest
+virtual → guest physical). The hypervisor must translate guest physical to host physical.
+This is done with <strong>shadow page tables</strong> (hypervisor-maintained tables that
+map guest virtual → host physical directly) or <strong>nested page tables / EPT</strong>
+(Extended Page Tables, Intel; NPT, AMD—hardware that walks two levels of page tables).
+Shadow page tables are software-intensive (the hypervisor must intercept guest page
+table updates); EPT is hardware-assisted and faster but adds latency to each memory
+access. In RISC-V, the <em>two-stage page table</em> (Stage 1: guest virtual → guest
+physical; Stage 2: guest physical → host physical) provides the same functionality.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-5">18.5 Types of Virtual Machines</h2>
+
+<p>Virtual machines come in several types, differing in what they virtualize and how.
+The main categories are <strong>system virtual machines</strong> (virtualize the
+hardware), <strong>process virtual machines</strong> (virtualize the OS API), and
+<strong>containers</strong> (OS-level virtualization). Each has different isolation,
+performance, and use-case characteristics.</p>
+
+<p><strong>System virtual machines</strong> virtualize the complete hardware. A
+<strong>Type 1 hypervisor</strong> (bare-metal) runs directly on the hardware with no
+host OS: examples include VMware ESXi, Microsoft Hyper-V, Xen, and KVM (which is built
+into the Linux kernel). A <strong>Type 2 hypervisor</strong> (hosted) runs on top of a
+host OS: examples include VMware Workstation, VirtualBox, and QEMU. The distinction is
+blurred in practice—KVM is a Linux kernel module (Type 2?) that runs directly on
+hardware (Type 1?)—but the key point is whether the hypervisor has direct hardware
+access.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Type</th><th>Examples</th><th>Host OS?</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td>Type 1 (bare-metal)</td><td>ESXi, Hyper-V, Xen, KVM</td><td>No</td><td>Data centers, cloud</td></tr>
+<tr><td>Type 2 (hosted)</td><td>VMware Workstation, VirtualBox, QEMU</td><td>Yes</td><td>Desktop, development, testing</td></tr>
+<tr><td>Process VM</td><td>JVM, .NET CLR, V8</td><td>Yes (runs as app)</td><td>Language runtimes</td></tr>
+<tr><td>Container</td><td>Docker, Podman, LXC</td><td>Yes (shares kernel)</td><td>Microservices, CI/CD</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Process virtual machines</strong> do not virtualize the hardware; instead,
+they provide a <em>virtual instruction set</em> and runtime environment for a single
+process. The <strong>Java Virtual Machine (JVM)</strong> is the canonical example: it
+executes Java bytecode and provides a runtime with garbage collection, security, and
+cross-platform portability. The <strong>.NET CLR</strong> and <strong>V8</strong>
+(JavaScript engine) are similar. A process VM starts when the application starts and
+terminates when it exits. The "virtual machine" is the runtime, not a full OS.</p>
+
+<p><strong>Containers</strong> (OS-level virtualization) are a middle ground. A
+container shares the host kernel but has its own isolated user space: its own filesystem
+namespace, process namespace, network namespace, and user namespace. Because there is no
+second kernel, containers start in milliseconds (vs. seconds for VMs) and have near-zero
+overhead. The isolation is weaker than VMs (a kernel vulnerability affects all
+containers), but sufficient for most use cases. <strong>Docker</strong> popularized
+containers; <strong>Kubernetes</strong> orchestrates them at scale.</p>
+
+<div class="code-block"><span class="comment">/* Container isolation via Linux namespaces */</span>
+
+<span class="comment">// Docker run creates a container with isolated namespaces</span>
+<span class="comment">// Each namespace gives the container its own view:</span>
+
+<span class="comment">// PID namespace: container sees only its own processes</span>
+<span class="comment">//   (PID 1 in container ≠ PID 1 on host)</span>
+
+<span class="comment">// Mount namespace: container has its own filesystem root</span>
+<span class="comment">//   (can't see host files unless explicitly mounted)</span>
+
+<span class="comment">// Network namespace: container has its own network stack</span>
+<span class="comment">//   (own IP, routing table, firewall rules)</span>
+
+<span class="comment">// User namespace: container UID 0 ≠ host UID 0</span>
+<span class="comment">//   (root in container is unprivileged on host)</span>
+
+<span class="comment">// cgroups: limit CPU, memory, I/O per container</span></div>
+
+<p><strong>Emulation</strong> is a related but distinct concept. An <em>emulator</em>
+interprets the guest's instructions one at a time, simulating a different architecture.
+<strong>QEMU</strong> can emulate ARM on x86, or x86 on ARM, by interpreting each
+instruction. This is much slower than virtualization (10–100×) but allows running
+software for a different architecture. <strong>QEMU/KVM</strong> combines QEMU's device
+emulation with KVM's hardware-assisted CPU virtualization: KVM handles the CPU, QEMU
+handles I/O devices, giving near-native speed for same-architecture guests.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ QEMU and xv6</div>
+<p>If you're running xv6, you're almost certainly using QEMU. QEMU emulates a RISC-V
+(or x86) system, including the CPU, memory, and virtual devices (UART, virtio disk,
+virtio network). xv6's <code class="code-inline">Makefile</code> invokes QEMU with a
+configuration that sets up the virtual hardware. When xv6 executes a
+<code class="code-inline">csrw satp</code> instruction (set page table), QEMU updates
+its emulated <code class="code-inline">satp</code> register. When xv6 writes to the UART,
+QEMU displays the character. This is full-system emulation—slower than KVM, but
+essential for OS development where you need to control the entire virtual machine.</p>
+</div>
+
+<p><strong>Unikernels</strong> are a specialized type of VM that runs a single
+application directly on a hypervisor, with no OS. The application is compiled with a
+minimal library OS (like <em>MirageOS</em> or <em>IncludeOS</em>) that provides just
+enough OS functionality (network stack, file system) to run. The result is a tiny,
+specialized VM that boots in milliseconds, has a minimal attack surface, and is ideal
+for microservices and serverless functions. Unikernels blur the line between process VMs
+and system VMs: they are system VMs (they run on a hypervisor) but contain only one
+application (like a process VM).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-6">18.6 Virtualization and OS Components</h2>
+
+<p>Virtualizing each OS component presents unique challenges. The CPU, memory, and I/O
+each require different techniques, and the hypervisor must handle all of them correctly
+and efficiently. Understanding how each component is virtualized illuminates both the
+power and the complexity of virtualization.</p>
+
+<p><strong>CPU virtualization</strong> is the core: the hypervisor must present each
+guest with one or more virtual CPUs (vCPUs) that behave like real CPUs. The guest OS
+schedules its processes on vCPUs as if they were physical cores. The hypervisor
+<em>time-shares</em> the physical CPUs among vCPUs: when a vCPU is "running," the
+hypervisor has scheduled it on a physical core. The guest is unaware of this
+scheduling—it believes its vCPU is always running. When the hypervisor needs the
+physical core for another vCPU, it <em>preempts</em> the current vCPU (using a timer
+interrupt) and schedules a different one.</p>
+
+<div class="code-block"><span class="comment">/* CPU virtualization (conceptual) */</span>
+
+<span class="comment">// Physical CPU has 4 cores; 3 VMs each want 2 vCPUs</span>
+<span class="comment">// Hypervisor time-shares: each vCPU gets a time slice</span>
+
+<span class="keyword">while</span> (true) {
+    <span class="keyword">for</span> each vcpu in runqueue {
+        <span class="comment">// Load vCPU state into physical core</span>
+        load_vmcs(vcpu);
+        <span class="comment">// Enter guest mode (VMLAUNCH / VMRESUME)</span>
+        <span class="comment">// ... guest runs until trap or timer ...</span>
+        <span class="comment">// Exit guest mode (VMEXIT)</span>
+        save_vmcs(vcpu);
+
+        <span class="comment">// Handle exit reason (I/O, page fault, timer)</span>
+        handle_exit(vcpu);
+    }
+}</div>
+
+<p><strong>Memory virtualization</strong> is the most performance-critical component. The
+guest OS believes it has contiguous physical memory starting at address 0. In reality,
+its "physical" memory is allocated from the host's memory, possibly scattered across
+different host physical pages. The hypervisor must translate every guest physical address
+to a host physical address. As discussed in Section 18.4, this is done with shadow page
+tables (software) or nested page tables / EPT (hardware). The overhead of memory
+virtualization is significant: with EPT, each memory access requires walking two page
+tables (guest and host), increasing TLB miss penalties.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Memory Virtualization Challenge</div>
+<p>Memory virtualization is the single biggest performance bottleneck in virtualized
+systems. With shadow page tables, the hypervisor must intercept every guest page table
+update (writing to <code class="code-inline">CR3</code> on x86, or
+<code class="code-inline">satp</code> on RISC-V), which is frequent during process
+creation and context switching. With EPT, the TLB must store entries that map guest
+virtual → host physical, and a TLB miss requires walking two page tables (4 levels each
+on x86-64 = up to 8 memory accesses). Modern CPUs add <em>VPID</em> (Virtual Processor
+ID) to avoid TLB flushes on VM transitions, and <em>large pages</em> (2 MB, 1 GB) to
+reduce TLB pressure.</p>
+</div>
+
+<p><strong>I/O virtualization</strong> is the most complex component because I/O devices
+are diverse and have complex interfaces. There are three main approaches:</p>
+
+<ul>
+<li><strong>Emulation</strong>: the hypervisor emulates a real device (e.g., an Intel
+e1000 NIC). The guest uses the standard device driver; the hypervisor intercepts device
+register writes and emulates the device behavior. This is slow (each I/O operation
+traps) but works with unmodified guests. QEMU uses this for its default devices.</li>
+<li><strong>Paravirtualization</strong>: the hypervisor provides a simplified, virtual
+device (e.g., <em>virtio</em>) that is designed for virtualization. The guest uses a
+special virtio driver that communicates with the hypervisor via shared memory and
+hypercalls, avoiding most traps. This is much faster than emulation. Virtio is the
+standard for KVM/QEMU.</li>
+<li><strong>Pass-through / SR-IOV</strong>: a physical device is assigned directly to a
+VM, bypassing the hypervisor. The guest has direct access to the device hardware,
+achieving near-bare-metal performance. <em>SR-IOV</em> (Single Root I/O Virtualization)
+allows a single physical device (like a NIC) to present multiple virtual functions, each
+assigned to a different VM. This is used for high-performance networking and storage in
+cloud environments.</li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Method</th><th>Performance</th><th>Guest Modification</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>Emulation</td><td>Slow (traps per I/O)</td><td>None (standard driver)</td><td>QEMU e1000, IDE disk</td></tr>
+<tr><td>Paravirtualization</td><td>Fast (shared memory)</td><td>Special driver</td><td>virtio-net, virtio-blk</td></tr>
+<tr><td>Pass-through</td><td>Near-native</td><td>Standard driver (for that device)</td><td>VFIO, SR-IOV</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Network virtualization</strong> deserves special mention. In a virtualized
+environment, VMs need to communicate with each other, with the host, and with the
+external network. The hypervisor provides a <em>virtual switch</em> (vSwitch) that
+connects VMs' virtual NICs. VM-to-VM traffic on the same host never touches the physical
+network—it is handled entirely in memory by the vSwitch. For external traffic, the
+hypervisor performs NAT or bridging. Technologies like <em>Open vSwitch</em> and
+<em>VMware NSX</em> provide advanced features like VLANs, QoS, and distributed
+switching across hosts.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Virtualization and xv6</div>
+<p>xv6 runs in QEMU, which uses emulation for I/O. When xv6 writes to the virtio disk
+controller, QEMU intercepts the register writes and translates them to reads/writes on
+the disk image file. When xv6 writes to the UART, QEMU displays the character. If you
+wanted to run xv6 under a real hypervisor (like KVM), you would need to either (1) use
+QEMU's emulation (slow but works) or (2) port xv6 to use virtio drivers and run under
+KVM (fast but requires modifying xv6). The <code class="code-inline">virtio</code> driver
+in xv6 is already a paravirtualized driver—it's designed to work with QEMU's virtio
+backend, not a real disk controller.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-18-7">18.7 Examples: VMware and JVM</h2>
+
+<p><strong>VMware</strong> is the most influential commercial virtualization product.
+Founded in 1998, VMware released VMware Workstation in 1999, the first x86 virtualization
+product. It used binary translation to virtualize the x86 architecture, which was not
+classically virtualizable. VMware's key innovation was a <em>dynamic binary translator</em>
+that scanned guest kernel code, identified sensitive instructions, and replaced them
+with calls to the VMM. User-mode code ran natively, so application performance was
+near-native; only kernel operations were translated.</p>
+
+<p>VMware's product line evolved: <strong>VMware ESXi</strong> (2001) is a Type 1
+hypervisor that runs directly on hardware (no host OS), designed for data centers.
+<strong>VMware Workstation</strong> and <strong>VMware Fusion</strong> (for Mac) are
+Type 2 hypervisors for desktop use. <strong>VMware vSphere</strong> is the enterprise
+platform, adding management, live migration (vMotion), high availability, and resource
+scheduling. With hardware-assisted virtualization (VT-x/AMD-V), modern VMware uses
+hardware support instead of binary translation for most operations, achieving
+near-native performance.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ VMware Architecture</div>
+<p>VMware ESXi architecture:</p>
+<ul>
+<li><strong>VMkernel</strong>: the hypervisor kernel (microkernel-like), manages CPU,
+memory, and I/O scheduling</li>
+<li><strong>VMX process</strong>: each VM is a VMX process that runs the guest, with
+VMkernel handling traps</li>
+<li><strong>VMM</strong>: the virtual machine monitor within each VMX, handles CPU
+virtualization (binary translation or VT-x)</li>
+<li><strong>vmxnet3, pvscsi</strong>: paravirtualized drivers for network and storage</li>
+<li><strong>vSphere Client</strong>: management interface for creating and configuring VMs</li>
+</ul>
+</div>
+
+<p><strong>KVM (Kernel-based Virtual Machine)</strong> is the open-source alternative,
+integrated into the Linux kernel since 2007. KVM turns the Linux kernel into a Type 1
+hypervisor: each VM is a regular Linux process, scheduled by the Linux scheduler, and
+KVM provides the CPU virtualization via VT-x/AMD-V. I/O is handled by QEMU, which runs
+in user space and provides device emulation. The combination <em>QEMU/KVM</em> is the
+standard open-source virtualization stack: KVM for CPU/memory, QEMU for devices. KVM is
+used by cloud platforms like OpenStack and underlies Google Compute Engine and other
+cloud services.</p>
+
+<p>The <strong>Java Virtual Machine (JVM)</strong> is a fundamentally different kind of
+virtual machine: a <em>process virtual machine</em> that executes Java bytecode. The JVM
+is not a hypervisor; it does not virtualize hardware. Instead, it provides a
+platform-independent runtime: Java source is compiled to bytecode (architecture-neutral),
+and the JVM interprets or JIT-compiles the bytecode to native code. This "write once, run
+anywhere" model means the same Java program runs on any platform with a JVM.</p>
+
+<div class="code-block"><span class="comment">/* JVM architecture (simplified) */</span>
+
+<span class="comment">// Java source → bytecode → JVM</span>
+
+<span class="comment">// 1. Compiler: Hello.java → Hello.class (bytecode)</span>
+javac Hello.java
+
+<span class="comment">// 2. JVM loads Hello.class</span>
+<span class="comment">//    Class loader reads .class, verifies bytecode</span>
+
+<span class="comment">// 3. Execution engine runs bytecode</span>
+<span class="comment">//    - Interpreter: executes bytecode one instruction at a time</span>
+<span class="comment">//    - JIT compiler: compiles hot methods to native code</span>
+<span class="comment">//    - GC: automatic memory management</span>
+
+<span class="comment">// 4. Runtime data areas:</span>
+<span class="comment">//    - Method area: class metadata, bytecode</span>
+<span class="comment">//    - Heap: objects (GC-managed)</span>
+<span class="comment">//    - Stack: method frames (per thread)</span>
+<span class="comment">//    - PC register: current instruction (per thread)</span></div>
+
+<p>The JVM provides several OS-like services: <strong>memory management</strong> (garbage
+collection), <strong>thread scheduling</strong> (maps Java threads to OS threads),
+<strong>security</strong> (security manager, class loaders), and <strong>I/O</strong>
+(file, network, via native methods). In this sense, the JVM is a <em>language-level
+operating system</em>—it manages resources for Java applications the way an OS manages
+resources for processes. The comparison is not accidental: the JVM's designers drew on OS
+concepts (processes, threads, memory protection, security) in designing the runtime.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 JVM vs. System VM: A Comparison</div>
+<table>
+<thead><tr><th>Property</th><th>System VM (VMware/KVM)</th><th>Process VM (JVM)</th></tr>
+</thead>
+<tbody>
+<tr><td>What it virtualizes</td><td>Hardware (CPU, memory, devices)</td><td>Instruction set + runtime</td></tr>
+<tr><td>Guest</td><td>Full OS (Linux, Windows)</td><td>Single application (Java program)</td></tr>
+<tr><td>Isolation</td><td>Strong (separate kernel)</td><td>Language-level (type safety)</td></tr>
+<tr><td>Startup time</td><td>Seconds to minutes</td><td>Milliseconds to seconds</td></tr>
+<tr><td>Overhead</td><td>Low (hardware-assisted)</td><td>Medium (JIT, GC)</td></tr>
+<tr><td>Portability</td><td>Same architecture only</td><td>Cross-platform (bytecode)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Other notable virtualization examples include <strong>Microsoft Hyper-V</strong>
+(Type 1 hypervisor for Windows, uses paravirtualized "enlightened" guests),
+<strong>Xen</strong> (open-source hypervisor, originally paravirtualization, now supports
+HVM), <strong>Docker</strong> (containers using Linux namespaces and cgroups), and
+<strong>WebAssembly (WASM)</strong> (a portable bytecode for the web, increasingly used
+outside browsers via <em>WASI</em>, the WebAssembly System Interface). Each represents a
+different point in the design space of virtualization and isolation.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-1">19.1 Advantages of Distributed Systems</h2>
+
+<p>A <strong>distributed system</strong> is a collection of independent computers that
+appears to its users as a single coherent system. The computers (nodes) are connected by
+a network and cooperate to achieve a common goal. Unlike a single computer, a distributed
+system has no shared memory—nodes communicate by passing messages over the network. The
+operating system (or middleware) presents a unified view, hiding the distribution from
+users and applications.</p>
+
+<p>The primary advantages of distributed systems are <strong>resource sharing</strong>,
+<strong>scalability</strong>, <strong>fault tolerance</strong>, and
+<strong>geographic distribution</strong>. Resource sharing allows users on one node to
+access files, printers, databases, and computing power on other nodes. Scalability means
+the system can grow by adding more nodes, rather than replacing a single machine with a
+bigger one. Fault tolerance means the system can continue operating (perhaps with reduced
+capacity) if some nodes fail. Geographic distribution allows data and computation to be
+placed near the users who need them, reducing latency.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Key Advantages of Distributed Systems</div>
+<ul>
+<li><strong>Resource sharing</strong>: share files, printers, databases, CPU across nodes</li>
+<li><strong>Scalability</strong>: add nodes to increase capacity (horizontal scaling)</li>
+<li><strong>Fault tolerance</strong>: system survives node failures (redundancy)</li>
+<li><strong>Performance</strong>: parallel processing, load distribution</li>
+<li><strong>Geographic distribution</strong>: data near users, disaster recovery</li>
+<li><strong>Cost-effectiveness</strong>: many cheap nodes vs. one expensive mainframe</li>
+<li><strong>Data accessibility</strong>: data available from any location</li>
+</ul>
+</div>
+
+<p>However, distributed systems also introduce significant <strong>challenges</strong>.
+The most fundamental is <strong>partial failure</strong>: in a distributed system, some
+nodes may fail while others continue. This is qualitatively different from a single
+computer, which either works or doesn't. Handling partial failure requires detecting
+failures, reconfiguring the system, and ensuring consistency—problems that are
+notoriously difficult (the <em>Byzantine generals problem</em>, the <em>consensus
+problem</em>, <em>CAP theorem</em>).</p>
+
+<p>Another challenge is <strong>latency</strong>: network communication is orders of
+magnitude slower than memory access. A local memory read takes ~100 ns; a network round
+trip in a data center takes ~500 μs (5000× slower); across continents, ~150 ms
+(1,500,000× slower). This latency fundamentally shapes distributed system design:
+operations that are fast locally (like reading a file) become slow remotely, requiring
+caching, replication, and asynchronous communication.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The CAP Theorem</div>
+<p>The <strong>CAP theorem</strong> (Brewer, 2000) states that a distributed system can
+provide at most two of three guarantees:</p>
+<ul>
+<li><strong>Consistency</strong>: all nodes see the same data at the same time</li>
+<li><strong>Availability</strong>: every request receives a response (no timeout)</li>
+<li><strong>Partition tolerance</strong>: the system operates despite network partitions</li>
+</ul>
+<p>Since network partitions <em>will</em> happen (cables get cut, switches fail), real
+systems must choose between C and A during a partition. <em>CP</em> systems (like HBase,
+MongoDB with strong consistency) reject requests during a partition to maintain
+consistency. <em>AP</em> systems (like Cassandra, DynamoDB) accept requests and reconcile
+later, risking temporary inconsistency. There is no "CA" system that ignores
+partitions—partitions are a fact of network life.</p>
+</div>
+
+<p><strong>Transparency</strong> is a key design goal: the distributed system should hide
+its distributed nature from users and applications. Types of transparency include
+<strong>access transparency</strong> (same operations for local and remote resources),
+<strong>location transparency</strong> (resources are accessed without knowing their
+location), <strong>replication transparency</strong> (users don't know about replicas),
+<strong>failure transparency</strong> (failures are hidden), and <strong>migration
+transparency</strong> (resources can move without affecting access). Achieving full
+transparency is extremely difficult; real systems make trade-offs.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-2">19.2 Network Structure</h2>
+
+<p>A distributed system is built on a <strong>network</strong> that connects the nodes.
+Networks are classified by scale: <strong>LAN</strong> (Local Area Network, within a
+building or campus, ~1 km), <strong>MAN</strong> (Metropolitan Area Network, ~10 km),
+<strong>WAN</strong> (Wide Area Network, ~100+ km, e.g., the Internet), and
+<strong>PAN</strong> (Personal Area Network, ~10 m, e.g., Bluetooth). The network's
+characteristics—bandwidth, latency, reliability—fundamentally affect the distributed
+system built on top of it.</p>
+
+<p>Networks are organized in layers, following the <strong>OSI model</strong> (7 layers)
+or the simpler <strong>TCP/IP model</strong> (4 layers). From bottom to top, the TCP/IP
+layers are: <strong>Link</strong> (Ethernet, Wi-Fi—physical and data link),
+<strong>Internet</strong> (IP—networking, routing), <strong>Transport</strong> (TCP,
+UDP—end-to-end communication), and <strong>Application</strong> (HTTP, DNS, SMTP—user
+protocols). Each layer builds on the one below, adding functionality.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Layer</th><th>Protocols</th><th>Function</th></tr>
+</thead>
+<tbody>
+<tr><td>Application</td><td>HTTP, DNS, SMTP, SSH</td><td>User-level protocols</td></tr>
+<tr><td>Transport</td><td>TCP, UDP, QUIC</td><td>End-to-end delivery, reliability</td></tr>
+<tr><td>Internet</td><td>IP (IPv4, IPv6), ICMP</td><td>Routing, addressing</td></tr>
+<tr><td>Link</td><td>Ethernet, Wi-Fi, PPP</td><td>Frame delivery on local link</td></tr>
+<tr><td>Physical</td><td>Copper, fiber, radio</td><td>Bit transmission</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Local Area Networks (LANs)</strong> typically use Ethernet (IEEE 802.3) or
+Wi-Fi (IEEE 802.11). Ethernet uses <em>switches</em> to connect devices; each device has
+a <em>MAC address</em> (hardware address). Switches forward frames based on MAC
+addresses, creating a point-to-point network. <strong>Wide Area Networks (WANs)</strong>
+use <em>routers</em> to forward packets between networks based on IP addresses. The
+Internet is a global WAN composed of thousands of interconnected networks, using
+<em>BGP</em> (Border Gateway Protocol) for inter-domain routing.</p>
+
+<p><strong>Network topology</strong> describes how nodes are connected. Common topologies
+include <em>bus</em> (all nodes on a shared wire, obsolete), <em>star</em> (all nodes
+connected to a central switch), <em>ring</em> (nodes in a circle), <em>mesh</em> (nodes
+connected to multiple peers), and <em>tree</em> (hierarchical). Modern data centers use
+<em>spine-leaf</em> topologies for low-latency, high-bandwidth any-to-any connectivity.
+The topology affects performance (latency, bandwidth), reliability (single points of
+failure), and cost.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Network Performance Metrics</div>
+<ul>
+<li><strong>Bandwidth</strong>: data rate (bits per second). Ethernet: 1–400 Gbps. Wi-Fi:
+0.1–10 Gbps. Internet: variable.</li>
+<li><strong>Latency</strong>: time for a bit to travel. LAN: ~0.5 ms. Same data center:
+~0.5 ms. Cross-continent: ~50–150 ms. Satellite: ~600 ms.</li>
+<li><strong>Jitter</strong>: variation in latency. Affects real-time applications
+(VoIP, gaming).</li>
+<li><strong>Packet loss</strong>: percentage of packets lost. Internet: 0.01–1%. Wi-Fi:
+higher, variable.</li>
+<li><strong>Throughput</strong>: actual data delivered per second (≤ bandwidth, reduced
+by overhead, loss, congestion).</li>
+</ul>
+</div>
+
+<p><strong>Network protocols</strong> define the rules for communication. The
+<strong>Internet Protocol (IP)</strong> provides unreliable, connectionless packet
+delivery: packets may be lost, duplicated, or delivered out of order.
+<strong>TCP (Transmission Control Protocol)</strong> adds reliability: it numbers
+packets, acknowledges receipt, retransmits lost packets, and orders them, providing a
+reliable byte stream. <strong>UDP (User Datagram Protocol)</strong> is a thin layer over
+IP that adds port numbers but no reliability—useful for applications that can tolerate
+loss (video streaming, DNS, gaming) or implement their own reliability
+(<strong>QUIC</strong>, used by HTTP/3, implements reliability over UDP).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 and Networking</div>
+<p>xv6 has a minimal networking stack. It includes a network interface card (NIC) driver
+(for the QEMU virtio-net device) and a basic network stack that can send and receive
+Ethernet frames. However, xv6 does not implement TCP/IP—there is no socket API, no
+TCP state machine, no IP routing. Adding networking to xv6 would require implementing:
+(1) an IP layer (packet forwarding, fragmentation), (2) a TCP layer (connection
+management, reliable delivery, congestion control), (3) a socket API (like
+<code class="code-inline">socket()</code>, <code class="code-inline">bind()</code>,
+<code class="code-inline">listen()</code>, <code class="code-inline">accept()</code>),
+and (4) network applications (a simple web server or chat client). This is a substantial
+project but illustrates how much functionality a real OS networking stack provides.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-3">19.3 Communication Structure</h2>
+
+<p>Distributed systems communicate using various <strong>communication structures</strong>,
+each with different trade-offs. The fundamental choice is between <strong>message
+passing</strong> (explicit send/receive) and <strong>remote procedure call (RPC)</strong>
+(making a remote function call look like a local one). Higher-level abstractions like
+<strong>distributed shared memory</strong> and <strong>publish-subscribe</strong> build
+on these foundations.</p>
+
+<p><strong>Message passing</strong> is the most basic form: one process sends a message
+to another, which receives it. The <em>send</em> and <em>receive</em> operations may be
+<strong>blocking</strong> (synchronous: sender waits until the message is received) or
+<strong>non-blocking</strong> (asynchronous: sender continues immediately). Message
+passing is flexible but low-level: the programmer must explicitly marshal data, handle
+failures, and manage message ordering. The <strong>sockets API</strong> (Berkeley
+sockets) is the standard message-passing interface in Unix and Windows.</p>
+
+<div class="code-block"><span class="comment">/* Socket communication (simplified) */</span>
+
+<span class="comment">// Server side</span>
+<span class="keyword">int</span> server_fd = socket(AF_INET, SOCK_STREAM, 0);
+bind(server_fd, &addr, sizeof(addr));
+listen(server_fd, 5);
+<span class="keyword">int</span> client_fd = accept(server_fd, NULL, NULL);
+<span class="func">read</span>(client_fd, buf, 1024);   <span class="comment">// receive message</span>
+<span class="func">write</span>(client_fd, reply, n);   <span class="comment">// send reply</span>
+
+<span class="comment">// Client side</span>
+<span class="keyword">int</span> sock = socket(AF_INET, SOCK_STREAM, 0);
+connect(sock, &addr, sizeof(addr));
+<span class="func">write</span>(sock, request, n);      <span class="comment">// send message</span>
+<span class="func">read</span>(sock, buf, 1024);          <span class="comment">// receive reply</span></div>
+
+<p><strong>Remote Procedure Call (RPC)</strong> is a higher-level abstraction that makes a
+call to a remote function look like a local function call. The caller invokes a function;
+the RPC runtime <em>marshals</em> the arguments into a message, sends it to the server,
+the server <em>unmarshals</em> the arguments, calls the function, marshals the result,
+and sends it back. The caller's function call returns the result as if it were local.
+This abstraction is powerful but hides important realities: network latency, partial
+failure, and the fact that a "local" call and a "remote" call have very different
+performance and failure characteristics.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ A Note on Distributed Computing</div>
+<p>There is a famous <em>fallacy</em> in distributed computing, articulated by L. Peter
+Deutsch: "The network is reliable." Other fallacies: "Latency is zero," "Bandwidth is
+infinite," "The network is secure," "Topology doesn't change," "There is one
+administrator," "Transport cost is zero." These fallacies lead to broken distributed
+systems. RPC, in particular, hides the network so well that developers treat remote calls
+like local ones, leading to <em>chatty</em> protocols (many small calls) that are
+devastated by latency. Good distributed system design acknowledges the network's
+limitations and minimizes round trips.</p>
+</div>
+
+<p><strong>RPC implementations</strong> include <em>gRPC</em> (Google, uses Protocol
+Buffers and HTTP/2), <em>Apache Thrift</em> (Facebook), <em>JSON-RPC</em>, and
+<em>XML-RPC</em>. Each defines an <em>Interface Definition Language (IDL)</em> for
+specifying the remote interface, and generates client stubs and server skeletons. The
+stub/skeleton handle marshaling, so the programmer writes code that looks like local
+function calls. <em>REST</em> (Representational State Transfer) is an architectural style
+(not RPC) that uses HTTP verbs (GET, POST, PUT, DELETE) on resources identified by URLs;
+it is simpler but less type-safe than RPC.</p>
+
+<p><strong>Distributed Shared Memory (DSM)</strong> is an abstraction that provides a
+shared memory model over a distributed system. Processes on different nodes can read and
+write shared variables as if they were in the same address space; the DSM runtime handles
+replication and consistency. DSM is appealing because it extends the familiar shared
+memory programming model to distributed systems. However, implementing DSM efficiently is
+extremely difficult: maintaining consistency across nodes with network latency leads to
+poor performance, and the abstraction hides the cost of remote access, leading to
+unpredictable performance. DSM is mostly of research interest; few production systems use
+it.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Marshaling and Serialization</div>
+<p><strong>Marshaling</strong> (or <em>serialization</em>) is the process of converting
+in-memory data structures into a byte stream for transmission. The receiver
+<em>unmarshals</em> (deserializes) the byte stream back into data structures. Challenges
+include: <em>byte order</em> (big-endian vs. little-endian), <em>data types</em>
+(integers, floats, strings, arrays, structs), <em>pointers</em> (must be replaced with
+identifiers), and <em>versioning</em> (handling schema changes). Common formats:
+<em>JSON</em> (human-readable, slow), <em>Protocol Buffers</em> (binary, fast, schema),
+<em>MessagePack</em> (binary JSON), <em>Apache Avro</em> (schema-based).</p>
+</div>
+
+<p><strong>Publish-subscribe (pub/sub)</strong> is a communication pattern where
+publishers send messages to topics, and subscribers receive messages from topics they
+subscribe to. Publishers and subscribers are decoupled: publishers don't know who
+subscribes, and subscribers don't know who publishes. This is useful for event-driven
+architectures, IoT, and microservices. <em>Apache Kafka</em>, <em>RabbitMQ</em>, and
+<em>Redis Pub/Sub</em> are popular implementations. Pub/sub is asynchronous and
+scalable but introduces challenges in ordering, durability, and exactly-once delivery.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-4">19.4 Network and Distributed Operating Systems</h2>
+
+<p>A <strong>network operating system (NOS)</strong> provides services that allow users
+on one machine to access resources on other machines, but each machine runs its own OS
+and users are aware of the network. Examples: users know they are <em>logging in</em> to
+a remote machine via SSH, or <em>mounting</em> a remote file system via NFS. The NOS
+provides the tools for network access, but the network is visible to users and
+applications.</p>
+
+<p>A <strong>distributed operating system</strong> goes further: it presents a single
+system image. Users and applications see a single, coherent system, even though it spans
+multiple machines. The OS automatically places processes, files, and other resources
+across the network, transparently. Users do not know (or need to know) which machine
+their process runs on or where their files are stored. True distributed operating
+systems are rare: <em>Amoeba</em>, <em>Plan 9</em>, and <em>LOCUS</em> are research
+examples. Most "distributed systems" in practice are built on network operating systems
+(Linux + middleware) rather than true distributed operating systems.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Network OS</th><th>Distributed OS</th></tr>
+</thead>
+<tbody>
+<tr><td>User awareness</td><td>Knows about network</td><td>Sees single system</td></tr>
+<tr><td>Autonomy</td><td>Each machine independent</td><td>Machines cooperate tightly</td></tr>
+<tr><td>Resource location</td><td>Explicit (user specifies)</td><td>Transparent (OS decides)</td></tr>
+<tr><td>Failure handling</td><td>User/app handles</td><td>OS handles transparently</td></tr>
+<tr><td>Examples</td><td>Linux + NFS/SSH</td><td>Plan 9, Amoeba</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The distinction matters because it affects how the system is designed and used. In a
+network OS, each machine runs a complete OS kernel and manages its own resources. Network
+protocols (NFS for files, SSH for remote login, SMTP for email) provide inter-machine
+services. The system is a <em>federation</em> of independent machines. This is the model
+of the Internet: each host is autonomous, and protocols enable cooperation.</p>
+
+<p>In a distributed OS, the kernel itself is distributed: it runs across multiple
+machines and manages all resources globally. Process scheduling, memory management, and
+file systems are <em>distributed</em>—the OS decides where to run a process, where to
+store a file, and how to balance load. This requires sophisticated algorithms for
+distributed scheduling, distributed consensus, and distributed locking. The benefit is
+transparency; the cost is complexity and the difficulty of handling partial failure.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Middleware</div>
+<p>In practice, most distributed systems use <strong>middleware</strong>—software that
+sits between the OS and the application, providing distributed services. Middleware
+includes: <em>RPC frameworks</em> (gRPC, Thrift), <em>message queues</em> (Kafka,
+RabbitMQ), <em>distributed file systems</em> (NFS, Ceph, HDFS), <em>distributed
+databases</em> (Cassandra, MongoDB), and <em>coordination services</em> (ZooKeeper,
+etcd). Middleware provides a distributed system <em>abstraction</em> without requiring a
+distributed <em>operating system</em>. This is the dominant approach: Linux (network OS)
++ middleware = distributed system.</p>
+</div>
+
+<p><strong>Cluster computing</strong> is a common architecture: a set of identical
+machines (a cluster) connected by a high-speed LAN, running a network OS with middleware
+for coordination. <strong>Grid computing</strong> extends this across organizations and
+geographic boundaries, with heterogeneous machines. <strong>Cloud computing</strong>
+provides virtualized resources (VMs, containers, functions) on demand, with the cloud
+provider managing the infrastructure. All of these are built on network operating
+systems, not distributed operating systems—the transparency is provided by middleware
+and management software, not the OS kernel.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Plan 9: A Distributed OS</div>
+<p><strong>Plan 9 from Bell Labs</strong> (1980s–1990s) is the most influential
+distributed operating system. Its key idea: <em>everything is a file</em>, and files can
+be remote. Plan 9 uses the <em>9P protocol</em> to access resources on remote machines
+as if they were local files. A Plan 9 user can run a CPU-intensive computation on a
+remote CPU server, read files from a remote file server, and display output on a local
+terminal—all transparently. Plan 9 influenced Linux (the <code class="code-inline">/proc</code>
+filesystem, UTF-8) and modern distributed systems, but never achieved commercial
+success. It remains a touchstone for distributed OS design.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-5">19.5 Design Issues</h2>
+
+<p>Designing a distributed system involves several fundamental issues that have no
+counterpart in single-machine systems. These include <strong>naming</strong>,
+<strong>consistency</strong>, <strong>replication</strong>, <strong>fault tolerance</strong>,
+and <strong>security</strong>. Each involves trade-offs, and the "right" choice depends
+on the application's requirements.</p>
+
+<p><strong>Naming</strong> is the problem of mapping human-readable names to resources
+(files, services, machines) in a distributed system. A <em>name service</em> (like DNS)
+translates names to addresses. Challenges include: <em>scalability</em> (the name space
+is global), <em>latency</em> (name resolution requires network access), <em>caching</em>
+(cached entries may be stale), and <em>updates</em> (propagating name changes). DNS uses
+a hierarchical, distributed database with caching and time-to-live (TTL) to balance
+freshness and performance. <em>Service discovery</em> (Consul, etcd, Kubernetes DNS) is
+a related problem: finding the address of a service that may move or scale.</p>
+
+<p><strong>Consistency</strong> is the problem of ensuring that all nodes agree on the
+state of shared data. <strong>Strong consistency</strong> (linearizability) guarantees
+that every read returns the latest write—this is easy on a single machine but expensive
+in a distributed system (requires coordination on every write).
+<strong>Eventual consistency</strong> allows replicas to diverge temporarily, with the
+guarantee that they will eventually converge. This is faster and more available but
+allows stale reads. <strong>Causal consistency</strong> and <strong>session consistency</strong>
+are intermediate points. The <em>CAP theorem</em> (Section 19.1) formalizes the
+trade-off: during a network partition, you must choose between consistency and
+availability.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Consistency Model</th><th>Guarantee</th><th>Cost</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>Strong (linearizable)</td><td>Read = latest write</td><td>High (coordination)</td><td>Spanner, etcd</td></tr>
+<tr><td>Sequential</td><td>All see same order</td><td>Medium</td><td>ZooKeeper</td></tr>
+<tr><td>Causal</td><td>Causally related ops ordered</td><td>Medium</td><td>COPS</td></tr>
+<tr><td>Eventual</td><td>Converges eventually</td><td>Low</td><td>Cassandra, DynamoDB</td></tr>
+<tr><td>Read-your-writes</td><td>See your own writes</td><td>Low (session)</td><td>Session-based systems</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Replication</strong> is the practice of storing multiple copies of data on
+different nodes. Replication improves <em>availability</em> (data survives node failure),
+<em>performance</em> (read from a nearby replica), and <em>scalability</em> (distribute
+read load). The challenge is <em>consistency</em>: when data is updated, all replicas
+must be updated. <strong>Primary-backup replication</strong> has one primary that
+handles writes and forwards to backups; if the primary fails, a backup takes over.
+<strong>Multi-master replication</strong> allows writes to any replica, with conflict
+resolution. <strong>Quorum-based replication</strong> requires a majority of replicas
+to agree, balancing consistency and availability.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Consensus Problem</div>
+<p><strong>Consensus</strong> is the fundamental problem of distributed systems: how do
+nodes agree on a value? It sounds simple but is remarkably hard because nodes can fail
+and the network can delay or drop messages. The <strong>Paxos</strong> algorithm
+(Lamport, 1998) solves consensus but is notoriously complex.
+<strong>Raft</strong> (2014) is a more understandable consensus algorithm, used by
+etcd, Consul, and others. Consensus is the foundation of <em>state machine
+replication</em>: if all nodes agree on a sequence of operations, they can maintain
+identical state. This is how distributed systems like ZooKeeper and etcd provide
+consistent metadata.</p>
+</div>
+
+<p><strong>Fault tolerance</strong> is the ability to continue operating despite
+failures. Distributed systems must handle: <em>node crashes</em> (a machine stops),
+<em>network partitions</em> (the network splits), <em>byzantine failures</em> (nodes
+behave maliciously), and <em>storage failures</em> (disk corruption). Techniques include
+<em>replication</em> (multiple copies), <em>checkpointing</em> (save state periodically),
+<em>heartbeat monitoring</em> (detect failed nodes), <em>failover</em> (switch to a
+backup), and <em>Byzantine fault tolerance</em> (tolerate malicious nodes, used in
+blockchain systems). The <em>two-army problem</em> shows that reliable communication over
+an unreliable channel is impossible with certainty; practical systems use timeouts and
+heuristics.</p>
+
+<p><strong>Security in distributed systems</strong> adds the challenge of securing
+communication over an untrusted network. Every message may be intercepted, modified, or
+replayed. <strong>TLS/SSL</strong> provides encryption, authentication, and integrity for
+network communication. <strong>Kerberos</strong> provides ticket-based authentication in
+distributed environments. <strong>Public Key Infrastructure (PKI)</strong> provides
+trust through certificate authorities. The <em>zero-trust model</em> assumes the network
+is hostile and authenticates every request, regardless of network location.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Distributed System Design Patterns</div>
+<ul>
+<li><strong>Load balancer</strong>: distribute requests across servers</li>
+<li><strong>Sharding</strong>: partition data across nodes (by key)</li>
+<li><strong>Replication</strong>: copy data for availability/performance</li>
+<li><strong>Caching</strong>: store frequently accessed data closer to consumers</li>
+<li><strong>Circuit breaker</strong>: stop calling a failing service (prevent cascading failures)</li>
+<li><strong>Leader election</strong>: choose one node to coordinate (via consensus)</li>
+<li><strong>Saga</strong>: distributed transaction as a sequence of compensating actions</li>
+<li><strong>Service mesh</strong>: sidecar proxy for service-to-service communication</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-6">19.6 Distributed File Systems</h2>
+
+<p>A <strong>distributed file system (DFS)</strong> allows files stored on remote servers
+to be accessed as if they were local. The DFS presents a unified file namespace that
+spans multiple machines, hiding the physical location of files. Users and applications
+access files using the same API (open, read, write) as local files, without knowing
+whether a file is local or remote. This is a key example of <em>transparency</em> in
+distributed systems.</p>
+
+<p>The <strong>Network File System (NFS)</strong>, developed by Sun Microsystems in 1984,
+is the most widely used DFS. NFS allows a client to <em>mount</em> a directory exported
+by a server, making the remote directory appear as part of the local file tree. When a
+process opens a file in the mounted directory, the NFS client sends requests to the NFS
+server over the network. NFS uses <strong>Sun RPC</strong> for communication and
+supports both UDP and TCP as transports. NFSv4 added strong security (Kerberos), stateful
+operation, and improved performance over WANs.</p>
+
+<div class="code-block"><span class="comment">/* NFS mount and access */</span>
+
+<span class="comment">// Server exports a directory</span>
+<span class="comment">// /etc/exports:</span>
+<span class="comment">// /home  *(rw,sync,no_subtree_check)</span>
+
+<span class="comment">// Client mounts the remote directory</span>
+mount server.example.com:/home /mnt/home
+
+<span class="comment">// Now /mnt/home/* is the server's /home/*</span>
+ls /mnt/home/alice      <span class="comment">// reads from server</span>
+cat /mnt/home/alice/file.txt  <span class="comment">// file served over network</span>
+
+<span class="comment">// NFS protocol operations (over Sun RPC):</span>
+<span class="comment">//   NFSPROC3_READ  → read file by handle + offset</span>
+<span class="comment">//   NFSPROC3_WRITE → write file by handle + offset</span>
+<span class="comment">//   NFSPROC3_LOOKUP → resolve path component to file handle</span></div>
+
+<p><strong>Server Message Block (SMB) / Common Internet File System (CIFS)</strong> is
+the Microsoft equivalent, used for file sharing in Windows environments. SMB provides
+file, printer, and named pipe sharing over the network. Like NFS, it allows remote files
+to appear local. <em>Samba</em> is an open-source implementation of SMB for Unix,
+enabling Linux servers to share files with Windows clients. SMB 3.0 added features like
+SMB Direct (RDMA), encryption, and multi-channel.</p>
+
+<p><strong>Cloud distributed file systems</strong> are designed for data-center and cloud
+scale. <strong>HDFS (Hadoop Distributed File System)</strong> stores large files (100s of
+GB to TBs) by splitting them into blocks (128 MB) and replicating each block across
+multiple nodes (typically 3). HDFS is optimized for sequential reads of large files and
+is the storage layer for Hadoop. <strong>Ceph</strong> provides a unified storage system
+with object, block, and file interfaces, using <em>CRUSH</em> for data placement.
+<strong>Amazon S3</strong> is an object store (not a file system) that provides
+essentially unlimited storage with 99.999999999% (11 nines) durability through
+replication and erasure coding.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>DFS</th><th>Origin</th><th>Key Features</th></tr>
+</thead>
+<tbody>
+<tr><td>NFS</td><td>Sun (1984)</td><td>Unix standard, stateless (v3), Kerberos (v4)</td></tr>
+<tr><td>SMB/CIFS</td><td>Microsoft</td><td>Windows file sharing, Samba for Unix</td></tr>
+<tr><td>HDFS</td><td>Apache/Hadoop</td><td>Large files, block replication, big data</td></tr>
+<tr><td>Ceph</td><td>2006</td><td>Object/block/file, CRUSH placement</td></tr>
+<tr><td>GlusterFS</td><td>2005</td><td>Scale-out, no metadata server</td></tr>
+<tr><td>Lustre</td><td>2003</td><td>HPC, high-performance parallel I/O</td></tr>
+<tr><td>Amazon EFS</td><td>AWS</td><td>Managed NFS for cloud</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The <strong>Andrew File System (AFS)</strong>, developed at Carnegie Mellon in the
+1980s, was a pioneering DFS that introduced several influential concepts. AFS uses
+<em>whole-file caching</em>: when a file is opened, the entire file is copied to the
+client's local cache, and subsequent reads and writes operate on the cache. The file is
+written back to the server only when closed. This dramatically reduces network traffic
+for files that are read or written repeatedly. AFS also introduced <em>location
+independence</em>: files are identified by name, not by server, and can be moved between
+servers without changing paths.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ DFS Architecture: Client-Server</div>
+<p>Most DFS use a <strong>client-server architecture</strong>: clients (user machines)
+request file operations from servers (file servers). The client typically has a
+<strong>cache</strong> to reduce network traffic: recently accessed file blocks are kept
+locally, and the client checks the cache before contacting the server. The
+<strong>consistency</strong> of the cache is a key issue: if another client modifies the
+file, the cached copy is stale. NFS uses <em>attribute caching</em> with time-based
+validation (check the server every N seconds); AFS uses <em>callback promises</em> (the
+server promises to notify the client of changes).</p>
+</div>
+
+<p><strong>Google File System (GFS)</strong> and its successor <strong>Colossus</strong>
+are internal Google DFS designed for Google's workloads: large files, append-mostly
+access, and high failure rates (commodity hardware). GFS splits files into 64 MB chunks,
+replicates each chunk 3 times, and uses a single <em>master</em> for metadata (chunk
+locations) and <em>chunkservers</em> for data. The design assumes failures are common and
+optimizes for Google's specific access patterns. GFS influenced HDFS, which is the
+open-source equivalent.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 and Distributed File Systems</div>
+<p>xv6 has a local file system (the "log-structured" file system on the virtio disk) but
+no network file system. Adding NFS-like functionality to xv6 would require: (1) a network
+stack (see Section 19.2), (2) an RPC layer (for NFS protocol messages), (3) a client-side
+VFS layer that redirects file operations to the network, and (4) a server-side handler
+that processes NFS requests. The xv6 file system interface
+(<code class="code-inline">sys_open</code>, <code class="code-inline">sys_read</code>,
+<code class="code-inline">sys_write</code>) would remain the same—the distribution would
+be transparent. This is exactly how NFS works on Linux: the VFS layer decides whether a
+file is local or remote, and dispatches accordingly.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-7">19.7 DFS Naming and Transparency</h2>
+
+<p><strong>Naming</strong> in a distributed file system is the mapping from file names to
+file locations. The naming scheme determines how users refer to files and how the system
+locates them. There are three levels of <strong>transparency</strong> in naming:</p>
+
+<ul>
+<li><strong>Location transparency</strong>: the name does not reveal the file's location.
+A path like <code class="code-inline">/home/alice/file.txt</code> does not indicate which
+server stores the file. The file can be moved to a different server without changing the
+path.</li>
+<li><strong>Location independence</strong>: the name remains valid even if the file moves.
+This is stronger than location transparency: not only does the name not reveal the
+location, but the file can be <em>migrated</em> while in use. AFS and Ceph support this;
+NFS (with static mounts) does not.</li>
+<li><strong>Access transparency</strong>: local and remote files are accessed using the
+same operations. The user does not need to use different commands for local and remote
+files. NFS and SMB achieve this through the VFS layer.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Naming Schemes</div>
+<ul>
+<li><strong>Host-based naming</strong>: the name includes the host (e.g.,
+<code class="code-inline">server:/path</code>). NFS mounts use this. Not location-transparent.</li>
+<li><strong>Mount-based naming</strong>: a remote directory is mounted into the local
+namespace (e.g., <code class="code-inline">/mnt/server/home</code>). The local path
+hides the server, but the mount point reveals it. Semi-transparent.</li>
+<li><strong>Global naming</strong>: all files are in a single global namespace, and the
+system locates them automatically (e.g., AFS's <code class="code-inline">/afs/cell/path</code>).
+Fully location-transparent.</li>
+</ul>
+</div>
+
+<p><strong>Symbolic links</strong> are a common mechanism for naming: a symbolic link is
+a file that contains a path to another file (which may be on a remote server). When the
+link is accessed, the OS follows it to the target. Symbolic links provide flexibility but
+can create <em>dangling references</em> (if the target is deleted) and do not provide
+location independence (the link contains the location).</p>
+
+<p><strong>Hard links</strong> and <strong>inodes</strong> are the Unix mechanism for
+file naming. An <em>inode</em> is a data structure that describes a file's contents and
+location on disk. A <em>directory entry</em> maps a name to an inode number. Multiple
+directory entries (hard links) can point to the same inode. In a DFS, the inode may be on
+a remote server; the client must resolve the name to a <em>file handle</em> (a unique
+identifier for the file on the server) before accessing it.</p>
+
+<div class="code-block"><span class="comment">/* NFS file handle and name resolution */</span>
+
+<span class="comment">// NFS uses file handles (opaque identifiers) to refer to files</span>
+<span class="comment">// A handle is: { server_ip, filesystem_id, inode_number, generation }</span>
+
+<span class="comment">// Name resolution: /home/alice/file.txt</span>
+<span class="comment">// 1. Start with root handle (from mount)</span>
+<span class="comment">// 2. LOOKUP "home" → handle for /home</span>
+<span class="comment">// 3. LOOKUP "alice" → handle for /home/alice</span>
+<span class="comment">// 4. LOOKUP "file.txt" → handle for /home/alice/file.txt</span>
+<span class="comment">// 5. READ(handle, offset, count) → file data</span>
+
+<span class="comment">// Each LOOKUP is an RPC to the server</span>
+<span class="comment">// Client caches handle→name mappings (directory cache)</span></div>
+
+<p><strong>Replication transparency</strong> means that users do not know (or need to
+know) that a file has multiple copies. When a user reads a file, the DFS may serve it
+from any replica; when a user writes, the DFS updates all replicas. The challenge is
+<em>consistency</em>: if two users write to different replicas simultaneously, the writes
+may conflict. DFS use various consistency models: <em>read-your-writes</em> (you see your
+own writes), <em>monotonic reads</em> (once you see a value, you never see an older one),
+and <em>strong consistency</em> (all replicas agree at all times, expensive).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ The Stale Cache Problem</div>
+<p>In a DFS with client caching, a client may cache a file and continue reading from the
+cache while another client modifies the file on the server. The first client's cache is
+<strong>stale</strong>: it contains an outdated version. NFSv3 uses <em>attribute
+caching</em> with a timeout: the client periodically checks the file's modification time
+on the server and invalidates the cache if it changed. This reduces staleness but does
+not eliminate it—there is always a window where the cache may be stale. NFSv4 with
+<em>delegations</em> allows the server to "delegate" a file to a client, guaranteeing
+that the client will be notified of any changes—eliminating staleness for that file.</p>
+</div>
+
+<p><strong>Failure transparency</strong> means that the DFS continues to operate despite
+failures. If a server crashes, the DFS should failover to a replica. If the network
+partitions, the DFS should either continue (accepting the risk of inconsistency) or
+refuse operations (maintaining consistency). <strong>High availability</strong> is
+achieved through replication: if one replica is unavailable, another can serve requests.
+The <em>quorum</em> approach requires a majority of replicas to agree on writes,
+ensuring that a single partition cannot make conflicting decisions.</p>
+
+<p><strong>Migration transparency</strong> allows files to be moved between servers
+without affecting access. This is useful for <em>load balancing</em> (move files from
+busy servers to idle ones) and <em>server maintenance</em> (evacuate a server before
+shutting it down). AFS supports file migration: the <em>volume</em> (a collection of
+files) is the unit of migration, and the <em>volume location database</em> tracks the
+current location. Clients consult the database to find the current server, then access
+the file directly.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Transparency Trade-offs</div>
+<p>Full transparency is the ideal but is expensive. Real DFS make trade-offs:</p>
+<ul>
+<li><strong>NFS</strong>: access transparency (yes), location transparency (partial—mount
+points), location independence (no—static mounts), consistency (weak—cache staleness).</li>
+<li><strong>AFS</strong>: access transparency (yes), location transparency (yes—global
+namespace), location independence (yes—volume migration), consistency (session—callbacks).</li>
+<li><strong>Ceph</strong>: access transparency (yes), location transparency (yes),
+location independence (yes—dynamic placement), consistency (strong—via metadata server).</li>
+</ul>
+<p>The more transparency you provide, the more complex the implementation. NFS's
+simplicity (stateless server, weak consistency) is why it has survived for 40+ years.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-19-8">19.8 Remote File Access Methods</h2>
+
+<p>Remote file access in a DFS involves several mechanisms that determine how data is
+transferred between client and server. The key design decisions are <strong>caching</strong>,
+<strong>consistency</strong>, <strong>statefulness</strong>, and <strong>failure
+handling</strong>. Each choice involves trade-offs between performance, consistency, and
+complexity.</p>
+
+<p><strong>Caching</strong> is the primary performance optimization in a DFS. Without
+caching, every read and write would require a network round trip, making the DFS
+unusable. The client caches recently accessed data (file blocks, attributes, directory
+entries) and serves subsequent accesses from the cache. The <strong>cache granularity</strong>
+matters: <em>block-level caching</em> (cache disk blocks, like NFS) is fine-grained but
+may require many requests to read a file; <em>whole-file caching</em> (cache the entire
+file, like AFS) is coarse but efficient for files that are read or written in full.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Caching Strategy</th><th>Granularity</th><th>Pros</th><th>Cons</th></tr>
+</thead>
+<tbody>
+<tr><td>Block caching (NFS)</td><td>4–8 KB blocks</td><td>Memory efficient, random access</td><td>Many requests for large files</td></tr>
+<tr><td>Whole-file caching (AFS)</td><td>Entire file</td><td>Few requests, local-speed access</td><td>Wasteful for large, rarely-read files</td></tr>
+<tr><td>Hybrid (Ceph)</td><td>Configurable</td><td>Flexible</td><td>Complex implementation</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Cache consistency</strong> is the problem of ensuring that cached data is not
+stale. There are two main approaches: <strong>client-initiated validation</strong> and
+<strong>server-initiated invalidation</strong>. In client-initiated validation (NFSv3), the
+client periodically checks with the server whether the cached data is still valid (by
+comparing modification times). This is simple but allows staleness between checks. In
+server-initiated invalidation (AFS callbacks, NFSv4 delegations), the server keeps track
+of which clients have cached a file and notifies them when the file changes. This
+eliminates staleness but requires the server to maintain state (which clients have
+cached what).</p>
+
+<div class="code-block"><span class="comment">/* Cache consistency approaches */</span>
+
+<span class="comment">// 1. Client-initiated (NFSv3): periodic validation</span>
+<span class="keyword">read</span>(file) {
+    <span class="keyword">if</span> (cache_valid(file) && !expired(cache_time)) {
+        <span class="keyword">return</span> cache[file];  <span class="comment">// fast path</span>
+    }
+    attr = GETATTR(file);  <span class="comment">// RPC to server</span>
+    <span class="keyword">if</span> (attr.mtime == cached_mtime) {
+        renew_cache(file);  <span class="comment">// still valid</span>
+        <span class="keyword">return</span> cache[file];
+    }
+    <span class="comment">// Stale: re-read from server</span>
+    cache[file] = READ(file, 0, size);
+    <span class="keyword">return</span> cache[file];
+}
+
+<span class="comment">// 2. Server-initiated (AFS callback): push invalidation</span>
+<span class="comment">// Server maintains: file → list of clients with callbacks</span>
+<span class="comment">// On write: server sends CB_REVOKE to all listed clients</span>
+<span class="comment">// Client invalidates cache on receiving CB_REVOKE</span>
+<span class="comment">// No polling needed; no staleness window</span></div>
+
+<p><strong>Stateful vs. stateless servers</strong> is a fundamental design choice. A
+<strong>stateless server</strong> (NFSv3) does not maintain any state about clients: each
+request is self-contained, and the server can be restarted without affecting clients. A
+<strong>stateful server</strong> (NFSv4, SMB, AFS) maintains state about open files,
+locks, and client sessions. Stateful servers enable features like <em>file locking</em>
+(prevent concurrent writes) and <em>delegations</em> (server guarantees to notify of
+changes), but require <em>session recovery</em> if the server crashes.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Stateless vs. Stateful: The Recovery Problem</div>
+<p>A <strong>stateless server</strong> can crash and restart without clients noticing
+(they just retry requests). But it cannot support file locking (which requires the server
+to track who holds locks). A <strong>stateful server</strong> can support locking and
+delegations, but if it crashes, all state is lost. Clients must detect the crash and
+<em>recover</em> (re-establish locks, re-open files). NFSv4 uses <em>lease-based
+locking</em>: locks are granted for a limited time (a lease), and the client must renew
+them periodically. If the server crashes and restarts, it waits for all leases to expire
+before granting new locks, ensuring no stale locks survive. This is a clever compromise
+between statelessness and statefulness.</p>
+</div>
+
+<p><strong>File locking</strong> in a distributed system is challenging because locks
+must be consistent across all clients and must survive failures. <strong>Advisory
+locking</strong> (locks are not enforced by the system; applications must check) is
+simpler but relies on cooperation. <strong>Mandatory locking</strong> (the system
+enforces locks) is safer but can cause deadlocks and performance problems. In a DFS,
+locking requires a <em>distributed lock manager</em> that tracks locks across all nodes.
+The <em>lock revocation</em> problem (Section 17.7) is acute: if a client holds a lock
+and crashes, the server must detect the failure (via lease expiry or heartbeat) and
+revoke the lock.</p>
+
+<p><strong>Failure handling</strong> in remote file access must deal with: <em>server
+crashes</em> (the server stops), <em>network failures</em> (the network drops or delays
+packets), <em>client crashes</em> (the client stops), and <em>byzantine failures</em>
+(the server behaves incorrectly). The standard approach is <strong>at-least-once
+semantics</strong>: the client retries a request until it receives a response. This works
+for <em>idempotent</em> operations (like reading a file at a given offset—repeating the
+read returns the same data) but is dangerous for non-idempotent operations (like
+appending to a file—repeating the append writes twice). <strong>Exactly-once
+semantics</strong> requires the server to track which requests have been processed,
+typically using <em>request IDs</em> and a <em>reply cache</em>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Semantics of Remote File Operations</div>
+<ul>
+<li><strong>At-least-once</strong>: the operation is performed one or more times. Safe
+for idempotent operations (read, set attribute). Unsafe for non-idempotent (append,
+increment).</li>
+<li><strong>At-most-once</strong>: the operation is performed zero or one times. The
+client may not know if it was performed. Used when the client can tolerate uncertainty.</li>
+<li><strong>Exactly-once</strong>: the operation is performed exactly one time. Requires
+the server to deduplicate requests (using request IDs) and handle crashes carefully.
+Most expensive but safest.</li>
+</ul>
+<p>NFSv3 provides at-least-once for most operations (the client retries). NFSv4 improves
+this with <em>session trunking</em> and <em>exactly-once semantics</em> for session-based
+operations.</p>
+</div>
+
+<p><strong>Performance optimization</strong> in remote file access includes:
+<strong>read-ahead</strong> (prefetch the next blocks of a file, anticipating sequential
+access), <strong>write-behind</strong> (buffer writes and flush asynchronously),
+<strong>batching</strong> (combine multiple operations into one RPC), and
+<strong>compression</strong> (compress data before transmission). NFSv4 introduced
+<em>compound procedures</em> that combine multiple operations (like LOOKUP + OPEN + READ)
+into a single RPC, reducing round trips. <strong>pNFS (parallel NFS)</strong> separates
+metadata and data: clients access data servers directly (bypassing the metadata server
+for bulk I/O), enabling parallel access and higher throughput.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Remote File Access and xv6</div>
+<p>xv6's file system is entirely local. If you wanted to add remote file access (like
+NFS), you would need to: (1) add a network stack, (2) implement an RPC layer, (3) modify
+the file system to support remote operations (a VFS-like layer that dispatches to local
+or remote handlers), (4) implement caching with a consistency protocol, and (5) handle
+failures (retry, timeout). The xv6 file system code
+(<code class="code-inline">file.c</code>, <code class="code-inline">fs.c</code>,
+<code class="code-inline">sysfile.c</code>) would need to be generalized to support both
+local and remote backends. This is a significant project, but it illustrates how a real
+OS supports distributed file access—and how much complexity the "transparent" remote
+access actually involves.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return; // skip links without data-target (e.g., part links)
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

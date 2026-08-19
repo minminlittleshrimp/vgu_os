@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 06 - C-to-Assembly Compiler Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Lab 06: C to ASM</h1>
+    <a class="subtitle" href="../main.html">VGU Operating Systems</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Labs</div>
+      <a class="nav-item" href="lab01-riscv-asm-basics.html"><span class="nav-num">01</span>RISC-V Basics</a>
+      <a class="nav-item" href="lab02-riscv-stack-frames.html"><span class="nav-num">02</span>Stack Frames</a>
+      <a class="nav-item" href="lab03-x86-64-asm.html"><span class="nav-num">03</span>x86-64 ASM</a>
+      <a class="nav-item" href="lab04-arm64-asm.html"><span class="nav-num">04</span>ARM64 ASM</a>
+      <a class="nav-item" href="lab05-cross-isa-comparison.html"><span class="nav-num">05</span>Cross-ISA</a>
+      <a class="nav-item active" href="lab06-c-to-asm-explorer.html"><span class="nav-num">06</span>C to ASM</a>
+      <a class="nav-item" href="lab07-os-syscalls-traps.html"><span class="nav-num">07</span>Syscalls & Traps</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Resources</div>
+      <a class="nav-item" href="../handbook/main.html">Handbook</a>
+      <a class="nav-item" href="../simulator/main.html">Simulator</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Lab 06: C-to-Assembly Compiler Explorer</h1>
+<p style="color:var(--text-dim);font-size:14px">Use the compiler explorer to understand how C constructs map to assembly, and how optimization levels transform code.</p>
+
+<div class="divider"></div>
+
+<h2>Objectives</h2>
+<ul>
+<li>Use the compiler explorer (simulator) to compile C code to assembly</li>
+<li>Understand how C variables, arrays, structs, and pointers map to assembly</li>
+<li>Compare optimization levels: <span class="code-inline">-O0</span>, <span class="code-inline">-O1</span>, <span class="code-inline">-O2</span>, <span class="code-inline">-O3</span></li>
+<li>Understand stack spilling (when variables go to the stack vs registers)</li>
+<li>Observe how recursion is compiled at different optimization levels</li>
+<li>Recognize compiler optimization patterns (constant folding, dead code elimination, tail-call optimization)</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+<li>Complete <a href="lab01-riscv-asm-basics.html">Lab 01</a> and <a href="lab02-riscv-stack-frames.html">Lab 02</a></li>
+<li>Basic understanding of C (variables, arrays, structs, pointers, functions)</li>
+<li>Open the <a href="../simulator/main.html">Simulator</a> in compiler explorer mode</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">What Is a Compiler Explorer?</div>
+A compiler explorer (like <a href="https://godbolt.org">Godbolt</a>) lets you type C code and instantly see the generated assembly. You can change optimization levels, target architectures, and compiler versions. Our <a href="../simulator/main.html">simulator</a> provides similar functionality.
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== EXERCISE 1 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 1: Compile hello.c with -O0, -O1, -O2, -O3 - Compare</span>
+</div>
+<p>Compile the same function at four optimization levels and observe how the compiler transforms the code.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">compute</span>(<span class="keyword">int</span> x) {
+    <span class="keyword">int</span> a = <span class="number">5</span>;
+    <span class="keyword">int</span> b = <span class="number">10</span>;
+    <span class="keyword">int</span> c = a + b;
+    <span class="keyword">int</span> d = c * x;
+    <span class="keyword">return</span> d + <span class="number">1</span>;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O0 (no optimization)</div>
+<p>Set optimization to <span class="code-inline">-O0</span>. Observe:</p>
+<ul>
+<li>Every variable is stored on the stack (spilled)</li>
+<li>Multiple <span class="code-inline">sw</span>/<span class="code-inline">lw</span> (or <span class="code-inline">sd</span>/<span class="code-inline">ld</span>) instructions</li>
+<li>The computation follows the C source line by line</li>
+<li>Many instructions just move data between stack and registers</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O1</div>
+<p>Switch to <span class="code-inline">-O1</span>. Observe:</p>
+<ul>
+<li>Stack spills are reduced - variables stay in registers</li>
+<li>Constant folding: <span class="code-inline">a + b = 15</span> is computed at compile time</li>
+<li>Fewer instructions overall</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2</div>
+<p>Switch to <span class="code-inline">-O2</span>. Observe:</p>
+<ul>
+<li>No stack frame at all - everything in registers</li>
+<li>The entire function may be just 2-3 instructions</li>
+<li>Constant folding: <span class="code-inline">5 + 10 = 15</span>, so <span class="code-inline">d = 15 * x</span></li>
+<li>Expected: <span class="code-inline">li t0, 15; mul a0, a0, t0; addi a0, a0, 1; ret</span></li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O3</div>
+<p>Switch to <span class="code-inline">-O3</span>. Observe:</p>
+<ul>
+<li>May be identical to <span class="code-inline">-O2</span> for this simple function</li>
+<li>For larger functions, <span class="code-inline">-O3</span> adds aggressive inlining and vectorization</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Fill in the comparison table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Optimization</th><th>Instruction Count</th><th>Stack Frame?</th><th>Constant Folding?</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>-O0</code></td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>-O1</code></td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>-O2</code></td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>-O3</code></td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Optimization Levels Explained</div>
+<ul>
+<li><code>-O0</code>: No optimization. Easy to debug, every variable on stack.</li>
+<li><code>-O1</code>: Basic optimization. Reduces code size and execution time.</li>
+<li><code>-O2</code>: Standard optimization. Most production code uses this. Aggressive register allocation.</li>
+<li><code>-O3</code>: Maximum optimization. Adds inlining, vectorization. May increase code size.</li>
+</ul>
+</div>
+</div>
+
+<!-- ===== EXERCISE 2 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 2: Local Variables - Stack vs Registers</span>
+</div>
+<p>Understand when the compiler stores local variables on the stack and when it keeps them in registers.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">locals</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="keyword">int</span> x = a + <span class="number">1</span>;
+    <span class="keyword">int</span> y = b + <span class="number">2</span>;
+    <span class="keyword">int</span> z = x + y;
+    <span class="keyword">return</span> z;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O0</div>
+<p>At <span class="code-inline">-O0</span>, observe that <span class="code-inline">x</span>, <span class="code-inline">y</span>, and <span class="code-inline">z</span> are each stored on the stack. Look for <span class="code-inline">sw</span> (store word) and <span class="code-inline">lw</span> (load word) instructions.</p>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2</div>
+<p>At <span class="code-inline">-O2</span>, the compiler keeps everything in registers. There should be no stack access at all. The function may be as simple as:</p>
+<div class="code-block"><span class="label">locals:</span>
+    <span class="keyword">addi</span> <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">1</span>    <span class="comment"># x = a + 1</span>
+    <span class="keyword">addi</span> <span class="reg">a1</span>, <span class="reg">a1</span>, <span class="number">2</span>    <span class="comment"># y = b + 2</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>  <span class="comment"># z = x + y</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Force stack spilling</div>
+<p>Add the <span class="code-inline">volatile</span> keyword to force the compiler to store on the stack:</p>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">locals_volatile</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="keyword">volatile</span> <span class="keyword">int</span> x = a + <span class="number">1</span>;
+    <span class="keyword">volatile</span> <span class="keyword">int</span> y = b + <span class="number">2</span>;
+    <span class="keyword">return</span> x + y;
+}</div>
+<p>Compile with <span class="code-inline">-O2</span>. Even at <span class="code-inline">-O2</span>, <span class="code-inline">volatile</span> forces stack stores. Observe the <span class="code-inline">sw</span>/<span class="code-inline">lw</span> instructions return.</p>
+</div>
+<div class="step">
+<div class="step-title">Answer these questions</div>
+<ul>
+<li>At <span class="code-inline">-O0</span>, how many stack slots are allocated?</li>
+<li>At <span class="code-inline">-O2</span>, how many stack slots are allocated?</li>
+<li>What does <span class="code-inline">volatile</span> tell the compiler?</li>
+<li>Why does the compiler prefer registers over the stack?</li>
+</ul>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Register Allocation</div>
+The compiler's <em>register allocator</em> decides which variables live in registers and which spill to the stack. At <code>-O0</code>, everything spills (for debuggability). At <code>-O2</code>, the allocator tries to keep as many variables in registers as possible. <code>volatile</code> forces the compiler to always access memory, bypassing the allocator.
+</div>
+</div>
+
+<!-- ===== EXERCISE 3 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 3: Arrays - How arr[i] Is Compiled</span>
+</div>
+<p>Understand how array indexing compiles to assembly using base + index x scale addressing.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">sum_array</span>(<span class="keyword">int</span> *arr, <span class="keyword">int</span> n) {
+    <span class="keyword">int</span> sum = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        sum += arr[i];
+    }
+    <span class="keyword">return</span> sum;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2 and find the array access</div>
+<p>Look for the instruction that loads from the array. In RISC-V, it looks like:</p>
+<div class="code-block"><span class="comment"># arr[i] access in RISC-V</span>
+<span class="keyword">slli</span>  <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="number">2</span>     <span class="comment"># t0 = i * 4 (shift left by 2)</span>
+<span class="keyword">add</span>  <span class="reg">t0</span>, <span class="reg">a0</span>, <span class="reg">t0</span>   <span class="comment"># t0 = arr + i*4 (address of arr[i])</span>
+<span class="keyword">lw</span>   <span class="reg">t1</span>, <span class="number">0</span>(<span class="reg">t0</span>)   <span class="comment"># t1 = arr[i] (load word)</span></div>
+</div>
+<div class="step">
+<div class="step-title">Compare with x86-64</div>
+<p>Switch to x86-64 and compile the same code. The array access is a single instruction:</p>
+<div class="code-block"><span class="comment"># arr[i] access in x86-64</span>
+<span class="keyword">mov</span>  <span class="reg">eax</span>, <span class="directive">DWORD PTR</span> [<span class="reg">rdi</span> + <span class="reg">rcx</span>*<span class="number">4</span>]  <span class="comment"># eax = arr[i]</span></div>
+<p>x86-64's addressing mode <span class="code-inline">[base + index*scale]</span> does the multiply and add in hardware.</p>
+</div>
+<div class="step">
+<div class="step-title">Understand the scale factor</div>
+<p>The scale factor depends on the element size:</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>C Type</th><th>Size (bytes)</th><th>Scale Factor</th><th>Shift Amount</th></tr>
+</thead>
+<tbody>
+<tr><td><code>char</code></td><td>1</td><td>1</td><td>0 (no shift)</td></tr>
+<tr><td><code>short</code></td><td>2</td><td>2</td><td>1 (slli 1)</td></tr>
+<tr><td><code>int</code></td><td>4</td><td>4</td><td>2 (slli 2)</td></tr>
+<tr><td><code>long</code> / <code>ptr</code></td><td>8</td><td>8</td><td>3 (slli 3)</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="step">
+<div class="step-title">Try a 2D array</div>
+<p>Compile this and observe the double indexing:</p>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">get</span>(<span class="keyword">int</span> arr[<span class="number">4</span>][<span class="number">4</span>], <span class="keyword">int</span> i, <span class="keyword">int</span> j) {
+    <span class="keyword">return</span> arr[i][j];
+}</div>
+<p>The compiler computes <span class="code-inline">arr + (i*4 + j) * 4</span> - a multiply, add, and another multiply.</p>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 4 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 4: Structs - How struct Access Is Compiled</span>
+</div>
+<p>Understand how struct field access compiles to fixed-offset memory loads.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">struct</span> <span class="directive">point</span> {
+    <span class="keyword">int</span> x;
+    <span class="keyword">int</span> y;
+    <span class="keyword">int</span> z;
+};
+
+<span class="keyword">int</span> <span class="directive">get_y</span>(<span class="keyword">struct</span> point *p) {
+    <span class="keyword">return</span> p-&gt;y;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2</div>
+<p>Look for the load instruction. In RISC-V:</p>
+<div class="code-block"><span class="label">get_y:</span>
+    <span class="keyword">lw</span>  <span class="reg">a0</span>, <span class="number">4</span>(<span class="reg">a0</span>)   <span class="comment"># load word at offset 4 (y field)</span>
+    <span class="keyword">ret</span></div>
+<p>The offset <span class="code-inline">4</span> is the byte offset of <span class="code-inline">y</span> in the struct (after <span class="code-inline">x</span> which is 4 bytes).</p>
+</div>
+<div class="step">
+<div class="step-title">Understand struct layout</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Offset</th><th>Size</th></tr>
+</thead>
+<tbody>
+<tr><td><code>x</code></td><td>int</td><td>0</td><td>4 bytes</td></tr>
+<tr><td><code>y</code></td><td>int</td><td>4</td><td>4 bytes</td></tr>
+<tr><td><code>z</code></td><td>int</td><td>8</td><td>4 bytes</td></tr>
+</tbody>
+</table>
+</div>
+<p>Total struct size: 12 bytes. The compiler knows each field's offset at compile time.</p>
+</div>
+<div class="step">
+<div class="step-title">Try a struct with different types</div>
+<div class="code-block"><span class="keyword">struct</span> <span class="directive">mixed</span> {
+    <span class="keyword">char</span> c;     <span class="comment"># offset 0, 1 byte</span>
+    <span class="keyword">int</span> i;      <span class="comment"># offset 4 (padded!), 4 bytes</span>
+    <span class="keyword">long</span> l;    <span class="comment"># offset 8, 8 bytes</span>
+};
+
+<span class="keyword">long</span> <span class="directive">get_l</span>(<span class="keyword">struct</span> mixed *m) {
+    <span class="keyword">return</span> m-&gt;l;
+}</div>
+<p>Compile and check the offset of <span class="code-inline">l</span>. It should be <span class="code-inline">8</span> - there's 3 bytes of padding after <span class="code-inline">c</span> to align <span class="code-inline">i</span> to a 4-byte boundary.</p>
+</div>
+<div class="step">
+<div class="step-title">Answer these questions</div>
+<ul>
+<li>What is the offset of <span class="code-inline">y</span> in <span class="code-inline">struct point</span>?</li>
+<li>Why is there padding in <span class="code-inline">struct mixed</span>?</li>
+<li>How does the compiler know the offset at compile time?</li>
+<li>What instruction is used for a 4-byte load? An 8-byte load?</li>
+</ul>
+</div>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Struct Padding</div>
+The compiler inserts padding to align fields to their natural alignment. <code>int</code> is 4-byte aligned, <code>long</code> is 8-byte aligned. This ensures efficient memory access. You can use <code>#pragma pack(1)</code> or <code>__attribute__((packed))</code> to disable padding, but it may slow down access.
+</div>
+</div>
+
+<!-- ===== EXERCISE 5 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Hands-On</span>
+<span class="exercise-title">Exercise 5: Pointers - How *p Is Compiled</span>
+</div>
+<p>Understand how pointer dereference compiles to a single load instruction.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">deref</span>(<span class="keyword">int</span> *p) {
+    <span class="keyword">return</span> *p;
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2</div>
+<p>In RISC-V:</p>
+<div class="code-block"><span class="label">deref:</span>
+    <span class="keyword">lw</span>  <span class="reg">a0</span>, <span class="number">0</span>(<span class="reg">a0</span>)   <span class="comment"># load word from address in a0</span>
+    <span class="keyword">ret</span></div>
+<p>The pointer <span class="code-inline">p</span> is in <span class="code-inline">a0</span>. <span class="code-inline">lw a0, 0(a0)</span> loads 4 bytes from that address.</p>
+</div>
+<div class="step">
+<div class="step-title">Try pointer arithmetic</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">deref_offset</span>(<span class="keyword">int</span> *p, <span class="keyword">int</span> idx) {
+    <span class="keyword">return</span> p[idx];
+}</div>
+<p>This is equivalent to <span class="code-inline">*(p + idx)</span>. The compiler generates:</p>
+<div class="code-block"><span class="comment"># RISC-V</span>
+<span class="keyword">slli</span>  <span class="reg">a1</span>, <span class="reg">a1</span>, <span class="number">2</span>     <span class="comment"># a1 = idx * 4</span>
+<span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>   <span class="comment"># a0 = p + idx*4</span>
+<span class="keyword">lw</span>   <span class="reg">a0</span>, <span class="number">0</span>(<span class="reg">a0</span>)   <span class="comment"># a0 = *(p + idx)</span></div>
+</div>
+<div class="step">
+<div class="step-title">Try double pointer</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">double_deref</span>(<span class="keyword">int</span> **pp) {
+    <span class="keyword">return</span> **pp;
+}</div>
+<p>This requires two loads: first load <span class="code-inline">*pp</span> to get <span class="code-inline">p</span>, then load <span class="code-inline">*p</span> to get the value:</p>
+<div class="code-block"><span class="label">double_deref:</span>
+    <span class="keyword">ld</span>  <span class="reg">a0</span>, <span class="number">0</span>(<span class="reg">a0</span>)   <span class="comment"># a0 = *pp (load pointer)</span>
+    <span class="keyword">lw</span>  <span class="reg">a0</span>, <span class="number">0</span>(<span class="reg">a0</span>)   <span class="comment"># a0 = **pp (load value)</span>
+    <span class="keyword">ret</span></div>
+</div>
+<div class="step">
+<div class="step-title">Answer these questions</div>
+<ul>
+<li>What is the difference between <span class="code-inline">lw</span> (load word) and <span class="code-inline">ld</span> (load double)?</li>
+<li>Why does <span class="code-inline">p[idx]</span> multiply <span class="code-inline">idx</span> by 4 for <span class="code-inline">int*</span>?</li>
+<li>How many loads does <span class="code-inline">**pp</span> require?</li>
+<li>What would <span class="code-inline">***ppp</span> (triple dereference) look like?</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ===== EXERCISE 6 ===== -->
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge challenge">Challenge</span>
+<span class="exercise-title">Exercise 6: Recursion - -O0 (Real Recursion) vs -O2 (May Optimize to Loop)</span>
+</div>
+<p>Compare how the compiler handles recursion at different optimization levels. At <span class="code-inline">-O2</span>, the compiler may transform recursion into iteration.</p>
+
+<div class="steps">
+<div class="step">
+<div class="step-title">Enter this C code</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">sum_to</span>(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    <span class="keyword">return</span> n + sum_to(n - <span class="number">1</span>);
+}</div>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O0</div>
+<p>At <span class="code-inline">-O0</span>, you will see:</p>
+<ul>
+<li>A full stack frame (prologue/epilogue)</li>
+<li><span class="code-inline">n</span> spilled to the stack</li>
+<li>A <span class="code-inline">call sum_to</span> instruction (recursive call)</li>
+<li>Each call creates a new frame - true recursion</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Compile with -O2</div>
+<p>At <span class="code-inline">-O2</span>, the compiler may apply <strong>tail-call optimization</strong> or <strong>recursion elimination</strong>:</p>
+<ul>
+<li>The recursive <span class="code-inline">call</span> may be replaced with a <span class="code-inline">j</span> (jump) - reusing the same stack frame</li>
+<li>Or the compiler may convert it to an explicit loop with <span class="code-inline">bgt</span>/<span class="code-inline">ble</span></li>
+<li>No new stack frames are created - it runs in constant stack space</li>
+</ul>
+</div>
+<div class="step">
+<div class="step-title">Try non-tail-recursive factorial</div>
+<div class="code-block"><span class="keyword">int</span> <span class="directive">factorial</span>(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">1</span>) <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">return</span> n * factorial(n - <span class="number">1</span>);
+}</div>
+<p>Compile with <span class="code-inline">-O2</span>. This is <strong>not</strong> tail-recursive (the <span class="code-inline">*</span> happens after the call), so the compiler <em>cannot</em> simply convert it to a loop. However, some compilers can still optimize it using accumulator transformation.</p>
+</div>
+<div class="step">
+<div class="step-title">Fill in the comparison table</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Function</th><th>Opt Level</th><th>Recursive call?</th><th>Stack frame per call?</th><th>Loop instead?</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sum_to</code></td><td><code>-O0</code></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>sum_to</code></td><td><code>-O2</code></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>factorial</code></td><td><code>-O0</code></td><td>?</td><td>?</td><td>?</td></tr>
+<tr><td><code>factorial</code></td><td><code>-O2</code></td><td>?</td><td>?</td><td>?</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Tail-Call Optimization (TCO)</div>
+When the recursive call is the <strong>last</strong> operation before return (tail position), the compiler can replace <code>call</code> with <code>j</code> (jump). No new stack frame is created - the recursion becomes iteration. <code>sum_to</code> is tail-recursive after transformation (accumulator). <code>factorial</code> is not, because <code>n *</code> happens after the call.
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>Deliverables</h2>
+<div class="steps">
+<div class="step">
+<div class="step-title">Exercise 1 table</div>
+<p>Completed optimization level comparison table for <span class="code-inline">compute()</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 2 answers</div>
+<p>Answers to the local variable questions, plus screenshots of <span class="code-inline">-O0</span> vs <span class="code-inline">-O2</span> vs <span class="code-inline">volatile</span>.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 3 analysis</div>
+<p>Screenshots of array access in RISC-V and x86-64, plus the scale factor table.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 4 answers</div>
+<p>Struct layout tables and answers to the struct questions.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 5 answers</div>
+<p>Answers to the pointer questions, plus screenshot of double dereference.</p>
+</div>
+<div class="step">
+<div class="step-title">Exercise 6 table</div>
+<p>Completed recursion comparison table for <span class="code-inline">sum_to</span> and <span class="code-inline">factorial</span>.</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<h2>References</h2>
+<ul>
+<li><a href="../simulator/main.html">Simulator</a> - Compiler explorer mode</li>
+<li><a href="../handbook/main.html">Assembly Handbook</a> - All chapters for ISA reference</li>
+<li>GCC Optimization Options - <a href="https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html">gcc.gnu.org</a></li>
+<li>Compiler Explorer - <a href="https://godbolt.org">godbolt.org</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<script src="../sidebar.js"></script>
+</body>
+</html>

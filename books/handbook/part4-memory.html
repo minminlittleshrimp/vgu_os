@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 4: Memory Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item active" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 9: Main Memory</div>
+      <a class="nav-item" data-target="sec-9-1"><span class="nav-num">9.1</span>Background</a>
+      <a class="nav-item" data-target="sec-9-2"><span class="nav-num">9.2</span>Contiguous Memory Allocation</a>
+      <a class="nav-item" data-target="sec-9-3"><span class="nav-num">9.3</span>Paging</a>
+      <a class="nav-item" data-target="sec-9-4"><span class="nav-num">9.4</span>Structure of the Page Table</a>
+      <a class="nav-item" data-target="sec-9-5"><span class="nav-num">9.5</span>Swapping</a>
+      <a class="nav-item" data-target="sec-9-6"><span class="nav-num">9.6</span>Intel 32/64-bit Architecture</a>
+      <a class="nav-item" data-target="sec-9-7"><span class="nav-num">9.7</span>ARMv8 Architecture</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 10: Virtual Memory</div>
+      <a class="nav-item" data-target="sec-10-1"><span class="nav-num">10.1</span>Background</a>
+      <a class="nav-item" data-target="sec-10-2"><span class="nav-num">10.2</span>Demand Paging</a>
+      <a class="nav-item" data-target="sec-10-3"><span class="nav-num">10.3</span>Copy-on-Write</a>
+      <a class="nav-item" data-target="sec-10-4"><span class="nav-num">10.4</span>Page Replacement</a>
+      <a class="nav-item" data-target="sec-10-5"><span class="nav-num">10.5</span>Allocation of Frames</a>
+      <a class="nav-item" data-target="sec-10-6"><span class="nav-num">10.6</span>Thrashing</a>
+      <a class="nav-item" data-target="sec-10-7"><span class="nav-num">10.7</span>Memory Compression</a>
+      <a class="nav-item" data-target="sec-10-8"><span class="nav-num">10.8</span>Allocating Kernel Memory</a>
+      <a class="nav-item" data-target="sec-10-9"><span class="nav-num">10.9</span>Other Considerations</a>
+      <a class="nav-item" data-target="sec-10-10"><span class="nav-num">10.10</span>OS Examples</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 4: Memory Management</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 9–10 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers main memory allocation, paging,
+virtual memory, demand paging, page replacement algorithms, and thrashing.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-9-1">9.1 Background</a></li>
+<li><a href="#sec-9-2">9.2 Contiguous Memory Allocation</a></li>
+<li><a href="#sec-9-3">9.3 Paging</a></li>
+<li><a href="#sec-9-4">9.4 Structure of the Page Table</a></li>
+<li><a href="#sec-9-5">9.5 Swapping</a></li>
+<li><a href="#sec-9-6">9.6 Intel 32/64-bit Architecture</a></li>
+<li><a href="#sec-9-7">9.7 ARMv8 Architecture</a></li>
+<li><a href="#sec-10-1">10.1 Background</a></li>
+<li><a href="#sec-10-2">10.2 Demand Paging</a></li>
+<li><a href="#sec-10-3">10.3 Copy-on-Write</a></li>
+<li><a href="#sec-10-4">10.4 Page Replacement</a></li>
+<li><a href="#sec-10-5">10.5 Allocation of Frames</a></li>
+<li><a href="#sec-10-6">10.6 Thrashing</a></li>
+<li><a href="#sec-10-7">10.7 Memory Compression</a></li>
+<li><a href="#sec-10-8">10.8 Allocating Kernel Memory</a></li>
+<li><a href="#sec-10-9">10.9 Other Considerations</a></li>
+<li><a href="#sec-10-10">10.10 OS Examples</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-1">9.1 Background</h2>
+
+<p>Memory is central to the operation of a modern computer system. It consists of a large
+array of bytes, each with its own address. The CPU fetches instructions from memory
+according to the value of the <strong>program counter</strong> (PC), and it loads and
+stores data to memory addresses computed by the running program. The memory unit sees
+only a stream of addresses and does not care how they were generated or what they
+represent.</p>
+
+<p>Addresses in a system can be viewed from two perspectives. A <strong>logical address</strong>
+(also called a <em>virtual address</em>) is the address generated by the CPU. A
+<strong>physical address</strong> is the address seen by the memory unit—that is, the
+address loaded into the memory-address register. The two are not necessarily the same.
+The mapping from logical to physical addresses is performed at runtime by the
+<strong>memory-management unit</strong> (MMU), a hardware device that sits between the
+CPU and main memory.</p>
+
+<p>The simplest form of address translation is a <strong>base register</strong> and a
+<strong>limit register</strong>. The base register holds the starting physical address of
+a process's memory region, and the limit register holds the size of that region. Every
+logical address <code class="code-inline">A</code> is translated to physical address
+<code class="code-inline">base + A</code>, provided that <code class="code-inline">A &lt; limit</code>.
+If <code class="code-inline">A &gt;= limit</code>, the MMU raises a trap to the OS, which
+terminates the process for a memory-access violation. This is the fundamental mechanism
+for memory protection.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Key Concept</div>
+<p>The separation of logical and physical addresses is the foundation of
+<strong>memory protection</strong> and <strong>virtual memory</strong>. Without it, any
+process could read or overwrite any memory location, including the kernel's code and
+data. The MMU enforces this separation in hardware, so the OS does not need to check
+every memory access in software.</p>
+</div>
+
+<p>In the xv6 teaching operating system, the MMU is configured during process creation.
+The function <code class="code-inline">proc_pagetable()</code> in
+<code class="code-inline">kernel/vm.c</code> sets up the page table for a new process,
+mapping the kernel's code and data at high addresses and the user's code, data, and stack
+at lower addresses. When a process makes a system call, the CPU switches to the kernel
+page table (or a kernel portion of the same table), allowing the kernel to access both
+its own memory and the user's memory (with proper checks).</p>
+
+<p>Modern systems rarely use a single base/limit pair. Instead, they use <strong>paging</strong>,
+which divides memory into fixed-size blocks called <em>pages</em> and <em>frames</em>.
+Paging eliminates external fragmentation and allows non-contiguous allocation, making it
+possible to run a process whose logical address space is larger than the available
+physical memory. We study paging in detail in Section 9.3.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-2">9.2 Contiguous Memory Allocation</h2>
+
+<p>Before paging became universal, operating systems allocated memory in
+<strong>contiguous blocks</strong>. Each process was given a single, contiguous region of
+physical memory. The OS maintained a list of free memory holes and allocated a hole large
+enough for each process. When the process terminated, its memory was returned to the free
+list and possibly coalesced with adjacent free holes.</p>
+
+<p>Three strategies are commonly used to select a hole for a new process:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Strategy</th><th>Description</th><th>Advantage</th><th>Disadvantage</th></tr>
+</thead>
+<tbody>
+<tr><td>First Fit</td><td>Allocate the first hole big enough</td><td>Fast—stops at first match</td><td>May fragment low addresses</td></tr>
+<tr><td>Best Fit</td><td>Allocate the smallest hole big enough</td><td>Minimizes wasted space per allocation</td><td>Leaves many tiny unusable holes</td></tr>
+<tr><td>Worst Fit</td><td>Allocate the largest hole</td><td>Leaves large remnants that are still usable</td><td>Quickly exhausts large blocks</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Both first fit and best fit are generally better than worst fit in terms of storage
+utilization. First fit is usually the fastest. Simulations show that first fit and best
+fit are comparable in overall performance, but first fit is simpler and faster, so it is
+preferred in practice.</p>
+
+<p>The main problem with contiguous allocation is <strong>external fragmentation</strong>:
+as processes are loaded and removed, the free memory becomes broken into small,
+non-contiguous pieces. Even if the total free memory is sufficient to satisfy a request,
+no single hole may be large enough. One solution is <strong>compaction</strong>—moving
+all processes to one end of memory to create one large free block. However, compaction is
+expensive (it requires copying large amounts of data) and is only possible if all
+addresses are dynamically relocatable (i.e., the base register can be updated).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Fragmentation</div>
+<p><strong>External fragmentation</strong> occurs when there is enough total free memory
+but no single hole is large enough. <strong>Internal fragmentation</strong> occurs when
+memory is allocated in fixed-size blocks and the last block is partially unused.
+Contiguous allocation suffers from external fragmentation; paging (Section 9.3) eliminates
+external fragmentation but introduces a small amount of internal fragmentation.</p>
+</div>
+
+<p>Another issue is that contiguous allocation makes it difficult to grow a process's
+memory. If a process needs more heap space and the adjacent memory is occupied by another
+process, the OS must either move the process or swap it out. Paging solves this by
+allowing non-contiguous allocation: a process's pages can be scattered across any free
+frames in physical memory.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-3">9.3 Paging</h2>
+
+<p><strong>Paging</strong> is a memory-management scheme that permits the physical address
+space of a process to be non-contiguous. It avoids external fragmentation and allows the
+logical address space to be larger than the physical memory (when combined with virtual
+memory). Paging is the dominant memory management technique in modern operating systems,
+including Linux, Windows, macOS, and xv6.</p>
+
+<p>Physical memory is divided into fixed-size blocks called <strong>frames</strong>, and
+logical memory is divided into blocks of the same size called <strong>pages</strong>.
+When a process needs to run, its pages are loaded into any available frames—no
+contiguity required. The page size is typically 4 KB, though larger pages (2 MB, 1 GB)
+are supported by modern CPUs for performance reasons (see <em>huge pages</em>).</p>
+
+<p>The CPU generates a logical address, which is divided into two parts: a
+<strong>page number</strong> (<code class="code-inline">p</code>) and a
+<strong>page offset</strong> (<code class="code-inline">d</code>). The page number is used
+as an index into a <strong>page table</strong>, which contains the base address of each
+frame in physical memory. The physical address is computed as
+<code class="code-inline">frame_base + offset</code>.</p>
+
+<div class="code-block"><span class="comment">/* Logical to physical address translation */</span>
+
+<span class="comment">// Logical address: 32 bits (example)</span>
+<span class="comment">// Page size: 4 KB = 2^12, so offset = 12 bits</span>
+<span class="comment">// Page number = 32 - 12 = 20 bits</span>
+
+<span class="label">logical_address:</span>
+  page_number = logical_address >> 12
+  offset      = logical_address & 0xFFF
+
+<span class="comment">// Look up page table</span>
+  frame_base  = page_table[page_number].frame
+
+<span class="comment">// Physical address</span>
+  physical_address = (frame_base << 12) | offset</div>
+
+<p>The page table is maintained by the OS and stored in main memory. A hardware register
+called the <strong>page-table base register</strong> (PTBR) points to the page table. On
+each memory access, the MMU must first read the page table to find the frame number, then
+access the actual data. This doubles the number of memory accesses, so modern CPUs use a
+<strong>translation lookaside buffer</strong> (TLB)—a small, fast cache of recent
+page-table entries—to speed up translation.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 TLB: The Speed Multiplier</div>
+<p>Without a TLB, every memory access would require two memory accesses (one for the page
+table, one for the data). The TLB caches recently used page-table entries, so most
+translations complete in a single cycle. TLB hit rates are typically 95–99% for
+well-behaved programs. A TLB miss triggers a <em>page-table walk</em> to fetch the entry
+from memory.</p>
+</div>
+
+<p>Each page-table entry (PTE) contains several control bits in addition to the frame
+number. The most important are: <strong>valid/invalid bit</strong> (whether the page is
+in memory), <strong>read/write bits</strong> (access permissions),
+<strong>user/supervisor bit</strong> (whether the page is accessible in user mode),
+<strong>dirty bit</strong> (whether the page has been modified), and
+<strong>reference bit</strong> (whether the page has been accessed recently, used by
+replacement algorithms).</p>
+
+<p>In xv6, the page table is a three-level structure on RISC-V (Sv39). The
+<code class="code-inline">walk()</code> function in <code class="code-inline">kernel/vm.c</code>
+traverses the three levels to find the PTE for a given virtual address. The
+<code class="code-inline">mappages()</code> function creates mappings by writing frame
+addresses and permission bits into the page table. This is the same mechanism described
+by Silberschatz, implemented in a real (teaching) kernel.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-4">9.4 Structure of the Page Table</h2>
+
+<p>For a 32-bit system with 4 KB pages, a single-level page table would require
+<code class="code-inline">2^20</code> entries (about 1 million), each 4 bytes, totaling
+4 MB per process. This is wasteful, especially for small processes. Modern systems solve
+this with <strong>hierarchical paging</strong>, <strong>hashed page tables</strong>, or
+<strong>inverted page tables</strong>.</p>
+
+<p><strong>Hierarchical paging</strong> (also called <em>multilevel paging</em>) breaks
+the page table into multiple levels. A two-level scheme divides the page number into a
+<strong>page directory</strong> index and a <strong>page table</strong> index. Only the
+page directory is always in memory; the second-level tables are allocated on demand. If
+a process uses only a small portion of its address space, most page-table entries are
+never created, saving memory.</p>
+
+<div class="code-block"><span class="comment">/* Two-level page table (32-bit example) */</span>
+
+<span class="comment">// Logical address: 32 bits</span>
+<span class="comment">//   [ page_dir_index (10) | page_table_index (10) | offset (12) ]</span>
+
+<span class="label">translate(addr):</span>
+  dir_index  = addr >> 22          <span class="comment">// top 10 bits</span>
+  tbl_index  = (addr >> 12) & 0x3FF <span class="comment">// middle 10 bits</span>
+  offset     = addr & 0xFFF        <span class="comment">// bottom 12 bits</span>
+
+  dir_entry  = page_directory[dir_index]
+  <span class="keyword">if</span> (!dir_entry.valid) <span class="keyword">fault</span>
+
+  tbl_entry  = dir_entry.table_ptr[tbl_index]
+  <span class="keyword">if</span> (!tbl_entry.valid) <span class="keyword">fault</span>
+
+  <span class="keyword">return</span> (tbl_entry.frame << 12) | offset</div>
+
+<p>For 64-bit systems, two levels are insufficient. A 64-bit address with 4 KB pages
+requires 52 bits of page number, which would need five or six levels of paging. In
+practice, most 64-bit architectures (x86-64, ARMv8) use <strong>four-level</strong> page
+tables, supporting 48 bits of virtual address space (256 TB). Five-level paging (57 bits,
+128 PB) is available on newer Intel CPUs. The unused high bits must be zero or all-ones
+(canononical address form).</p>
+
+<p><strong>Hashed page tables</strong> are used for address spaces larger than 32 bits.
+A virtual page number is hashed, and the hash value indexes into a hash table of
+page-table entries. Each entry contains the virtual page number, the mapped page frame,
+and a pointer to the next entry (chaining for collisions). This works well for sparse
+address spaces.</p>
+
+<p><strong>Inverted page tables</strong> take a different approach: instead of one entry
+per virtual page, there is one entry per physical frame. The table is indexed by physical
+frame number, and each entry stores the process ID and virtual page number that maps to
+that frame. This keeps the page table size proportional to physical memory, not virtual
+memory. The drawback is that looking up a virtual address requires searching the table
+(or using a hash), which is slower. PowerPC, UltraSPARC, and IA-64 use inverted page
+tables.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Trade-off</div>
+<p>Standard (forward) page tables are fast to look up (direct indexing) but can be huge
+for large address spaces. Inverted page tables are compact (proportional to physical
+memory) but slower to search. Hashed page tables are a compromise. Modern x86 and ARM
+use multilevel forward page tables with TLBs to get the best of both worlds.</p>
+</div>
+
+<p>In xv6 on RISC-V (Sv39), the page table has three levels, each with 512 entries
+(9 bits per level). The virtual address is 39 bits: 27 bits for the three page-table
+indices (9+9+9) and 12 bits for the offset. This supports 512 GB of virtual address
+space per process. The <code class="code-inline">SATP</code> register holds the physical
+address of the root page table, and the hardware walks the three levels on a TLB miss.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-5">9.5 Swapping</h2>
+
+<p><strong>Swapping</strong> is a technique that allows the total logical address space
+of all processes to exceed the physical memory. A process (or parts of it) can be
+<strong>swapped out</strong>—copied from memory to a backing store (usually disk)—and
+later <strong>swapped in</strong> when it is needed again. This creates the illusion of
+more memory than physically exists.</p>
+
+<p>In early systems, <strong>swapping</strong> moved entire processes between memory and
+disk. When the OS needed to run a process that was swapped out, it would swap in the
+entire process before scheduling it. This was simple but slow: moving a 100 MB process to
+and from disk takes significant time. Modern systems use <strong>paging</strong> instead,
+swapping individual pages rather than entire processes. This is called
+<strong>demand paging</strong> and is covered in Chapter 10.</p>
+
+<p>The backing store for swapped data is typically a dedicated <strong>swap partition</strong>
+or <strong>swap file</strong> on disk. The OS maintains metadata to track which pages of
+which processes are on the swap device and where they are located. When a process
+references a page that is not in memory (a <strong>page fault</strong>), the OS finds
+the page on the swap device, reads it into a free frame, updates the page table, and
+restarts the instruction.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Swap Performance</div>
+<p>Swapping is slow because disk I/O is orders of magnitude slower than memory access.
+A system that swaps too much suffers from <strong>thrashing</strong> (Section 10.6),
+where it spends more time swapping than executing. Modern systems with large RAM may
+disable swapping entirely, but this means out-of-memory conditions cause immediate
+process termination rather than graceful degradation.</p>
+</div>
+
+<p>In xv6, there is no swapping mechanism—the teaching kernel keeps all process pages in
+memory. However, the page-fault trap handler in <code class="code-inline">kernel/trap.c</code>
+does kill processes that access invalid addresses. A real OS would extend this handler to
+check whether the faulting page is on the swap device and, if so, bring it in. The
+<code class="code-inline">sbrk()</code> system call in xv6 grows the process's heap by
+allocating new pages, but it does not support lazy allocation or swapping.</p>
+
+<p>Mobile operating systems (iOS, Android) typically do not use disk-based swapping.
+Instead, they ask applications to free memory voluntarily, and if memory pressure
+persists, they terminate background applications. This is because flash storage has
+limited write endurance, and swapping would wear it out quickly. macOS uses
+<strong>memory compression</strong> (Section 10.7) as an alternative to swapping to disk.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-6">9.6 Intel 32/64-bit Architecture</h2>
+
+<p>The Intel x86 architecture has evolved from 16-bit (8086) to 32-bit (80386+) to 64-bit
+(x86-64 / AMD64). Each generation introduced new memory management features. Understanding
+the Intel architecture is important because it is the most widely used desktop and server
+architecture and is the target of many OS textbooks.</p>
+
+<p>In <strong>32-bit mode</strong> (IA-32), Intel uses a two-level page table: a
+<strong>page directory</strong> (1024 entries) and a <strong>page table</strong> (1024
+entries each). With 4 KB pages, this supports 4 GB of virtual address space
+(1024 × 1024 × 4 KB = 4 GB). The <code class="code-inline">CR3</code> register holds the
+physical address of the page directory. Intel also supports <strong>PAE</strong> (Physical
+Address Extension), which adds a third level and allows up to 64 GB of physical memory
+(though each process is still limited to 4 GB virtual).</p>
+
+<p>In <strong>64-bit mode</strong> (x86-64 / IA-32e), Intel uses a four-level page table
+structure called <strong>IA-32e paging</strong>. Each level has 512 entries (9 bits).
+With 4 KB pages, this supports 48 bits of virtual address space (256 TB). A newer
+<strong>five-level paging</strong> mode (LA57) extends this to 57 bits (128 PB). The
+<code class="code-inline">CR3</code> register still holds the root, and the hardware
+performs a four-level (or five-level) walk on a TLB miss.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>IA-32 (32-bit)</th><th>x86-64 (64-bit)</th></tr>
+</thead>
+<tbody>
+<tr><td>Virtual address width</td><td>32 bits (4 GB)</td><td>48 or 57 bits (256 TB / 128 PB)</td></tr>
+<tr><td>Page table levels</td><td>2 (or 3 with PAE)</td><td>4 (or 5 with LA57)</td></tr>
+<tr><td>Entries per level</td><td>1024 (10 bits)</td><td>512 (9 bits)</td></tr>
+<tr><td>Page sizes</td><td>4 KB, 4 MB</td><td>4 KB, 2 MB, 1 GB</td></tr>
+<tr><td>Root register</td><td>CR3</td><td>CR3</td></tr>
+<tr><td>TLB</td><td>Yes (L1 data + instruction)</td><td>Yes (multi-level TLB)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Intel CPUs also support <strong>huge pages</strong>: 2 MB and 1 GB pages in 64-bit
+mode. A 2 MB page uses a single PDE (page directory entry) with the PS (page size) bit set,
+eliminating one level of translation. This reduces TLB pressure for applications with
+large working sets (databases, virtual machines). Linux exposes huge pages via the
+<code class="code-inline">hugetlbfs</code> filesystem and transparent huge pages (THP).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 TLB and PCID</div>
+<p>On context switch, the TLB must be flushed (or partially flushed) because entries from
+the old process are invalid. Intel CPUs support <strong>PCID</strong> (Process Context
+ID), which tags TLB entries with a process identifier, allowing multiple processes' TLB
+entries to coexist. This avoids flushing the entire TLB on every context switch,
+significantly improving performance for workloads with frequent context switches.</p>
+</div>
+
+<p>The Intel architecture also includes <strong>NX bit</strong> (No eXecute, also called
+the XD bit—eXecute Disable), which marks pages as non-executable. This is a security
+feature that prevents code execution from data pages, mitigating buffer-overflow attacks.
+The OS sets the NX bit on stack and heap pages to prevent shellcode injection. This is an
+example of how hardware features support OS-level security policies.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-9-7">9.7 ARMv8 Architecture</h2>
+
+<p>The <strong>ARMv8</strong> architecture is a 64-bit RISC architecture used in most
+smartphones, tablets, and increasingly in servers (e.g., AWS Graviton). It has a
+memory management unit similar to x86-64 but with different terminology and structure.
+Understanding ARMv8 is important for mobile and embedded OS development.</p>
+
+<p>ARMv8 (AArch64) uses a <strong>multilevel page table</strong> with 4 KB pages. The
+virtual address is 48 bits (or 52 bits with ARMv8.2-LPA), supporting 256 TB of virtual
+address space. The page table has up to four levels: Level 0 (root), Level 1, Level 2,
+and Level 3 (leaf). Each level has 512 entries (9 bits). The
+<code class="code-inline">TTBR0_EL1</code> register holds the physical address of the
+root page table for user-space, and <code class="code-inline">TTBR1_EL1</code> holds the
+root for kernel-space. This split simplifies kernel address translation and avoids
+flushing kernel TLB entries on context switch.</p>
+
+<div class="code-block"><span class="comment">/* ARMv8 (AArch64) address translation */</span>
+
+<span class="comment">// Virtual address: 48 bits (with 4 KB pages)</span>
+<span class="comment">//   [ L0 (9) | L1 (9) | L2 (9) | L3 (9) | offset (12) ]</span>
+
+<span class="label">translate(va):</span>
+  l0_idx = (va >> 39) & 0x1FF
+  l1_idx = (va >> 30) & 0x1FF
+  l2_idx = (va >> 21) & 0x1FF
+  l3_idx = (va >> 12) & 0x1FF
+  off   = va & 0xFFF
+
+  l0 = TTBR[l0_idx]       <span class="comment">// TTBR0 or TTBR1</span>
+  l1 = l0.table[l1_idx]
+  l2 = l1.table[l2_idx]
+
+  <span class="comment">// L2 can be a block descriptor (2 MB) or table pointer</span>
+  <span class="keyword">if</span> (l2.is_block) <span class="keyword">return</span> (l2.base << 21) | (va & 0x1FFFFF)
+
+  l3 = l2.table[l3_idx]
+  <span class="keyword">return</span> (l3.base << 12) | off</div>
+
+<p>ARMv8 supports <strong>block descriptors</strong> at intermediate levels: 1 GB blocks
+at Level 1 and 2 MB blocks at Level 2. These are equivalent to x86 huge pages. Using
+blocks reduces the number of page-table levels traversed and reduces TLB pressure. The
+OS can choose between 4 KB pages, 2 MB blocks, and 1 GB blocks depending on the
+application's memory access patterns.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ ARM vs. x86 Page Tables</div>
+<p>Both ARMv8 and x86-64 use four-level page tables with 4 KB base pages and 9 bits per
+level. The key difference is that ARM uses <strong>separate page tables</strong> for
+user and kernel (TTBR0 and TTBR1), while x86 uses a single page table with the kernel
+mapped at the top of the address space. ARM's approach avoids kernel TLB flushes on
+context switch, while x86's approach allows the kernel to access user memory without
+switching tables.</p>
+</div>
+
+<p>ARMv8 also includes the <strong>ASID</strong> (Address Space ID) feature, similar to
+Intel's PCID. Each process is assigned an 8-bit or 16-bit ASID, and TLB entries are
+tagged with it. On context switch, the OS sets the new ASID in the
+<code class="code-inline">TTBR0</code> register, and the hardware automatically uses only
+TLB entries matching the current ASID. This avoids flushing the TLB on every context
+switch, improving performance for workloads with many short-lived processes.</p>
+
+<p>Security extensions in ARMv8 include <strong>TrustZone</strong>, which provides two
+execution environments: the <em>Secure World</em> (trusted OS, trusted applications) and
+the <em>Normal World</em> (regular OS, regular applications). Each world has its own
+virtual address space and page tables, and hardware enforces isolation between them.
+This is used for secure boot, DRM, biometric authentication, and mobile payments. The
+OP-TEE project provides an open-source trusted OS that runs in the Secure World alongside
+a Linux kernel in the Normal World.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-1">10.1 Background</h2>
+
+<p><strong>Virtual memory</strong> is a technique that allows the execution of a process
+that may not be completely in memory. The main advantage is that programs can be larger
+than physical memory. Further, virtual memory abstracts physical memory into a large,
+uniform array of storage, separating the programmer's view of memory from the actual
+hardware. This makes programming easier and enables memory protection.</p>
+
+<p>The concept of virtual memory builds on paging (Chapter 9). In a virtual memory system,
+a process's pages are loaded into physical frames on demand. If a process references a
+page that is not in memory, a <strong>page fault</strong> occurs, and the OS brings the
+page in from disk. This is called <strong>demand paging</strong> and is the most common
+form of virtual memory.</p>
+
+<p>Virtual memory also enables <strong>memory-mapped files</strong>, where a file on disk
+is mapped into a process's virtual address space. Reading and writing the mapped memory
+transparently reads and writes the file. This is more efficient than explicit
+<code class="code-inline">read()</code> and <code class="code-inline">write()</code>
+calls because the OS handles paging and caching. The <code class="code-inline">mmap()</code>
+system call in POSIX provides this feature.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Virtual Memory Benefits</div>
+<p>Virtual memory provides: (1) <strong>larger address space</strong>—a process can use
+more memory than physically available; (2) <strong>protection</strong>—each process has
+its own address space, isolated from others; (3) <strong>memory sharing</strong>—pages
+can be shared between processes (e.g., shared libraries, copy-on-write fork); (4)
+<strong>efficient I/O</strong>—demand paging loads only the pages actually used.</p>
+</div>
+
+<p>In xv6, virtual memory is implemented via the RISC-V Sv39 page table. Each process has
+its own page table, created by <code class="code-inline">proc_pagetable()</code>. The
+kernel is mapped at high addresses (starting at 0x80000000), and user code, data, and
+stack are mapped at lower addresses. The <code class="code-inline">uvmalloc()</code> and
+<code class="code-inline">uvmdealloc()</code> functions grow and shrink the user address
+space. However, xv6 does not implement demand paging—all pages are allocated eagerly
+when <code class="code-inline">sbrk()</code> is called. A real OS would implement lazy
+allocation: allocate the page table entry but mark it invalid, and only allocate the
+physical frame when the page is first accessed.</p>
+
+<p>The performance of virtual memory depends on the <strong>locality of reference</strong>
+principle. Programs tend to access a small set of pages at any given time (the
+<strong>working set</strong>). If the working set fits in physical memory, the page-fault
+rate is low and performance is good. If the working set exceeds physical memory, the
+system <strong>thrashes</strong> (Section 10.6), spending most of its time moving pages
+between memory and disk.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-2">10.2 Demand Paging</h2>
+
+<p><strong>Demand paging</strong> is a method of virtual memory where pages are loaded
+only when they are demanded (referenced) by the executing process. When a process starts,
+only the first page (containing the entry point) is loaded. As the process executes and
+references more pages, each missing page is brought in on demand. This is analogous to
+demand-driven inventory: stock is replenished only when needed.</p>
+
+<p>The key mechanism is the <strong>valid/invalid bit</strong> in each page-table entry.
+When a page is allocated but not yet loaded, the PTE is marked invalid. When the CPU
+references such a page, the MMU raises a <strong>page fault</strong> (a type of trap).
+The OS page-fault handler checks whether the reference is valid (within the process's
+logical address space) and, if so, locates the page on disk, finds a free frame, reads
+the page into the frame, updates the PTE to point to the frame and mark it valid, and
+restarts the faulting instruction.</p>
+
+<div class="code-block"><span class="comment">/* Page fault handler (simplified) */</span>
+
+<span class="label">page_fault_handler(addr):</span>
+  <span class="comment">// 1. Check if address is valid (within process VMA)</span>
+  <span class="keyword">if</span> (!is_valid_address(addr))
+    <span class="keyword">kill</span>(process, SIGSEGV)
+
+  <span class="comment">// 2. Find a free frame (or evict one)</span>
+  frame = get_free_frame()
+  <span class="keyword">if</span> (frame == NULL) {
+    victim = select_victim_page()
+    <span class="keyword">if</span> (victim.dirty)
+      write_page_to_disk(victim)
+    frame = victim.frame
+    victim.pte.valid = <span class="keyword">false</span>
+  }
+
+  <span class="comment">// 3. Read page from disk into frame</span>
+  read_page_from_disk(addr.page, frame)
+
+  <span class="comment">// 4. Update PTE</span>
+  pte = get_pte(addr)
+  pte.frame = frame
+  pte.valid = <span class="keyword">true</span>
+  pte.dirty = <span class="keyword">false</span>
+
+  <span class="comment">// 5. Restart the faulting instruction</span>
+  <span class="keyword">return</span> to_user_mode</div>
+
+<p>The performance of demand paging is measured by the <strong>effective access time</strong>.
+If the page-fault rate is <code class="code-inline">p</code> (0 ≤ p ≤ 1), the memory access
+time is <code class="code-inline">ma</code>, and the page-fault service time is
+<code class="code-inline">pft</code>, then:</p>
+
+<p style="text-align:center;font-family:'Roboto Mono',monospace">
+EAT = (1 − p) × ma + p × pft
+</p>
+
+<p>If <code class="code-inline">p = 0</code>, there are no page faults and EAT = ma. If
+<code class="code-inline">p = 1</code>, every access faults and EAT = pft (very slow).
+Even a small page-fault rate can be devastating: if <code class="code-inline">ma = 100 ns</code>
+and <code class="code-inline">pft = 10 ms</code>, then a 1% fault rate gives
+EAT = 0.99 × 100 + 0.01 × 10,000,000 = 100,099 ns—over 1000× slower than a no-fault
+access. This is why the OS must keep the page-fault rate very low.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Page Fault Cost</div>
+<p>A page fault is extremely expensive because it involves disk I/O. Even with NVMe SSDs
+(~100 μs), a page fault is 1000× slower than a memory access. The OS must minimize faults
+by keeping the working set in memory and choosing good replacement algorithms. A high
+fault rate leads to thrashing.</p>
+</div>
+
+<p>In xv6, demand paging is not implemented—pages are allocated eagerly. However, the
+trap handler in <code class="code-inline">kernel/trap.c</code> does handle page faults
+(by killing the process). To add demand paging to xv6, one would: (1) modify
+<code class="code-inline">sbrk()</code> to only grow the page table, not allocate frames;
+(2) add a page-fault handler that allocates a frame on first access; (3) implement a
+swap area on disk for evicted pages; (4) add a page-replacement algorithm. This is a
+common advanced xv6 lab exercise.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-3">10.3 Copy-on-Write</h2>
+
+<p><strong>Copy-on-Write</strong> (CoW) is an optimization that avoids copying pages
+until they are modified. When a process forks, instead of duplicating all the parent's
+pages, the child shares the parent's pages. Both parent and child page-table entries are
+marked <strong>read-only</strong> and <strong>copy-on-write</strong>. When either process
+writes to a shared page, a protection fault occurs, and the OS creates a private copy of
+the page for the writing process.</p>
+
+<p>CoW dramatically speeds up <code class="code-inline">fork()</code>. Without CoW, forking
+a process with 1 GB of memory would require copying 1 GB of data, which takes tens of
+milliseconds. With CoW, <code class="code-inline">fork()</code> only copies the page
+table (a few MB), and pages are copied lazily only if written. In practice, many forked
+processes immediately call <code class="code-inline">exec()</code>, which replaces the
+address space entirely, so most pages are never copied.</p>
+
+<div class="code-block"><span class="comment">/* Copy-on-Write fork flow */</span>
+
+<span class="label">fork():</span>
+  child = new_process()
+  child.pagetable = copy_pagetable(parent.pagetable)
+
+  <span class="comment">// Mark all writable pages as read-only + CoW</span>
+  <span class="keyword">for</span> each page p <span class="keyword">in</span> child.pagetable:
+    <span class="keyword">if</span> (p.writable):
+      p.writable = <span class="keyword">false</span>
+      p.cow = <span class="keyword">true</span>
+      p.refcount++        <span class="comment">// shared reference count</span>
+
+  <span class="comment">// Same for parent's pages</span>
+  <span class="keyword">for</span> each page p <span class="keyword">in</span> parent.pagetable:
+    <span class="keyword">if</span> (p.writable):
+      p.writable = <span class="keyword">false</span>
+      p.cow = <span class="keyword">true</span>
+
+<span class="label">cow_fault_handler(addr):</span>
+  pte = get_pte(addr)
+  <span class="keyword">if</span> (!pte.cow) <span class="keyword">kill</span>(process)
+
+  <span class="keyword">if</span> (pte.refcount == 1):
+    <span class="comment">// Only this process uses it; just make writable</span>
+    pte.writable = <span class="keyword">true</span>
+    pte.cow = <span class="keyword">false</span>
+  <span class="keyword">else</span>:
+    <span class="comment">// Create a private copy</span>
+    new_frame = alloc_frame()
+    copy_page(pte.frame, new_frame)
+    pte.frame = new_frame
+    pte.refcount--
+    pte.writable = <span class="keyword">true</span>
+    pte.cow = <span class="keyword">false</span></div>
+
+<p>CoW requires hardware support: the MMU must distinguish between a "real" protection
+violation (accessing a page the process should not access) and a CoW fault (accessing a
+page that is temporarily read-only but should be writable). On x86, the
+<code class="code-inline">CR2</code> register holds the faulting address, and the error
+code indicates whether it was a write fault. On RISC-V, the
+<code class="code-inline">scause</code> register indicates a store page fault.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 CoW in Practice</div>
+<p>Linux uses CoW extensively: <code class="code-inline">fork()</code> is nearly free,
+and <code class="code-inline">mmap()</code> with <code class="code-inline">MAP_PRIVATE</code>
+uses CoW to share file-backed pages until modified. The <code class="code-inline">vfork()</code>
+system call goes further: it shares the entire address space without even copying the
+page table, but the child must not modify anything and must call
+<code class="code-inline">exec()</code> or <code class="code-inline">_exit()</code>
+immediately.</p>
+</div>
+
+<p>In xv6, <code class="code-inline">fork()</code> does <em>not</em> use CoW—it eagerly
+copies all user pages via <code class="code-inline">uvmcopy()</code> in
+<code class="code-inline">kernel/vm.c</code>. This is simple but slow. Implementing CoW
+in xv6 is a common lab exercise: one must (1) add a reference count to each physical
+frame, (2) modify <code class="code-inline">uvmcopy()</code> to share pages and clear
+the PTE_W bit, (3) handle write page faults in <code class="code-inline">trap.c</code>
+by copying the page and restoring PTE_W, and (4) handle the case where the last reference
+to a page is freed.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-4">10.4 Page Replacement</h2>
+
+<p>When a page fault occurs and no free frame is available, the OS must
+<strong>evict</strong> a page from memory to make room. The choice of which page to evict
+is the <strong>page replacement problem</strong>. A good replacement algorithm minimizes
+the number of page faults, keeping the page-fault rate low and performance high.</p>
+
+<p>The <strong>reference bit</strong> (also called the <em>use bit</em> or <em>access
+bit</em>) in each PTE helps the OS track page usage. The hardware sets this bit to 1
+whenever the page is accessed. The OS can read and clear it to determine which pages are
+being used. Some architectures also provide a <strong>modify bit</strong> (dirty bit)
+that is set when the page is written. A dirty page must be written back to disk before
+eviction; a clean page can be evicted without I/O.</p>
+
+<h3>FIFO Page Replacement</h3>
+
+<p>The simplest algorithm is <strong>First-In, First-Out</strong> (FIFO). The OS maintains
+a queue of pages in memory, ordered by arrival time. When a page must be evicted, the
+oldest page (the one at the front of the queue) is removed. FIFO is easy to implement but
+can perform poorly: it may evict a frequently used page simply because it was loaded long
+ago.</p>
+
+<div class="code-block"><span class="comment">/* FIFO page replacement */</span>
+
+<span class="comment">// Reference string: 7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2
+// 3 frames</span>
+
+<span class="label">FIFO trace (3 frames):</span>
+  7  → [7]                    fault
+  0  → [7, 0]                 fault
+  1  → [7, 0, 1]              fault
+  2  → [0, 1, 2]    evict 7   fault
+  0  → [0, 1, 2]              hit
+  3  → [1, 2, 3]    evict 0   fault
+  0  → [2, 3, 0]    evict 1   fault
+  4  → [3, 0, 4]    evict 2   fault
+  2  → [0, 4, 2]    evict 3   fault
+  3  → [4, 2, 3]    evict 0   fault
+  0  → [2, 3, 0]    evict 4   fault
+  3  → [2, 3, 0]              hit
+  2  → [2, 3, 0]              hit
+
+<span class="comment">// Total: 10 faults out of 13 references</span></div>
+
+<p>FIFO suffers from <strong>Belady's anomaly</strong>: increasing the number of frames
+can <em>increase</em> the number of page faults. For the reference string above with 3
+frames, there are 10 faults; with 4 frames, there are 10 faults (no improvement); but
+for some reference strings, adding frames actually increases faults. This is
+counterintuitive and shows that FIFO is not a <em>stack algorithm</em>.</p>
+
+<h3>Optimal Page Replacement</h3>
+
+<p>The <strong>optimal</strong> algorithm (OPT or MIN) replaces the page that will not be
+used for the longest time in the future. It has the lowest possible fault rate for a
+fixed number of frames and is used as a benchmark. Unfortunately, it requires knowledge
+of the future reference string, which is impossible in practice. However, it is useful
+for comparison and for offline analysis.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Why Optimal Matters</div>
+<p>The optimal algorithm is not implementable, but it provides a theoretical lower bound
+on page faults. Researchers use it to evaluate practical algorithms: if an algorithm's
+fault rate is close to optimal, it is considered good. LRU approximates optimal well in
+practice because programs tend to exhibit temporal locality—pages used recently are likely
+to be used again soon.</p>
+</div>
+
+<h3>LRU Page Replacement</h3>
+
+<p>The <strong>Least Recently Used</strong> (LRU) algorithm replaces the page that has
+not been used for the longest time. It is based on the principle of
+<strong>temporal locality</strong>: if a page has not been used recently, it is unlikely
+to be used in the near future. LRU is a good approximation of optimal and does not suffer
+from Belady's anomaly (it is a stack algorithm).</p>
+
+<p>True LRU requires the hardware to timestamp every memory access or maintain a stack of
+page references, which is expensive. In practice, the OS uses <strong>LRU approximations</strong>:</p>
+
+<ul>
+<li><strong>Reference bit (second-chance) algorithm:</strong> Pages are arranged in a
+circular list (like FIFO). When a page must be evicted, the OS checks the reference bit.
+If it is 1, the bit is cleared and the page is given a "second chance" (moved to the back
+of the queue). If it is 0, the page is evicted. This approximates LRU using only the
+1-bit reference bit.</li>
+<li><strong>Enhanced second-chance:</strong> Uses both the reference bit and the modify
+bit. Pages are classified into four classes: (0,0), (0,1), (1,0), (1,1). The OS evicts
+the first page in the lowest class, preferring clean pages (no write-back needed).</li>
+<li><strong>Aging:</strong> Maintains a history of reference bits over time. Each page has
+an 8-bit counter, shifted right each interval, with the current reference bit shifted
+into the MSB. The page with the smallest counter is the least recently used.</li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Algorithm</th><th>Strategy</th><th>Belady's Anomaly?</th><th>Implementable?</th></tr>
+</thead>
+<tbody>
+<tr><td>FIFO</td><td>Evict oldest</td><td>Yes</td><td>Yes (simple)</td></tr>
+<tr><td>Optimal</td><td>Evict page not used for longest future time</td><td>No</td><td>No (needs future knowledge)</td></tr>
+<tr><td>LRU</td><td>Evict least recently used</td><td>No</td><td>Expensive (needs hardware support)</td></tr>
+<tr><td>Second-chance</td><td>FIFO with reference bit</td><td>No</td><td>Yes (common)</td></tr>
+<tr><td>Aging</td><td>Approximate LRU with bit history</td><td>No</td><td>Yes (common)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Counting-Based Algorithms</h3>
+
+<p><strong>Counting-based</strong> algorithms maintain a reference count for each page.
+The <strong>LFU</strong> (Least Frequently Used) algorithm evicts the page with the
+smallest count. The <strong>MFU</strong> (Most Frequently Used) algorithm evicts the page
+with the largest count, based on the heuristic that a page with a high count has been
+used a lot and may be done. Both are rarely used in practice because they require
+expensive counter maintenance and do not adapt well to changing access patterns.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 What Real Systems Use</div>
+<p>Linux uses a variant of LRU called the <strong>active/inactive list</strong> (or
+<em>second-chance</em> in older kernels, <em>MGLRU</em> in newer ones). Windows uses a
+<strong>clock algorithm</strong> (a variant of second-chance). Most systems use
+approximations rather than true LRU because maintaining exact access order is too
+expensive. The key insight is that <em>any</em> LRU approximation is much better than
+FIFO.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-5">10.5 Allocation of Frames</h2>
+
+<p>When multiple processes compete for physical memory, the OS must decide how to
+<strong>allocate frames</strong> among them. Two extremes are <strong>equal
+allocation</strong> (every process gets the same number of frames) and
+<strong>proportional allocation</strong> (frames are distributed in proportion to process
+size). Proportional allocation is generally better because larger processes need more
+frames to maintain a low fault rate.</p>
+
+<p>A minimum allocation is necessary: each process needs at least enough frames to hold
+the pages referenced by a single instruction. For example, on x86, a single instruction
+may span two pages (if it straddles a page boundary) and may reference two operands in
+two other pages. So the minimum is typically 3–4 frames. If a process has fewer frames
+than this minimum, it cannot execute a single instruction without faulting, leading to
+an infinite loop of faults.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Minimum Frames</div>
+<p>If a process has too few frames, it may not be able to complete a single instruction.
+For example, an instruction that fetches from one page, reads a source operand from
+another, and writes a destination to a third needs at least 3 frames. If only 2 are
+available, the OS evicts one of the needed pages to load another, causing an immediate
+re-fault. This is a <strong>thrashing</strong> condition.</p>
+</div>
+
+<p><strong>Global allocation</strong> allows a process to select a replacement frame from
+the set of all frames (any process's page). This is flexible: a process that needs more
+memory can take frames from other processes. <strong>Local allocation</strong> restricts
+replacement to the process's own frames. Global allocation is more common because it
+adapts to changing memory demands, but it can cause one process to steal frames from
+another, increasing the victim's fault rate.</p>
+
+<p>With global allocation, the number of frames allocated to a process can vary over time.
+The OS may use a <strong>page-fault frequency</strong> (PFF) strategy: if a process's
+fault rate is too high, it gets more frames; if too low, it gives up frames. This is a
+feedback control system that keeps fault rates within a target range and prevents
+thrashing.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-6">10.6 Thrashing</h2>
+
+<p><strong>Thrashing</strong> occurs when a process spends more time paging than executing.
+If a process does not have enough frames, it page-faults frequently. Each fault evicts a
+page that will be needed soon, causing another fault. The CPU utilization drops, and the
+OS may respond by scheduling more processes (thinking the CPU is idle), which makes the
+problem worse. The system enters a downward spiral of decreasing performance.</p>
+
+<p>The cause of thrashing is that the total <strong>working set</strong> of all processes
+exceeds the available physical memory. The <strong>working set</strong> is the set of
+pages a process is actively using. If the OS loads too many processes, each gets fewer
+frames than its working set, and every process thrashes.</p>
+
+<div class="code-block"><span class="comment">/* Thrashing scenario */</span>
+
+<span class="comment">// System has 100 frames</span>
+<span class="comment">// Process A working set: 40 pages</span>
+<span class="comment">// Process B working set: 35 pages</span>
+<span class="comment">// Process C working set: 30 pages</span>
+<span class="comment">// Total working set: 105 pages > 100 frames</span>
+
+<span class="comment">// Each process faults constantly because it cannot</span>
+<span class="comment">// keep its full working set in memory.</span>
+<span class="comment">// CPU utilization drops to near zero.</span>
+<span class="comment">// OS sees low CPU → schedules MORE processes → worse!</span></div>
+
+<p>The <strong>working-set model</strong> addresses thrashing by tracking each process's
+working set and ensuring that the total does not exceed physical memory. The working set
+is estimated using a <strong>window</strong> of Δ references: the working set
+<code class="code-inline">W(t, Δ)</code> is the set of pages referenced in the last Δ
+memory accesses. If <code class="code-inline">Σ W_i &gt; m</code> (total working sets
+exceed memory <code class="code-inline">m</code>), the OS suspends a process (swaps it
+out entirely) until memory is available.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Working Set vs. Page-Fault Frequency</div>
+<p>The working-set model is proactive: it estimates each process's needs and prevents
+overcommitment. The <strong>page-fault frequency</strong> (PFF) approach is reactive: it
+monitors fault rates and adjusts allocations. Both aim to keep each process's allocation
+above its working set size. PFF is simpler to implement and is used in practice.</p>
+</div>
+
+<p>The <strong>working-set size</strong> depends on the program's locality. A program
+with good locality has a small working set; a program with poor locality (e.g., randomly
+accessing a large array) has a large working set. Compilers and programmers can improve
+locality by: (1) accessing data sequentially (cache-friendly loops), (2) grouping
+frequently used data together, (3) using smaller data structures, and (4) avoiding
+pointer chasing. These optimizations reduce the working set and improve virtual memory
+performance.</p>
+
+<p>In xv6, thrashing is not a concern because there is no demand paging—all pages are in
+memory. However, xv6 limits the number of processes (<code class="code-inline">NPROC</code>,
+typically 64) and the size of each process's address space. A real OS must carefully
+manage the trade-off between multiprogramming level (more processes = better CPU
+utilization) and memory pressure (more processes = more thrashing risk).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-7">10.7 Memory Compression</h2>
+
+<p><strong>Memory compression</strong> is an alternative to swapping pages to disk. Instead
+of writing a cold (infrequently used) page to the swap device, the OS
+<strong>compresses</strong> it and stores the compressed version in a reserved area of
+RAM. When the page is needed again, it is decompressed. Since compression and
+decompression in RAM are much faster than disk I/O, this can significantly improve
+performance under memory pressure.</p>
+
+<p>macOS has used memory compression since OS X 10.9 (Mavericks). When memory pressure
+rises, the kernel compresses the least-recently-used pages and stores them in a
+compressed memory region. If pressure continues to rise, compressed pages are eventually
+written to disk. This two-tier approach (compress first, swap second) reduces disk I/O
+and improves responsiveness.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Compression Trade-offs</div>
+<p>Compression trades CPU time for I/O time. Compressing a 4 KB page takes a few
+microseconds; writing it to an SSD takes ~100 μs, to an HDD ~10 ms. So compression is a
+net win for HDDs and a marginal win for SSDs. The downside is increased CPU usage and
+the need for a compressed memory region. Modern algorithms (LZ4, zstd) are fast enough
+that the trade-off is favorable for most workloads.</p>
+</div>
+
+<p>Linux added <strong>zswap</strong> and <strong>zram</strong> as compressed swap
+backends. <code class="code-inline">zswap</code> is a compressed cache in RAM for pages
+that would otherwise go to the swap device. <code class="code-inline">zram</code> creates
+a compressed block device in RAM that can be used as swap. Both reduce disk I/O at the
+cost of CPU. Android uses zram extensively because mobile devices have limited flash
+endurance and no traditional swap partition.</p>
+
+<p>The compression algorithm matters. <strong>LZ4</strong> is fast (decompression at
+several GB/s) but has a modest compression ratio. <strong>zstd</strong> (Zstandard)
+offers a better ratio with reasonable speed and is used by default in recent Linux and
+Windows. The OS must balance compression ratio (saves more memory) against speed (faster
+decompression on page-in). Adaptive algorithms that choose the compression level based on
+memory pressure are an active research area.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-8">10.8 Allocating Kernel Memory</h2>
+
+<p>Kernel memory has different allocation requirements than user memory. User pages are
+uniformly sized (4 KB) and allocated/freed in bulk. Kernel memory, by contrast, needs to
+allocate objects of <strong>varying sizes</strong>: small structures (e.g., a 64-byte
+<code class="code-inline">task_struct</code>), medium buffers (e.g., 2 KB network
+buffers), and large contiguous regions (e.g., for DMA). The kernel cannot use the same
+page-based allocator for all of these.</p>
+
+<p>Most kernels use a <strong>slab allocator</strong> (or its successor, the
+<strong>slub allocator</strong> in Linux). The slab allocator manages caches of
+pre-initialized objects of specific types. When the kernel needs a new
+<code class="code-inline">inode</code> or <code class="code-inline">file</code>
+structure, it gets one from the appropriate slab cache—already initialized and ready to
+use. When freed, the object returns to the cache for reuse. This avoids the overhead of
+initialization and reduces fragmentation.</p>
+
+<div class="code-block"><span class="comment">/* Slab allocator concept (Linux) */</span>
+
+<span class="comment">// Each kernel object type has a dedicated cache</span>
+<span class="label">struct kmem_cache:</span>
+  name        <span class="comment">// e.g., "inode_cache"</span>
+  object_size <span class="comment">// e.g., 608 bytes</span>
+  slabs       <span class="comment">// list of slab pages</span>
+
+<span class="comment">// Allocation</span>
+<span class="label">kmalloc(size, flags):</span>
+  cache = find_cache_for_size(size)
+  obj = cache.alloc()   <span class="comment">// from free list</span>
+  <span class="keyword">return</span> obj
+
+<span class="comment">// Common caches:</span>
+<span class="comment">//   kmalloc-32, kmalloc-64, ..., kmalloc-8192</span>
+<span class="comment">//   inode_cache, dentry_cache, task_struct, ...</span></div>
+
+<p>The <strong>buddy system</strong> is used for allocating power-of-two-sized blocks of
+pages. It maintains free lists for blocks of size 1, 2, 4, 8, ... pages. When a block of
+size <code class="code-inline">n</code> is requested, the allocator finds the smallest
+power of two ≥ <code class="code-inline">n</code> that has a free block. If the block is
+larger than needed, it is split into two <strong>buddies</strong>, one of which is
+returned and the other added to a smaller free list. When a block is freed, the allocator
+checks if its buddy is also free; if so, they are merged into a larger block. This
+provides fast allocation and coalescing but can cause internal fragmentation (rounding up
+to the next power of two).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Two-Level Allocation</div>
+<p>Most kernels use a two-level strategy: the <strong>buddy system</strong> for
+page-sized (or larger) allocations, and the <strong>slab/slub allocator</strong> for
+sub-page objects. The buddy system manages physical pages; the slab allocator carves
+objects out of pages obtained from the buddy system. This combines the simplicity of the
+buddy system with the efficiency of object caching.</p>
+</div>
+
+<p>In xv6, kernel memory allocation is simpler. The <code class="code-inline">kalloc()</code>
+and <code class="code-inline">kfree()</code> functions in
+<code class="code-inline">kernel/kalloc.c</code> manage a free list of 4 KB pages. There
+is no slab allocator—kernel code that needs smaller objects either wastes a full page or
+manages sub-allocations manually. This is acceptable for a teaching OS but would be
+inefficient in a production system. The <code class="code-inline">kalloc()</code>
+implementation uses a per-CPU free list with a global fallback, which is a simplified
+version of Linux's approach.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-9">10.9 Other Considerations</h2>
+
+<p>Several additional factors affect virtual memory performance and design beyond the core
+algorithms discussed above.</p>
+
+<p><strong>Prepaging</strong> is the opposite of demand paging: instead of loading pages
+on demand, the OS preloads pages that it predicts will be needed. For example, when a
+process starts, the OS may preload the first few pages of the executable and the first
+few pages of shared libraries. This reduces the number of page faults at startup. The
+trade-off is that if the preloaded pages are not used, the I/O was wasted. Prepaging is
+beneficial when the cost of faults outweighs the cost of unnecessary I/O, which is often
+the case for HDDs.</p>
+
+<p><strong>Page size</strong> is a critical design decision. Larger pages (e.g., 2 MB, 1 GB)
+reduce the number of PTEs, reduce TLB pressure, and reduce page-table memory. However,
+they also increase internal fragmentation (a 1 GB page wastes up to 1 GB if partially
+used) and make fine-grained protection impossible. Most systems use 4 KB as the default
+and offer huge pages as an option for large-workload applications (databases, JVMs,
+virtual machines). The OS may use <strong>transparent huge pages</strong> (THP), which
+automatically coalesce 4 KB pages into 2 MB pages when possible.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Page Size</th><th>PTEs per 4 GB</th><th>TLB Coverage (1 entry)</th><th>Internal Frag.</th></tr>
+</thead>
+<tbody>
+<tr><td>4 KB</td><td>1,048,576</td><td>4 KB</td><td>Low</td></tr>
+<tr><td>2 MB</td><td>2,048</td><td>2 MB</td><td>Medium</td></tr>
+<tr><td>1 GB</td><td>4</td><td>1 GB</td><td>High</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Program structure</strong> affects paging performance. Consider two loops that
+access a 2D array: one row-by-row, one column-by-column. The row-by-row access is
+sequential and cache-friendly; the column-by-column access jumps across pages, causing
+many faults. Compilers and programmers should arrange data and code to maximize locality.
+For example, storing frequently used global variables together, keeping functions small,
+and using array layouts that match access patterns all improve virtual memory performance.</p>
+
+<div class="code-block"><span class="comment">/* Locality example: row-major vs column-major */</span>
+
+<span class="comment">// C arrays are row-major: a[i][j] and a[i][j+1] are adjacent</span>
+
+<span class="comment">// GOOD: sequential access, good locality</span>
+<span class="keyword">for</span> (i = 0; i < N; i++)
+  <span class="keyword">for</span> (j = 0; j < N; j++)
+    a[i][j] = 0;
+
+<span class="comment">// BAD: striding across rows, poor locality</span>
+<span class="keyword">for</span> (j = 0; j < N; j++)
+  <span class="keyword">for</span> (i = 0; i < N; i++)
+    a[i][j] = 0;</div>
+
+<p><strong>I/O interlock</strong> and <strong>page locking</strong> are needed when pages
+are involved in I/O. If a page is being written to by a DMA controller, it must not be
+evicted or modified by another process. The OS marks such pages as <strong>locked</strong>
+(pinned) so the replacement algorithm skips them. This is also important for
+memory-mapped I/O, where device registers are mapped into the kernel's address space and
+must not be paged out.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ DMA and Paging</div>
+<p>If a page is evicted and its frame is reused while a DMA transfer is in progress, the
+DMA will write to the wrong page, corrupting data. The OS must <strong>pin</strong>
+(lock) pages involved in DMA transfers. This is why <code class="code-inline">get_user_pages()</code>
+in Linux pins user pages before passing them to device drivers.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-10-10">10.10 OS Examples</h2>
+
+<p>Different operating systems implement virtual memory with different strategies. This
+section compares the approaches used by Linux, Windows, and mobile OSes.</p>
+
+<h3>Linux</h3>
+
+<p>Linux uses a four-level page table on x86-64 (PGD, P4D, PUD, PMD, PTE—actually five
+levels with P4D, but conceptually four). The page replacement algorithm is based on the
+<strong>active/inactive list</strong> model: pages are on an "active" or "inactive" list.
+Pages are promoted from inactive to active when accessed, and demoted when not. The
+<code class="code-inline">kswapd</code> daemon runs in the background, evicting pages
+from the inactive list when memory is low. Linux also supports
+<code class="code-inline">zswap</code> (compressed cache) and
+<code class="code-inline">zram</code> (compressed swap in RAM).</p>
+
+<p>Linux's <code class="code-inline">mmap()</code> system call supports memory-mapped
+files, anonymous mappings (not backed by a file), and shared memory. The
+<code class="code-inline">fork()</code> system call uses copy-on-write. Transparent Huge
+Pages (THP) automatically coalesce 4 KB pages into 2 MB pages for large allocations.
+The <code class="code-inline">madvise()</code> system call lets programs hint about their
+access patterns (e.g., <code class="code-inline">MADV_SEQUENTIAL</code>,
+<code class="code-inline">MADV_RANDOM</code>), allowing the kernel to optimize paging.</p>
+
+<h3>Windows</h3>
+
+<p>Windows uses a two-level page table on x86 (32-bit) and four-level on x86-64. The page
+replacement algorithm is a <strong>clock algorithm</strong> (a variant of second-chance).
+Windows supports <strong>memory-mapped files</strong> via
+<code class="code-inline">MapViewOfFile()</code> and <strong>copy-on-write</strong> for
+<code class="code-inline">fork()</code>-like operations (though Windows does not have a
+traditional <code class="code-inline">fork()</code>). Windows also supports
+<strong>large pages</strong> (2 MB, 1 GB) and <strong>memory compression</strong>
+(since Windows 10).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>Linux</th><th>Windows</th></tr>
+</thead>
+<tbody>
+<tr><td>Page table</td><td>4-level (5 with P4D)</td><td>4-level (x86-64)</td></tr>
+<tr><td>Replacement</td><td>Active/inactive (LRU approx.)</td><td>Clock (second-chance)</td></tr>
+<tr><td>Swap</td><td>Swap partition or file</td><td>Page file (pagefile.sys)</td></tr>
+<tr><td>Compression</td><td>zswap / zram</td><td>Built-in (Win10+)</td></tr>
+<tr><td>Huge pages</td><td>hugetlbfs, THP</td><td>Large pages API</td></tr>
+<tr><td>Memory-mapped files</td><td>mmap()</td><td>MapViewOfFile()</td></tr>
+<tr><td>CoW fork</td><td>Yes (fork)</td><td>No fork; CoW for other ops</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Mobile OSes (iOS, Android)</h3>
+
+<p>Mobile operating systems avoid traditional disk-based swapping because flash storage
+has limited write endurance and swapping would wear it out. Instead, they use
+<strong>memory compression</strong> and <strong>application termination</strong>. When
+memory pressure rises, the OS asks background apps to free memory (via callbacks like
+<code class="code-inline">onTrimMemory()</code> on Android). If pressure persists, the OS
+terminates background apps, saving their state for later restoration. iOS uses a similar
+approach with <code class="code-inline">UIApplicationDelegate</code> methods.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Mobile Memory Strategy</div>
+<p>Mobile OSes prioritize foreground responsiveness over background multitasking. Rather
+than swapping (which would wear flash and drain battery), they compress memory and
+terminate background apps. This is acceptable on mobile because users typically interact
+with one app at a time, and apps can save/restore state quickly. The trade-off is that
+background apps may be killed without warning, so they must be designed to handle
+termination gracefully.</p>
+</div>
+
+<p>In xv6, the virtual memory system is minimal but functional. Each process has a
+page table (Sv39 on RISC-V), the kernel is mapped at high addresses, and user pages are
+mapped at low addresses. There is no demand paging, no swapping, no compression, and no
+slab allocator. The <code class="code-inline">sbrk()</code> system call grows the heap
+eagerly. Despite these limitations, xv6 demonstrates the core concepts: page tables,
+address translation, TLB management, and memory protection. Extending xv6 with demand
+paging, CoW, and a slab allocator are common advanced lab exercises that bridge the gap
+between the teaching OS and production systems.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return;
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

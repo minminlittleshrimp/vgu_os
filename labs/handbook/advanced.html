@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS - Assembly Handbook II: Advanced Topics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Assembly Handbook II</h1>
+    <a class="subtitle" href="../main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Stack &amp; Memory</div>
+      <a class="nav-item active" data-target="ch01"><span class="nav-num">01</span>Stack Frames in Depth</a>
+      <a class="nav-item" data-target="ch02"><span class="nav-num">02</span>Heap and Dynamic Memory</a>
+      <a class="nav-item" data-target="ch03"><span class="nav-num">03</span>Memory Segments and Linking</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Function Mechanics</div>
+      <a class="nav-item" data-target="ch04"><span class="nav-num">04</span>Recursion and Stack Usage</a>
+      <a class="nav-item" data-target="ch05"><span class="nav-num">05</span>Variadic Functions</a>
+      <a class="nav-item" data-target="ch06"><span class="nav-num">06</span>Inline Assembly in C</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Concurrency</div>
+      <a class="nav-item" data-target="ch07"><span class="nav-num">07</span>Atomic Operations &amp; Memory Ordering</a>
+      <a class="nav-item" data-target="ch08"><span class="nav-num">08</span>Spinlocks in Assembly</a>
+      <a class="nav-item" data-target="ch09"><span class="nav-num">09</span>Lock-Free Programming</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">OS-Level Assembly</div>
+      <a class="nav-item" data-target="ch10"><span class="nav-num">10</span>Context Switching</a>
+      <a class="nav-item" data-target="ch11"><span class="nav-num">11</span>Trap Handling in Detail</a>
+      <a class="nav-item" data-target="ch12"><span class="nav-num">12</span>Boot Code and Startup</a>
+      <a class="nav-item" data-target="ch13"><span class="nav-num">13</span>Interrupts and Exception Handling</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Performance</div>
+      <a class="nav-item" data-target="ch14"><span class="nav-num">14</span>Compiler Optimization &amp; Assembly</a>
+      <a class="nav-item" data-target="ch15"><span class="nav-num">15</span>Branch Prediction &amp; Pipeline</a>
+      <a class="nav-item" data-target="ch16"><span class="nav-num">16</span>SIMD and Vector Instructions</a>
+      <a class="nav-item" data-target="ch17"><span class="nav-num">17</span>Cache-Aware Assembly</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Security</div>
+      <a class="nav-item" data-target="ch18"><span class="nav-num">18</span>Stack Smashing &amp; Buffer Overflows</a>
+      <a class="nav-item" data-target="ch19"><span class="nav-num">19</span>Spectre and Meltdown</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../books/handbook/part1-overview.html">Silberschatz Handbook</a>
+      <a class="nav-item" href="../../books/handbook/xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<p style="margin-bottom:8px"><a href="main.html">&larr; Back to Handbook I</a></p>
+<h1>Assembly Language Handbook II</h1>
+<p style="color:var(--text-dim);font-size:14px">Advanced topics: stack internals, concurrency, OS-level assembly,
+performance optimization, and security. For students who already know basic assembly.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#ch01">Stack Frames in Depth</a></li>
+<li><a href="#ch02">Heap and Dynamic Memory</a></li>
+<li><a href="#ch03">Memory Segments and Linking</a></li>
+<li><a href="#ch04">Recursion and Stack Usage</a></li>
+<li><a href="#ch05">Variadic Functions</a></li>
+<li><a href="#ch06">Inline Assembly in C</a></li>
+<li><a href="#ch07">Atomic Operations and Memory Ordering</a></li>
+<li><a href="#ch08">Spinlocks in Assembly</a></li>
+<li><a href="#ch09">Lock-Free Programming</a></li>
+<li><a href="#ch10">Context Switching</a></li>
+<li><a href="#ch11">Trap Handling in Detail</a></li>
+<li><a href="#ch12">Boot Code and Startup</a></li>
+<li><a href="#ch13">Interrupts and Exception Handling</a></li>
+<li><a href="#ch14">Compiler Optimization and Assembly</a></li>
+<li><a href="#ch15">Branch Prediction and Pipeline</a></li>
+<li><a href="#ch16">SIMD and Vector Instructions</a></li>
+<li><a href="#ch17">Cache-Aware Assembly</a></li>
+<li><a href="#ch18">Stack Smashing and Buffer Overflows</a></li>
+<li><a href="#ch19">Spectre and Meltdown</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch01">1. Stack Frames in Depth</h2>
+
+<p>In Handbook I, you learned that the stack stores local variables and return addresses.
+Now we go deeper. Every function call creates a <strong>stack frame</strong> — a block of
+memory on the stack that holds the function's local variables, saved registers, and the
+return address. Understanding the exact layout of a stack frame is essential for debugging
+crashes, reading disassembly, and understanding how compilers optimize code.</p>
+
+<p>The stack grows <strong>downward</strong> on virtually all modern architectures: it starts
+at a high address and grows toward lower addresses. When a function is called, it allocates
+space by <em>decrementing</em> the stack pointer (<code class="code-inline">sp</code>). When
+it returns, it deallocates by <em>incrementing</em> <code class="code-inline">sp</code>. The
+<strong>frame pointer</strong> (<code class="code-inline">fp</code> / <code class="code-inline">s0</code>
+in RISC-V, <code class="code-inline">rbp</code> in x86-64) marks the <em>top</em> of the current
+frame and provides a stable reference point for accessing local variables, even as
+<code class="code-inline">sp</code> changes.</p>
+
+<div class="code-block"><span class="comment">/* RISC-V Stack Frame Layout (grows downward) */</span>
+
+    <span class="comment">High addresses</span>
+    ┌─────────────────────┐
+    │  Caller's frame      │
+    ├─────────────────────┤ &lt;── previous fp (saved by callee)
+    │  Saved ra (return   │
+    │  address)            │
+    ├─────────────────────┤
+    │  Saved s0..s11       │  <span class="comment">callee-saved regs</span>
+    ├─────────────────────┤ &lt;── fp (s0) points here
+    │  Local variables     │
+    │  (int x, char buf[]) │
+    ├─────────────────────┤
+    │  Spill area for      │
+    │  caller's a0..a7      │
+    ├─────────────────────┤ &lt;── sp points here
+    │  (unused / red zone) │
+    └─────────────────────┘
+    <span class="comment">Low addresses</span></div>
+
+<h3>Frame Pointer Prologue and Epilogue</h3>
+
+<p>Every function that uses a frame pointer follows a standard pattern. The <strong>prologue</strong>
+sets up the frame at function entry; the <strong>epilogue</strong> tears it down before returning.
+In RISC-V, the prologue saves the return address (<code class="code-inline">ra</code>) and the
+old frame pointer, then sets <code class="code-inline">fp</code> to the current stack position.</p>
+
+<div class="code-block"><span class="comment"># RISC-V function prologue</span>
+<span class="label">my_func:</span>
+    <span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>    <span class="comment"># allocate 16 bytes on stack</span>
+    <span class="keyword">sd</span>    <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)         <span class="comment"># save return address</span>
+    <span class="keyword">sd</span>    <span class="reg">fp</span>, <span class="number">0</span>(<span class="reg">sp</span>)         <span class="comment"># save old frame pointer</span>
+    <span class="keyword">addi</span>  <span class="reg">fp</span>, <span class="reg">sp</span>, <span class="number">16</span>      <span class="comment"># fp = top of frame</span>
+
+    <span class="comment"># ... function body ...</span>
+    <span class="comment"># Access locals as: fp + offset</span>
+
+<span class="comment"># RISC-V function epilogue</span>
+<span class="label">.Lepilogue:</span>
+    <span class="keyword">ld</span>    <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)         <span class="comment"># restore return address</span>
+    <span class="keyword">ld</span>    <span class="reg">fp</span>, <span class="number">0</span>(<span class="reg">sp</span>)         <span class="comment"># restore old frame pointer</span>
+    <span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">16</span>       <span class="comment"># deallocate frame</span>
+    <span class="keyword">ret</span>                      <span class="comment"># return (jr ra)</span></div>
+
+<h3>Variable-Length Arrays and alloca</h3>
+
+<p>When you use a variable-length array (VLA) in C, or call <code class="code-inline">alloca()</code>,
+the compiler cannot know the frame size at compile time. Instead, it adjusts
+<code class="code-inline">sp</code> dynamically at runtime. This is why VLAs are dangerous: if the
+size is too large, you get a stack overflow with no warning. The compiler typically aligns the
+resulting <code class="code-inline">sp</code> to a 16-byte boundary after the dynamic allocation.</p>
+
+<div class="code-block"><span class="comment">// C code with VLA</span>
+<span class="keyword">void</span> func(<span class="keyword">int</span> n) {
+    <span class="keyword">int</span> buf[n];          <span class="comment">// size unknown at compile time</span>
+    <span class="comment">// ...</span>
+}
+
+<span class="comment"># RISC-V: dynamic stack allocation</span>
+<span class="label">func:</span>
+    <span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>
+    <span class="keyword">sd</span>    <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)
+    <span class="keyword">sd</span>    <span class="reg">s0</span>, <span class="number">0</span>(<span class="reg">sp</span>)
+    <span class="keyword">mv</span>    <span class="reg">s0</span>, <span class="reg">sp</span>          <span class="comment"># save sp in s0 (frame base)</span>
+
+    <span class="comment"># Compute VLA size: n * 4, round up to 16</span>
+    <span class="keyword">slli</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">2</span>         <span class="comment"># a0 = n * 4</span>
+    <span class="keyword">addi</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">15</span>       <span class="comment"># round up: +15</span>
+    <span class="keyword">srli</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">4</span>         <span class="comment"># /16</span>
+    <span class="keyword">slli</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">4</span>         <span class="comment"># *16  (now 16-byte aligned)</span>
+    <span class="keyword">sub</span>   <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="reg">a0</span>       <span class="comment"># dynamically allocate!</span>
+    <span class="comment"># buf is now at sp</span></div>
+
+<h3>Stack Alignment Rules</h3>
+
+<p>Most ISAs require the stack pointer to be aligned to a specific boundary at function call
+boundaries. This is not just a suggestion — misaligned stacks can cause hardware exceptions
+on some architectures and performance penalties on others.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>ISA</th><th>Required Alignment at Call</th><th>Reason</th></tr>
+</thead>
+<tbody>
+<tr><td><span class="reg-name">RISC-V</span></td><td>16 bytes</td><td>Standard calling convention; ensures 128-bit aligned access for SIMD</td></tr>
+<tr><td><span class="reg-name">x86-64 (SysV)</span></td><td>16 bytes</td><td>Required before <code>call</code> instruction; SSE instructions expect it</td></tr>
+<tr><td><span class="reg-name">ARM64 (AArch64)</span></td><td>16 bytes</td><td>SP must be 16-byte aligned at all public function boundaries</td></tr>
+<tr><td><span class="reg-name">MIPS</span></td><td>8 bytes</td><td>O32 ABI requires 8-byte alignment</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: Why 16-byte alignment?</div>
+<p style="margin:0">Modern CPUs load 16 or more bytes at once (e.g., for SIMD registers). If
+<code class="code-inline">sp</code> is not 16-byte aligned, a single 16-byte load would cross
+a cache line boundary, requiring two memory accesses. Worse, some architectures (like SPARC)
+raise a <em>bus error</em> on misaligned access. The calling convention guarantees alignment
+so that callees can safely use 16-byte loads/stores without re-checking.</p>
+</div>
+
+<h3>The x86-64 Red Zone</h3>
+
+<p>The x86-64 System V ABI defines a 128-byte <strong>red zone</strong> below the stack pointer.
+Leaf functions (functions that don't call other functions) can use this space <em>without</em>
+adjusting <code class="code-inline">rsp</code>. This is an optimization: it saves two instructions
+(the <code class="code-inline">sub rsp</code> and <code class="code-inline">add rsp</code>) for
+small leaf functions. However, signal handlers and interrupts will overwrite this area, so the
+red zone is only safe in non-interruptible contexts.</p>
+
+<div class="code-block"><span class="comment"># x86-64 leaf function using red zone (no stack adjustment!)</span>
+<span class="label">small_func:</span>
+    <span class="keyword">mov</span>  <span class="reg">rax</span>, <span class="reg">rdi</span>          <span class="comment"># use rdi directly</span>
+    <span class="keyword">add</span>  <span class="reg">rax</span>, <span class="reg">rsi</span>
+    <span class="keyword">mov</span>  [<span class="reg">rsp</span>-<span class="number">8</span>], <span class="reg">rax</span>   <span class="comment"># store in red zone (no sub rsp!)</span>
+    <span class="keyword">mov</span>  <span class="reg">rax</span>, [<span class="reg">rsp</span>-<span class="number">8</span>]
+    <span class="keyword">ret</span></div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Warning: Red Zone is x86-64 Only</div>
+<p style="margin:0">RISC-V and ARM64 do <strong>not</strong> have a red zone. On those
+architectures, you <em>must</em> adjust <code class="code-inline">sp</code> before writing to
+the stack, even in leaf functions. The Windows x64 ABI also does not use a red zone.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch02">2. Heap and Dynamic Memory</h2>
+
+<p>The stack is automatic and fast, but it has a major limitation: memory is freed when the
+function returns. If you need memory that outlives the function call — like a linked list node
+or a string you'll return to the caller — you need the <strong>heap</strong>. The heap is a
+region of memory managed by the C library's memory allocator (<code class="code-inline">malloc</code>,
+<code class="code-inline">free</code>, <code class="code-inline">calloc</code>,
+<code class="code-inline">realloc</code>).</p>
+
+<p>Unlike the stack, the heap does not have a strict LIFO ordering. You can allocate memory in
+any order and free it in any order. This flexibility comes at a cost: the allocator must track
+which blocks are free and which are in use, leading to <strong>fragmentation</strong> and
+overhead. Understanding how <code class="code-inline">malloc</code> works at the assembly level
+helps you understand memory leaks, performance issues, and security vulnerabilities.</p>
+
+<h3>How malloc Works Internally</h3>
+
+<p>When you call <code class="code-inline">malloc(64)</code>, the allocator doesn't just hand you
+64 bytes. It gives you a slightly larger block that includes <strong>metadata</strong> — a
+header before the returned pointer that records the block's size and status (free or allocated).
+Typical allocators (like glibc's <code class="code-inline">ptmalloc</code>) maintain free lists:
+linked lists of free blocks sorted by size. When you call <code class="code-inline">free</code>,
+the block is returned to the free list and may be <strong>coalesced</strong> (merged) with
+adjacent free blocks.</p>
+
+<div class="code-block"><span class="comment">/* Heap block layout (simplified) */</span>
+
+    ┌──────────────────┐
+    │  Block header     │  <span class="comment">size, flags (8-16 bytes)</span>
+    ├──────────────────┤
+    │                  │
+    │  User data        │  &lt;── malloc() returns this pointer
+    │  (requested size) │
+    │                  │
+    ├──────────────────┤
+    │  Padding / align  │  <span class="comment">round up to alignment</span>
+    ├──────────────────┤
+    │  Next block hdr   │  <span class="comment">...or free list pointer</span>
+    └──────────────────┘</div>
+
+<h3>How the Heap Grows: sbrk and mmap</h3>
+
+<p>Where does the heap memory actually come from? The C library obtains memory from the operating
+system using two system calls: <code class="code-inline">brk</code>/<code class="code-inline">sbrk</code>
+and <code class="code-inline">mmap</code>. <code class="code-inline">sbrk</code> extends the
+<strong>program break</strong> — the boundary of the data segment. Small allocations typically
+use <code class="code-inline">sbrk</code>, while large allocations (typically > 128KB) use
+<code class="code-inline">mmap</code>, which maps a new page-aligned region.</p>
+
+<div class="code-block"><span class="comment"># RISC-V: calling sbrk(64) to grow the heap</span>
+<span class="comment"># sbrk is a libc wrapper around the brk syscall</span>
+<span class="label">grow_heap:</span>
+    <span class="keyword">li</span>    <span class="reg">a7</span>, <span class="number">214</span>       <span class="comment"># SYS_brk on RISC-V</span>
+    <span class="keyword">li</span>    <span class="reg">a0</span>, <span class="number">0</span>          <span class="comment"># 0 = query current break</span>
+    <span class="keyword">ecall</span>                   <span class="comment"># returns current brk in a0</span>
+    <span class="keyword">mv</span>    <span class="reg">s1</span>, <span class="reg">a0</span>         <span class="comment"># save old break</span>
+
+    <span class="keyword">addi</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">64</span>      <span class="comment"># new break = old + 64</span>
+    <span class="keyword">li</span>    <span class="reg">a7</span>, <span class="number">214</span>       <span class="comment"># SYS_brk</span>
+    <span class="keyword">ecall</span>                   <span class="comment"># set new break</span>
+
+    <span class="keyword">mv</span>    <span class="reg">a0</span>, <span class="reg">s1</span>         <span class="comment"># return old break (usable memory)</span>
+    <span class="keyword">ret</span></div>
+
+<h3>Fragmentation</h3>
+
+<p>Over time, as blocks are allocated and freed in different orders, the heap becomes
+<strong>fragmented</strong>. There are two types: <em>external fragmentation</em> (free space
+is scattered in small pieces, so a large allocation fails even though total free space is
+sufficient) and <em>internal fragmentation</em> (the allocator rounds up the allocation size,
+wasting space inside each block). Fragmentation is why long-running programs (like web servers)
+can slowly consume more memory than they actually need.</p>
+
+<h3>Heap vs Stack Tradeoffs</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Stack</th><th>Heap</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Speed</strong></td><td>Very fast (pointer arithmetic)</td><td>Slower (allocator search, possible syscall)</td></tr>
+<tr><td><strong>Lifetime</strong></td><td>Function call scope</td><td>Until explicitly freed</td></tr>
+<tr><td><strong>Size limit</strong></td><td>Small (typically 1-8 MB)</td><td>Large (limited by virtual memory)</td></tr>
+<tr><td><strong>Management</strong></td><td>Automatic (compiler)</td><td>Manual (malloc/free) or GC</td></tr>
+<tr><td><strong>Fragmentation</strong></td><td>None (LIFO)</td><td>Yes (external + internal)</td></tr>
+<tr><td><strong>Thread safety</strong></td><td>Each thread has own stack</td><td>Shared, needs locks</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Memory Leaks in Assembly</h3>
+
+<p>In C, a memory leak happens when you call <code class="code-inline">malloc</code> but never
+call <code class="code-inline">free</code>. In assembly, the same thing happens: you call the
+allocator but lose the pointer. This is actually <em>easier</em> to do in assembly because
+there's no compiler to warn you. If you store a heap pointer in a register, overwrite that
+register, and have no other copy, the memory is leaked forever.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">Common Bug: Overwriting a Heap Pointer</div>
+<p style="margin:0">In assembly, if you call <code class="code-inline">malloc</code> and the
+result is in <code class="code-inline">a0</code>, you must save it somewhere (another register,
+the stack, or a global) <em>before</em> calling another function. If the next function call
+clobbers <code class="code-inline">a0</code>, you've lost the only pointer to that memory —
+a leak. Always save return values from <code class="code-inline">malloc</code> immediately.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch03">3. Memory Segments and Linking</h2>
+
+<p>When you compile a C program, the resulting binary contains several <strong>segments</strong>
+(also called sections). Each segment has a different purpose: some are read-only, some are
+writable, some are executable. Understanding these segments is crucial for understanding how
+your program is laid out in memory, how the linker works, and how security features like NX
+(No-Execute) and ASLR operate.</p>
+
+<h3>The Major Segments</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Segment</th><th>Contents</th><th>Permissions</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.text</code></td><td>Executable instructions</td><td>Read + Execute</td><td>Function code</td></tr>
+<tr><td><code>.rodata</code></td><td>Read-only data</td><td>Read only</td><td>String literals, const arrays</td></tr>
+<tr><td><code>.data</code></td><td>Initialized global/static variables</td><td>Read + Write</td><td><code>int x = 42;</code> (global)</td></tr>
+<tr><td><code>.bss</code></td><td>Uninitialized globals (zeroed)</td><td>Read + Write</td><td><code>int y;</code> (global)</td></tr>
+<tr><td><strong>Heap</strong></td><td>Dynamic allocations</td><td>Read + Write</td><td><code>malloc()</code> results</td></tr>
+<tr><td><strong>Stack</strong></td><td>Local variables, frames</td><td>Read + Write</td><td>Function locals</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="code-block"><span class="comment">/* Memory layout of a running process (simplified) */</span>
+
+    <span class="comment">High addresses</span>
+    ┌──────────────────────┐ 0x7fff_ffff_ffff
+    │  Stack (grows down)   │  ← sp
+    │  ↓                    │
+    │  (free space)          │
+    │  ↑                    │
+    │  Heap (grows up)       │  ← brk / mmap
+    ├──────────────────────┤
+    │  .bss  (zeroed)        │  uninitialized globals
+    ├──────────────────────┤
+    │  .data (initialized)   │  initialized globals
+    ├──────────────────────┤
+    │  .rodata (read-only)   │  strings, constants
+    ├──────────────────────┤
+    │  .text (executable)    │  code
+    └──────────────────────┘ 0x0000_0000_0040_0000
+    <span class="comment">Low addresses</span></div>
+
+<h3>How the Linker Combines Object Files</h3>
+
+<p>When you compile <code class="code-inline">main.c</code> and <code class="code-inline">util.c</code>
+separately, each produces an <strong>object file</strong> (<code class="code-inline">.o</code>).
+Each object file has its own <code>.text</code>, <code>.data</code>, and <code>.bss</code>
+sections, but with <strong>unresolved symbols</strong> — references to functions or variables
+defined in other files. The <strong>linker</strong> (<code class="code-inline">ld</code>)
+combines all object files by concatenating their sections and resolving cross-references.</p>
+
+<p>The process has three phases: <strong>symbol resolution</strong> (match each undefined
+symbol to its definition), <strong>relocation</strong> (patch addresses in the code to point
+to the correct locations), and <strong>section merging</strong> (combine all
+<code>.text</code> sections into one, all <code>.data</code> into one, etc.). The linker also
+inserts startup code (<code class="code-inline">_start</code>, <code class="code-inline">crt0</code>)
+that sets up the environment before calling <code class="code-inline">main</code>.</p>
+
+<div class="code-block"><span class="comment"># Before linking: main.o has an unresolved call to helper()</span>
+<span class="comment"># The compiler emits a placeholder + relocation entry:</span>
+
+    <span class="keyword">call</span>  <span class="number">0x00000000</span>    <span class="comment"># placeholder address</span>
+    <span class="comment"># Relocation entry: R_RISCV_CALL, offset=0x4, symbol=helper</span>
+
+<span class="comment"># After linking: the linker patches the address</span>
+
+    <span class="keyword">call</span>  <span class="number">0x00401234</span>    <span class="comment"># actual address of helper()</span></div>
+
+<h3>Static vs Dynamic Linking</h3>
+
+<p><strong>Static linking</strong> copies all library code into the executable. The result is a
+large but self-contained binary. <strong>Dynamic linking</strong> defers resolution to runtime:
+the executable contains references to shared libraries (<code class="code-inline">.so</code> on
+Linux, <code class="code-inline">.dll</code> on Windows), and the dynamic linker
+(<code class="code-inline">ld-linux</code>) loads them when the program starts. Dynamic linking
+saves disk space and memory (shared libraries are loaded once for all processes) but adds
+runtime overhead and complexity.</p>
+
+<h3>PLT and GOT: Dynamic Symbol Resolution</h3>
+
+<p>When you call a function from a shared library (like <code class="code-inline">printf</code>),
+the compiler can't know its address at link time. Instead, it uses the <strong>Procedure Linkage
+Table (PLT)</strong> and <strong>Global Offset Table (GOT)</strong>. The PLT is a trampoline:
+each entry is a small stub that jumps to an address stored in the GOT. On the first call, the
+GOT points back to the dynamic linker, which resolves the symbol and patches the GOT. Subsequent
+calls jump directly to the real function.</p>
+
+<div class="code-block"><span class="comment">/* PLT/GOT lazy binding flow */</span>
+
+<span class="comment">/* 1. Your code calls printf@plt */</span>
+    <span class="keyword">call</span>  printf@plt
+
+<span class="comment">/* 2. PLT stub: jump to GOT entry */</span>
+<span class="label">printf@plt:</span>
+    <span class="keyword">ld</span>    <span class="reg">t1</span>, [<span class="reg">got_printf</span>]   <span class="comment"># load GOT entry</span>
+    <span class="keyword">jr</span>    <span class="reg">t1</span>               <span class="comment"># jump to it</span>
+
+<span class="comment">/* 3. First call: GOT points to resolver */</span>
+<span class="comment">/*    Resolver finds printf, patches GOT, jumps there */</span>
+
+<span class="comment">/* 4. Subsequent calls: GOT has real address, direct jump */</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: Lazy Binding</div>
+<p style="margin:0">PLT/GOT uses <strong>lazy binding</strong>: symbols are resolved on first use,
+not at program start. This speeds up startup (only resolve what you use) but can cause
+unpredictable latency on first call. You can force eager binding with
+<code class="code-inline">LD_BIND_NOW=1</code> or the <code class="code-inline">-z now</code>
+linker flag.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch04">4. Recursion and Stack Usage</h2>
+
+<p>Recursion is a natural fit for the stack-based execution model. Each recursive call creates
+a new stack frame, so each level of recursion has its own copy of local variables. This is
+elegant but also dangerous: deep recursion consumes stack space proportional to recursion depth,
+and the stack has a fixed (and relatively small) size. Understanding how recursion maps to
+stack operations is key to understanding both its power and its limitations.</p>
+
+<h3>Factorial in RISC-V Assembly</h3>
+
+<p>Let's trace a recursive <code class="code-inline">factorial(n)</code> function. Each call
+saves <code class="code-inline">ra</code> (because it calls itself), decrements
+<code class="code-inline">n</code>, and recurses. The base case (<code class="code-inline">n &lt;= 1</code>)
+stops the recursion and returns 1. Each returning frame multiplies its
+<code class="code-inline">n</code> by the result of the recursive call.</p>
+
+<div class="code-block"><span class="comment"># RISC-V recursive factorial</span>
+<span class="comment"># int fact(int n) { if (n <= 1) return 1; return n * fact(n-1); }</span>
+
+<span class="label">fact:</span>
+    <span class="comment"># Prologue: we call fact, so must save ra</span>
+    <span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>
+    <span class="keyword">sd</span>    <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)
+    <span class="keyword">sd</span>    <span class="reg">s0</span>, <span class="number">0</span>(<span class="reg">sp</span>)
+
+    <span class="comment"># Base case: if (n <= 1) return 1</span>
+    <span class="keyword">li</span>    <span class="reg">t0</span>, <span class="number">1</span>
+    <span class="keyword">ble</span>   <span class="reg">a0</span>, <span class="reg">t0</span>, <span class="label">.Lbase</span>
+
+    <span class="comment"># Save n in callee-saved register</span>
+    <span class="keyword">mv</span>    <span class="reg">s0</span>, <span class="reg">a0</span>         <span class="comment"># s0 = n</span>
+
+    <span class="comment"># Recursive call: fact(n-1)</span>
+    <span class="keyword">addi</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">-1</span>      <span class="comment"># a0 = n - 1</span>
+    <span class="keyword">call</span>  <span class="label">fact</span>             <span class="comment"># ra = return addr, jump to fact</span>
+    <span class="comment"># a0 now holds fact(n-1)</span>
+
+    <span class="comment"># Multiply: n * fact(n-1)</span>
+    <span class="keyword">mul</span>   <span class="reg">a0</span>, <span class="reg">s0</span>, <span class="reg">a0</span>      <span class="comment"># a0 = n * fact(n-1)</span>
+    <span class="keyword">j</span>     <span class="label">.Lepilogue</span>
+
+<span class="label">.Lbase:</span>
+    <span class="keyword">li</span>    <span class="reg">a0</span>, <span class="number">1</span>          <span class="comment"># return 1</span>
+
+<span class="label">.Lepilogue:</span>
+    <span class="keyword">ld</span>    <span class="reg">ra</span>, <span class="number">8</span>(<span class="reg">sp</span>)
+    <span class="keyword">ld</span>    <span class="reg">s0</span>, <span class="number">0</span>(<span class="reg">sp</span>)
+    <span class="keyword">addi</span>  <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">16</span>
+    <span class="keyword">ret</span></div>
+
+<h3>Stack Growth During Recursion</h3>
+
+<p>Each recursive call adds a 16-byte frame (in this example). For
+<code class="code-inline">fact(5)</code>, the stack grows by 5 frames = 80 bytes before any
+returns happen. For <code class="code-inline">fact(10000)</code>, that's 160,000 bytes — which
+may exceed the stack limit. This is called <strong>stack overflow</strong>. The OS sets a
+default stack size (typically 8 MB on Linux), and exceeding it causes a
+<code class="code-inline">SIGSEGV</code> (segmentation fault).</p>
+
+<div class="code-block"><span class="comment">/* Stack during fact(3) */</span>
+
+    Call fact(3)     Call fact(2)     Call fact(1)
+    ┌─────────┐      ┌─────────┐      ┌─────────┐
+    │ ra, s0  │      │ ra, s0  │      │ ra, s0  │
+    │ n=3     │      │ n=2     │      │ n=1     │ ← base case
+    └─────────┘      └─────────┘      └─────────┘
+    sp → low         sp → lower       sp → lowest
+
+    Returns: 1 → 2*1=2 → 3*2=6 → answer = 6</div>
+
+<h3>Tail Call Optimization</h3>
+
+<p>Some recursive functions can be transformed into loops, eliminating stack growth entirely.
+A <strong>tail call</strong> is a function call that is the last action before return — its
+result is returned directly, with no further computation. The compiler can replace a tail call
+with a <strong>jump</strong> (reusing the current frame) instead of a call (creating a new frame).
+This is called <strong>tail call optimization (TCO)</strong>.</p>
+
+<div class="code-block"><span class="comment">// NOT tail-recursive: multiply happens AFTER the call</span>
+<span class="keyword">int</span> fact(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">1</span>) <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">return</span> n * fact(n - <span class="number">1</span>);  <span class="comment">// multiply after call</span>
+}
+
+<span class="comment">// Tail-recursive: call is the LAST action, uses accumulator</span>
+<span class="keyword">int</span> fact_tail(<span class="keyword">int</span> n, <span class="keyword">int</span> acc) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">1</span>) <span class="keyword">return</span> acc;
+    <span class="keyword">return</span> fact_tail(n - <span class="number">1</span>, n * acc);  <span class="comment">// pure tail call</span>
+}</div>
+
+<div class="code-block"><span class="comment"># Compiler turns tail-recursive fact_tail into a loop:</span>
+<span class="label">fact_tail:</span>
+<span class="label">.Lloop:</span>
+    <span class="keyword">li</span>    <span class="reg">t0</span>, <span class="number">1</span>
+    <span class="keyword">ble</span>   <span class="reg">a0</span>, <span class="reg">t0</span>, <span class="label">.Ldone</span>    <span class="comment"># if n <= 1, return acc</span>
+    <span class="keyword">mul</span>   <span class="reg">a1</span>, <span class="reg">a0</span>, <span class="reg">a1</span>          <span class="comment"># acc = n * acc</span>
+    <span class="keyword">addi</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">-1</span>         <span class="comment"># n = n - 1</span>
+    <span class="keyword">j</span>     <span class="label">.Lloop</span>               <span class="comment"># loop! (no new stack frame)</span>
+<span class="label">.Ldone:</span>
+    <span class="keyword">mv</span>    <span class="reg">a0</span>, <span class="reg">a1</span>              <span class="comment"># return acc</span>
+    <span class="keyword">ret</span></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Key Idea: TCO = Free Loop</div>
+<p style="margin:0">Tail call optimization converts recursion into iteration <em>without growing
+the stack</em>. The function reuses its own frame by jumping back to the top instead of calling.
+This means <code class="code-inline">fact_tail(1000000, 1)</code> uses the same stack space as
+<code class="code-inline">fact_tail(1, 1)</code> — no overflow. RISC-V and ARM64 guarantee TCO;
+x86-64 does it when possible but doesn't guarantee it.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch05">5. Variadic Functions</h2>
+
+<p>Functions like <code class="code-inline">printf</code> and
+<code class="code-inline">scanf</code> take a <strong>variable number of arguments</strong>.
+How does the CPU know where each argument is? There's no argument count in the call —
+<code class="code-inline">printf</code> figures it out by parsing the format string. The
+mechanism that makes this work is called <strong>variadic functions</strong>, and it depends
+heavily on the calling convention.</p>
+
+<h3>How printf Works</h3>
+
+<p>When you call <code class="code-inline">printf("%d %s %d\n", 42, "hi", 7)</code>, the
+arguments are passed according to the normal calling convention. In RISC-V, the first 8 arguments
+go in registers <code class="code-inline">a0</code>–<code class="code-inline">a7</code>, and
+additional arguments go on the stack. <code class="code-inline">printf</code> receives the
+format string in <code class="code-inline">a0</code>, then reads subsequent arguments by
+parsing format specifiers (<code class="code-inline">%d</code>, <code class="code-inline">%s</code>,
+etc.) and fetching the next argument each time.</p>
+
+<div class="code-block"><span class="comment">// printf("%d %s %d\n", 42, "hi", 7)</span>
+<span class="comment">// Argument layout in RISC-V:</span>
+<span class="comment">//   a0 = pointer to "%d %s %d\n"</span>
+<span class="comment">//   a1 = 42          (first %d)</span>
+<span class="comment">//   a2 = "hi"        (first %s)</span>
+<span class="comment">//   a3 = 7           (second %d)</span>
+
+<span class="comment"># RISC-V: calling printf</span>
+    <span class="keyword">la</span>    <span class="reg">a0</span>, <span class="label">.Lfmt</span>       <span class="comment"># a0 = format string</span>
+    <span class="keyword">li</span>    <span class="reg">a1</span>, <span class="number">42</span>         <span class="comment"># a1 = 42</span>
+    <span class="keyword">la</span>    <span class="reg">a2</span>, <span class="label">.Lhi</span>        <span class="comment"># a2 = "hi"</span>
+    <span class="keyword">li</span>    <span class="reg">a3</span>, <span class="number">7</span>          <span class="comment"># a3 = 7</span>
+    <span class="keyword">call</span>  <span class="label">printf</span>
+
+<span class="label">.Lfmt:</span>  .asciz <span class="string">"%d %s %d\n"</span>
+<span class="label">.Lhi:</span>   .asciz <span class="string">"hi"</span></div>
+
+<h3>va_list Implementation</h3>
+
+<p>The C standard library provides <code class="code-inline">va_list</code>,
+<code class="code-inline">va_start</code>, <code class="code-inline">va_arg</code>, and
+<code class="code-inline">va_end</code> to access variadic arguments portably. Under the hood,
+<code class="code-inline">va_list</code> is a structure that tracks the current position in the
+argument list. On register-based ABIs (like RISC-V and x86-64), it must handle two cases:
+arguments still in registers and arguments that have spilled to the stack.</p>
+
+<div class="code-block"><span class="comment">/* RISC-V va_list structure (simplified) */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> {
+    <span class="keyword">void</span>  *gp_offset;    <span class="comment">/* offset into reg save area */</span>
+    <span class="keyword">void</span>  *fp_offset;    <span class="comment">/* offset into FP reg save area */</span>
+    <span class="keyword">void</span>  *overflow_arg; <span class="comment">/* pointer to stack args */</span>
+    <span class="keyword">void</span>  *reg_save;     <span class="comment">/* saved register area */</span>
+} va_list;
+
+<span class="comment">/* va_arg(ap, type):</span>
+<span class="comment">   1. If gp_offset < 8*8, read from reg_save[gp_offset]</span>
+<span class="comment">   2. Else, read from overflow_arg, advance overflow_arg</span>
+<span class="comment">   3. Advance gp_offset by sizeof(type) */</span></div>
+
+<h3>The Overflow Area</h3>
+
+<p>The tricky part of variadic functions on register-based ABIs is the <strong>overflow area</strong>.
+When a variadic function is called, the compiler doesn't know how many register arguments will
+be accessed. The solution: the callee saves <em>all</em> register arguments
+(<code class="code-inline">a0</code>–<code class="code-inline">a7</code>) into a contiguous
+<strong>register save area</strong> on the stack. Then <code class="code-inline">va_arg</code>
+can read from this area sequentially, and when it runs out of register slots, it continues
+reading from the <strong>overflow area</strong> (where extra arguments were pushed by the caller).</p>
+
+<div class="code-block"><span class="comment">/* Stack layout for a variadic function in RISC-V */</span>
+
+    ┌──────────────────────┐
+    │  Overflow args        │  ← a8, a9, ... (if > 8 args)
+    ├──────────────────────┤
+    │  Return address (ra)  │
+    ├──────────────────────┤
+    │  Saved fp             │
+    ├──────────────────────┤ &lt;── fp
+    │  Reg save area:       │
+    │  [0]  = a0            │  ← va_arg reads from here
+    │  [8]  = a1            │
+    │  [16] = a2            │
+    │  ...                  │
+    │  [56] = a7            │  ← last register arg
+    ├──────────────────────┤
+    │  Local variables      │
+    └──────────────────────┘ &lt;── sp</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: Register Save Area</div>
+<p style="margin:0">Variadic functions must save <em>all</em> argument registers to the stack at
+entry, even if they might not use them all. This is why variadic functions are slightly slower
+than fixed-argument functions: they pay the cost of saving 8 registers (64 bytes) upfront. The
+<code class="code-inline">va_list</code> then walks this saved area as if it were a flat array.</p>
+</div>
+
+<h3>Stack-Based vs Register-Based Varargs</h3>
+
+<p>On older ABIs (like MIPS O32 and 32-bit x86), <em>all</em> arguments are passed on the stack.
+This makes variadic functions trivial: <code class="code-inline">va_arg</code> just increments
+a stack pointer. On modern ABIs (RISC-V, x86-64, ARM64), arguments are in registers, which is
+faster for normal calls but requires the register save area trick for variadic functions. This
+is a classic tradeoff: optimize for the common case (fixed arguments in registers) at the expense
+of the uncommon case (variadic functions).</p>
+
+<!-- ============================================================ -->
+<h2 id="ch06">6. Inline Assembly in C</h2>
+
+<p>Sometimes you need to write a few instructions that C can't express: reading a CPU control
+register, executing a barrier, or using a special instruction like
+<code class="code-inline">fence</code>. GCC and Clang provide <strong>inline assembly</strong>
+via the <code class="code-inline">__asm__</code> keyword, letting you embed assembly directly
+in C code while letting the compiler handle register allocation and optimization around it.</p>
+
+<h3>Basic Syntax</h3>
+
+<p>GCC inline assembly uses a template string with placeholders, followed by input operands,
+output operands, and a clobber list. The syntax is powerful but notoriously hard to read. The
+general form is: <code class="code-inline">__asm__ (template : outputs : inputs : clobbers)</code>.</p>
+
+<div class="code-block"><span class="comment">/* Basic inline assembly: add two numbers */</span>
+<span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="keyword">int</span> result;
+    <span class="keyword">__asm__</span> (
+        <span class="string">"add %0, %1, %2"</span>       <span class="comment">/* template */</span>
+        : <span class="string">"=r"</span>(result)            <span class="comment">/* output: %0 = result, in a register */</span>
+        : <span class="string">"r"</span>(a), <span class="string">"r"</span>(b)       <span class="comment">/* inputs: %1 = a, %2 = b */</span>
+    );
+    <span class="keyword">return</span> result;
+}</div>
+
+<h3>Constraints</h3>
+
+<p>Constraints tell the compiler how to pass values to and from the assembly. The most common
+constraints are <code class="code-inline">"r"</code> (any general-purpose register),
+<code class="code-inline">"=r"</code> (output register, write-only),
+<code class="code-inline">"+r"</code> (read-write register),
+<code class="code-inline">"i"</code> (immediate constant), and
+<code class="code-inline">"m"</code> (memory operand). The compiler chooses which register to
+use and substitutes the <code class="code-inline">%0</code>, <code class="code-inline">%1</code>,
+etc. placeholders accordingly.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Constraint</th><th>Meaning</th><th>Example Use</th></tr>
+</thead>
+<tbody>
+<tr><td><code>"r"</code></td><td>Input in any GP register</td><td>Reading a variable</td></tr>
+<tr><td><code>"=r"</code></td><td>Output register (write-only)</td><td>Storing a result</td></tr>
+<tr><td><code>"+r"</code></td><td>Read-write register</td><td>Modifying a variable in place</td></tr>
+<tr><td><code>"i"</code></td><td>Immediate constant</td><td>Fixed numeric value</td></tr>
+<tr><td><code>"m"</code></td><td>Memory operand</td><td>Direct memory access</td></tr>
+<tr><td><code>"&amp;r"</code></td><td>Early clobber register</td><td>Output written before inputs consumed</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The Clobber List</h3>
+
+<p>The <strong>clobber list</strong> tells the compiler which registers (or memory) your assembly
+modifies, so the compiler doesn't assume they're preserved. If you forget to list a clobbered
+register, the compiler may store important data there and your assembly will corrupt it. The
+special clobber <code class="code-inline">"memory"</code> means your assembly reads or writes
+memory in a way the compiler can't predict, forcing a memory barrier.</p>
+
+<div class="code-block"><span class="comment">/* Reading RISC-V cycle counter (rdcycle) */</span>
+<span class="keyword">static inline</span> <span class="keyword">unsigned long</span> rdcycle(<span class="keyword">void</span>) {
+    <span class="keyword">unsigned long</span> cycles;
+    <span class="keyword">__asm__ volatile</span> (
+        <span class="string">"rdcycle %0"</span>
+        : <span class="string">"=r"</span>(cycles)
+        : <span class="comment">/* no inputs */</span>
+        : <span class="comment">/* no clobbers */</span>
+    );
+    <span class="keyword">return</span> cycles;
+}
+
+<span class="comment">/* Memory barrier: fence iorw, iorw */</span>
+<span class="keyword">static inline</span> <span class="keyword">void</span> mb(<span class="keyword">void</span>) {
+    <span class="keyword">__asm__ volatile</span> (<span class="string">"fence iorw, iorw"</span> ::: <span class="string">"memory"</span>);
+}</div>
+
+<h3>The volatile Keyword</h3>
+
+<p>The <code class="code-inline">volatile</code> qualifier on
+<code class="code-inline">__asm__</code> tells the compiler <em>not</em> to optimize away or
+reorder the assembly, even if the output appears unused. This is critical for instructions
+with <strong>side effects</strong>: reading a hardware counter, executing a barrier, or
+performing an I/O operation. Without <code class="code-inline">volatile</code>, the compiler
+might delete your assembly if it thinks the result is unused.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">Warning: Always Use volatile for Side Effects</div>
+<p style="margin:0">If your inline assembly reads a hardware register, executes a barrier, or
+has any side effect beyond producing an output value, <strong>always</strong> use
+<code class="code-inline">__asm__ volatile</code>. Without it, the compiler may remove the
+instruction entirely during optimization, leading to subtle, hard-to-debug failures.</p>
+</div>
+
+<h3>Practical Examples</h3>
+
+<div class="code-block"><span class="comment">/* Atomic compare-and-swap on RISC-V (LR/SC) */</span>
+<span class="keyword">static inline</span> <span class="keyword">int</span> atomic_cas(<span class="keyword">int</span> *addr, <span class="keyword">int</span> old, <span class="keyword">int</span> new) {
+    <span class="keyword">int</span> result;
+    <span class="keyword">__asm__ volatile</span> (
+        <span class="string">"1: lr.w     %0, (%2)      \n"</span>   <span class="comment">/* load-reserved */</span>
+        <span class="string">"   bne      %0, %1, 2f    \n"</span>   <span class="comment">/* if != old, exit */</span>
+        <span class="string">"   sc.w     %0, %3, (%2)  \n"</span>   <span class="comment">/* store-conditional */</span>
+        <span class="string">"   bnez     %0, 1b        \n"</span>   <span class="comment">/* retry if sc failed */</span>
+        <span class="string">"2:                        \n"</span>
+        : <span class="string">"=&r"</span>(result)
+        : <span class="string">"r"</span>(old), <span class="string">"r"</span>(addr), <span class="string">"r"</span>(new)
+        : <span class="string">"memory"</span>
+    );
+    <span class="keyword">return</span> result;
+}
+
+<span class="comment">/* Read CSR (Control and Status Register) */</span>
+<span class="keyword">static inline</span> <span class="keyword">unsigned long</span> r_csr(<span class="keyword">unsigned long</span> csr) {
+    <span class="keyword">unsigned long</span> val;
+    <span class="keyword">__asm__ volatile</span> (<span class="string">"csrr %0, %1"</span> : <span class="string">"=r"</span>(val) : <span class="string">"i"</span>(csr));
+    <span class="keyword">return</span> val;
+}</div>
+
+<!-- ============================================================ -->
+<h2 id="ch07">7. Atomic Operations and Memory Ordering</h2>
+
+<p>When multiple threads (or CPU cores) access the same memory, you need
+<strong>atomic operations</strong> — operations that complete without interruption. A simple
+<code class="code-inline">count++</code> in C is <em>not</em> atomic: it compiles to a load,
+an add, and a store. If two threads execute it simultaneously, one update can be lost. Atomic
+operations solve this by providing instructions that read and write memory in a single,
+indivisible step.</p>
+
+<h3>The Read-Modify-Write Problem</h3>
+
+<p>Consider <code class="code-inline">count++</code> on a multi-core system. Thread A loads
+<code class="code-inline">count</code> (value 5), adds 1 (getting 6), and stores 6. But if
+Thread B loads <code class="code-inline">count</code> (also 5) before A stores, both will store
+6 — one increment is lost. This is a <strong>race condition</strong>. The solution is to make
+the load-add-store sequence <em>atomic</em>: no other core can observe or modify the value
+in between.</p>
+
+<div class="code-block"><span class="comment">/* Race condition: count++ is NOT atomic */</span>
+<span class="comment">// Thread A                    Thread B</span>
+   ld   t0, (count)           ld   t0, (count)      <span class="comment"># both read 5</span>
+   addi t0, t0, 1             addi t0, t0, 1        <span class="comment"># both compute 6</span>
+   sd   t0, (count)           sd   t0, (count)      <span class="comment"># both write 6 (lost update!)</span>
+
+<span class="comment">/* Atomic version: amoswap (single instruction) */</span>
+   <span class="keyword">amoswap.w</span> <span class="reg">a0</span>, <span class="reg">a1</span>, (<span class="reg">a2</span>)  <span class="comment"># swap atomically</span></div>
+
+<h3>Atomic Exchange: amoswap</h3>
+
+<p>The simplest atomic operation is <strong>exchange</strong>: atomically swap a register value
+with a memory location. RISC-V provides <code class="code-inline">amoswap</code> for this. It
+reads the old value from memory into a register and writes a new value, all in one indivisible
+step. This is the building block for spinlocks.</p>
+
+<div class="code-block"><span class="comment"># RISC-V: atomic swap</span>
+<span class="comment"># amoswap.w rd, rs2, (rs1)</span>
+<span class="comment">#   rd = M[rs1]; M[rs1] = rs2   (all atomic)</span>
+
+    <span class="keyword">li</span>      <span class="reg">a1</span>, <span class="number">1</span>            <span class="comment"># value to store</span>
+    <span class="keyword">la</span>      <span class="reg">a2</span>, lock_var       <span class="comment"># address</span>
+    <span class="keyword">amoswap.w</span> <span class="reg">a0</span>, <span class="reg">a1</span>, (<span class="reg">a2</span>)  <span class="comment"># a0 = old, M[a2] = 1</span>
+    <span class="comment"># if a0 == 0, we got the lock!</span></div>
+
+<h3>Compare-and-Swap (CAS)</h3>
+
+<p><strong>Compare-and-swap (CAS)</strong> is the most versatile atomic operation. It atomically
+compares a memory location to an expected value; if they match, it writes a new value and reports
+success. If they don't match, it does nothing and reports failure. CAS is the foundation of most
+lock-free data structures. On x86-64, it's the <code class="code-inline">cmpxchg</code>
+instruction; on RISC-V, it's implemented via load-linked/store-conditional (LR/SC).</p>
+
+<div class="code-block"><span class="comment"># RISC-V: CAS via LR/SC (load-reserved / store-conditional)</span>
+<span class="label">cas:</span>
+<span class="label">.Lretry:</span>
+    <span class="keyword">lr.w</span>     <span class="reg">t0</span>, (<span class="reg">a0</span>)        <span class="comment"># load-reserved: t0 = M[a0]</span>
+    <span class="keyword">bne</span>      <span class="reg">t0</span>, <span class="reg">a1</span>, <span class="label">.Lfail</span>  <span class="comment"># if t0 != expected, fail</span>
+    <span class="keyword">sc.w</span>     <span class="reg">t1</span>, <span class="reg">a2</span>, (<span class="reg">a0</span>)   <span class="comment"># store-conditional: M[a0] = new</span>
+    <span class="keyword">bnez</span>     <span class="reg">t1</span>, <span class="label">.Lretry</span>    <span class="comment"># if sc failed (t1!=0), retry</span>
+    <span class="keyword">li</span>      <span class="reg">a0</span>, <span class="number">0</span>           <span class="comment"># success</span>
+    <span class="keyword">ret</span>
+<span class="label">.Lfail:</span>
+    <span class="keyword">li</span>      <span class="reg">a0</span>, <span class="number">1</span>           <span class="comment"># failure</span>
+    <span class="keyword">ret</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: LR/SC vs cmpxchg</div>
+<p style="margin:0">x86-64 has a single <code class="code-inline">cmpxchg</code> instruction that
+does compare-and-swap atomically. RISC-V and ARM64 use a two-instruction approach:
+<strong>load-linked</strong> (or load-reserved) marks the address, and
+<strong>store-conditional</strong> only succeeds if no other write occurred to that address
+since the load-linked. If it fails, you retry. This is more flexible but requires a retry loop.</p>
+</div>
+
+<h3>Memory Ordering and Fences</h3>
+
+<p>On a single-core CPU, memory operations appear to execute in program order. But on multi-core
+systems, the CPU and compiler may <strong>reorder</strong> memory operations for performance.
+This means Thread A's writes may become visible to Thread B in a different order than A executed
+them. <strong>Memory barriers</strong> (fences) prevent this reordering, ensuring that operations
+before the fence complete before operations after it.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Ordering</th><th>Meaning</th><th>RISC-V</th><th>x86-64</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Relaxed</strong></td><td>No ordering guarantees</td><td><code>rlw</code> suffix</td><td><code>mov</code> (no fence)</td></tr>
+<tr><td><strong>Acquire</strong></td><td>No later reads/writes move before this</td><td><code>aq</code> suffix</td><td>Implicit (strong model)</td></tr>
+<tr><td><strong>Release</strong></td><td>No earlier reads/writes move after this</td><td><code>rl</code> suffix</td><td>Implicit (strong model)</td></tr>
+<tr><td><strong>Sequentially consistent</strong></td><td>Full ordering, global total order</td><td><code>aqrl</code> suffix</td><td><code>mfence</code> + locked op</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="code-block"><span class="comment"># RISC-V: full memory barrier</span>
+    <span class="keyword">fence</span>   <span class="reg">rw</span>, <span class="reg">rw</span>     <span class="comment"># all R/W before must complete before all R/W after</span>
+
+<span class="comment"># RISC-V: acquire fence (for lock acquisition)</span>
+    <span class="keyword">fence</span>   <span class="reg">r</span>, <span class="reg">rw</span>     <span class="comment"># reads before fence stay before; all ops after stay after</span>
+
+<span class="comment"># RISC-V: release fence (for lock release)</span>
+    <span class="keyword">fence</span>   <span class="reg">rw</span>, <span class="reg">w</span>     <span class="comment"># all ops before fence complete before writes after</span></div>
+
+<h3>The ABA Problem</h3>
+
+<p>CAS compares values, not "has this changed?" This leads to the <strong>ABA problem</strong>:
+Thread 1 reads value A, Thread 2 changes it to B then back to A, and Thread 1's CAS succeeds
+because the value is "still A" — but something <em>did</em> change in between. This can corrupt
+lock-free data structures. Solutions include <strong>tagged pointers</strong> (append a version
+counter) or <strong>hazard pointers</strong> (see Chapter 9).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">The ABA Problem</div>
+<p style="margin:0">Thread 1: reads A from <code class="code-inline">ptr</code>. Thread 2: changes
+<code class="code-inline">ptr</code> to B, frees A, allocates new object at same address as A,
+sets <code class="code-inline">ptr</code> back to A. Thread 1: CAS succeeds (value is A), but the
+object at A was freed and reallocated — use-after-free! This is why lock-free programming is
+hard.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch08">8. Spinlocks in Assembly</h2>
+
+<p>A <strong>spinlock</strong> is the simplest synchronization primitive: a thread that wants
+the lock repeatedly tries to acquire it, "spinning" in a loop until it succeeds. Spinlocks are
+used in the OS kernel and in low-level performance-critical code where the lock is held for a
+very short time and sleeping would be too expensive. Understanding spinlocks at the assembly
+level reveals exactly how atomic instructions, memory ordering, and CPU caches interact.</p>
+
+<h3>How a Spinlock Works</h3>
+
+<p>A spinlock is typically a single word in memory: 0 means unlocked, 1 means locked. To acquire,
+a thread atomically swaps 1 into the lock word. If the old value was 0, the thread got the lock.
+If the old value was 1, someone else had it, so the thread spins and retries. To release, the
+holder simply writes 0 to the lock word.</p>
+
+<div class="code-block"><span class="comment"># RISC-V spinlock (from xv6 kernel/spinlock.h concept)</span>
+<span class="comment"># lock = 0: unlocked, lock = 1: locked</span>
+
+<span class="label">acquire:</span>
+<span class="label">.Lspin:</span>
+    <span class="keyword">li</span>        <span class="reg">t1</span>, <span class="number">1</span>
+    <span class="keyword">amoswap.w.aq</span> <span class="reg">t0</span>, <span class="reg">t1</span>, (<span class="reg">a0</span>)  <span class="comment"># atomic swap: t0=old, M[a0]=1</span>
+    <span class="keyword">bnez</span>       <span class="reg">t0</span>, <span class="label">.Lspin</span>          <span class="comment"># if old was 1, keep spinning</span>
+    <span class="keyword">ret</span>                            <span class="comment"># got the lock!</span>
+
+<span class="label">release:</span>
+    <span class="keyword">fence</span>   <span class="reg">rw</span>, <span class="reg">w</span>                    <span class="comment"># release fence: flush writes</span>
+    <span class="keyword">sd</span>      <span class="reg">zero</span>, <span class="number">0</span>(<span class="reg">a0</span>)              <span class="comment"># lock = 0 (release)</span>
+    <span class="keyword">ret</span></div>
+
+<h3>The amoswap Instruction</h3>
+
+<p>The key instruction is <code class="code-inline">amoswap.w.aq</code>. The
+<code class="code-inline">.aq</code> (acquire) suffix ensures that all memory operations after
+the lock acquisition appear to happen <em>after</em> the acquisition. Without it, the CPU might
+reorder a write to protected data <em>before</em> the lock is actually acquired, causing a race.
+The release uses a <code class="code-inline">fence rw, w</code> to ensure all writes to protected
+data complete before the lock is released.</p>
+
+<h3>x86-64: The lock Prefix</h3>
+
+<p>On x86-64, atomicity is achieved with the <code class="code-inline">lock</code> prefix, which
+turns a normal instruction into an atomic one by asserting a hardware lock on the cache line.
+The <code class="code-inline">xchg</code> instruction is implicitly locked. x86-64 also has a
+strong memory model: loads and stores are already ordered, so explicit fences are rarely needed
+for spinlocks.</p>
+
+<div class="code-block"><span class="comment"># x86-64 spinlock</span>
+<span class="label">acquire:</span>
+<span class="label">.Lspin:</span>
+    <span class="keyword">mov</span>     <span class="reg">edx</span>, <span class="number">1</span>
+    <span class="keyword">xchg</span>    <span class="reg">dl</span>, [<span class="reg">rdi</span>]       <span class="comment"># atomic exchange (implicit lock)</span>
+    <span class="keyword">test</span>    <span class="reg">dl</span>, <span class="reg">dl</span>         <span class="comment"># was old value 0?</span>
+    <span class="keyword">jnz</span>     <span class="label">.Lspin</span>         <span class="comment"># if not 0, spin</span>
+    <span class="keyword">ret</span>
+
+<span class="label">release:</span>
+    <span class="keyword">mov</span>     <span class="byte">byte</span> [<span class="reg">rdi</span>], <span class="number">0</span>  <span class="comment"># release (x86 strong ordering)</span>
+    <span class="keyword">ret</span></div>
+
+<h3>ARM64: ldaxr / stlxr</h3>
+
+<p>ARM64 uses load-exclusive/store-exclusive pairs, similar to RISC-V's LR/SC. The
+<code class="code-inline">ldaxr</code> (load-acquire-exclusive) and
+<code class="code-inline">stlxr</code> (store-release-exclusive) instructions provide both
+exclusivity and memory ordering in one step.</p>
+
+<div class="code-block"><span class="comment"># ARM64 spinlock</span>
+<span class="label">acquire:</span>
+<span class="label">.Lspin:</span>
+    <span class="keyword">ldaxr</span>   <span class="reg">w1</span>, [<span class="reg">x0</span>]        <span class="comment"># load-acquire-exclusive</span>
+    <span class="keyword">cbnz</span>    <span class="reg">w1</span>, <span class="label">.Lspin</span>      <span class="comment"># if != 0, spin</span>
+    <span class="keyword">mov</span>     <span class="reg">w2</span>, <span class="number">1</span>
+    <span class="keyword">stlxr</span>   <span class="reg">w3</span>, <span class="reg">w2</span>, [<span class="reg">x0</span>]   <span class="comment"># store-release-exclusive</span>
+    <span class="keyword">cbnz</span>    <span class="reg">w3</span>, <span class="label">.Lspin</span>      <span class="comment"># if store failed, retry</span>
+    <span class="keyword">ret</span>
+
+<span class="label">release:</span>
+    <span class="keyword">stlr</span>    <span class="reg">wzr</span>, [<span class="reg">x0</span>]        <span class="comment"># store-release 0</span>
+    <span class="keyword">ret</span></div>
+
+<h3>Backoff Strategies</h3>
+
+<p>Naive spinlocks waste CPU cycles and cause heavy cache-line bouncing: every core spinning on
+the lock repeatedly issues atomic operations, flooding the interconnect. A
+<strong>backoff</strong> strategy adds a delay between retries, reducing contention. Exponential
+backoff doubles the delay each time, spreading out retries and reducing collisions.</p>
+
+<div class="code-block"><span class="comment"># RISC-V spinlock with exponential backoff</span>
+<span class="label">acquire_backoff:</span>
+    <span class="keyword">li</span>      <span class="reg">s2</span>, <span class="number">1</span>            <span class="comment"># initial delay = 1</span>
+<span class="label">.Lspin:</span>
+    <span class="keyword">li</span>      <span class="reg">t1</span>, <span class="number">1</span>
+    <span class="keyword">amoswap.w.aq</span> <span class="reg">t0</span>, <span class="reg">t1</span>, (<span class="reg">a0</span>)
+    <span class="keyword">beqz</span>     <span class="reg">t0</span>, <span class="label">.Lgot</span>       <span class="comment"># got it!</span>
+
+    <span class="comment"># Backoff: delay loop</span>
+    <span class="keyword">mv</span>      <span class="reg">t2</span>, <span class="reg">s2</span>
+<span class="label">.Ldelay:</span>
+    <span class="keyword">addi</span>    <span class="reg">t2</span>, <span class="reg">t2</span>, <span class="number">-1</span>
+    <span class="keyword">bnez</span>    <span class="reg">t2</span>, <span class="label">.Ldelay</span>
+
+    <span class="keyword">slli</span>    <span class="reg">s2</span>, <span class="reg">s2</span>, <span class="number">1</span>       <span class="comment"># double the delay</span>
+    <span class="keyword">j</span>       <span class="label">.Lspin</span>
+<span class="label">.Lgot:</span>
+    <span class="keyword">ret</span></div>
+
+<h3>Fair Spinlocks (Ticket Lock)</h3>
+
+<p>A simple spinlock is <strong>unfair</strong>: there's no guarantee about which waiting thread
+gets the lock next. Under heavy contention, some threads may starve. A <strong>ticket lock</strong>
+solves this: each thread takes a "ticket" (an incrementing number) and waits until its ticket is
+called. This guarantees FIFO ordering — no starvation.</p>
+
+<div class="code-block"><span class="comment"># RISC-V ticket lock</span>
+<span class="comment"># struct { int next; int owner; }</span>
+
+<span class="label">ticket_acquire:</span>
+    <span class="keyword">li</span>        <span class="reg">t1</span>, <span class="number">1</span>
+    <span class="keyword">amoadd.w</span>  <span class="reg">t0</span>, <span class="reg">t1</span>, (<span class="reg">a0</span>)   <span class="comment"># atomically get my ticket (t0)</span>
+    <span class="comment"># t0 = old next ticket, now next++</span>
+<span class="label">.Lwait:</span>
+    <span class="keyword">lw</span>        <span class="reg">t1</span>, <span class="number">4</span>(<span class="reg">a0</span>)       <span class="comment"># read owner</span>
+    <span class="keyword">bne</span>       <span class="reg">t0</span>, <span class="reg">t1</span>, <span class="label">.Lwait</span>  <span class="comment"># wait until owner == my ticket</span>
+    <span class="keyword">ret</span>
+
+<span class="label">ticket_release:</span>
+    <span class="keyword">lw</span>        <span class="reg">t0</span>, <span class="number">4</span>(<span class="reg">a0</span>)
+    <span class="keyword">addi</span>      <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="number">1</span>
+    <span class="keyword">sw</span>        <span class="reg">t0</span>, <span class="number">4</span>(<span class="reg">a0</span>)       <span class="comment"># owner++ (next in line)</span>
+    <span class="keyword">ret</span></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Key Idea: Ticket Lock = FIFO Fairness</div>
+<p style="margin:0">The ticket lock guarantees that threads acquire the lock in the order they
+requested it. Each thread gets a unique ticket number via atomic increment, then waits until
+the <code class="code-inline">owner</code> counter reaches its ticket. No thread can "cut in
+line." The downside: under low contention, the extra atomic add adds overhead compared to a
+simple spinlock.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch09">9. Lock-Free Programming</h2>
+
+<p>Locks are simple but have drawbacks: they can cause deadlocks, priority inversion, and
+performance bottlenecks. <strong>Lock-free programming</strong> avoids locks entirely, using
+atomic operations to coordinate threads. This is harder to get right but can be faster and more
+robust. However, lock-free code is notoriously difficult to write correctly — subtle bugs can
+lurk for years before manifesting.</p>
+
+<h3>Lock-Free vs Wait-Free</h3>
+
+<p><strong>Lock-free</strong> means at least one thread always makes progress (the system as a
+whole moves forward, but individual threads may starve). <strong>Wait-free</strong> is stronger:
+every thread makes progress in a bounded number of steps (no starvation). Wait-free algorithms
+are harder to design but guarantee fairness. Most practical lock-free data structures (like
+lock-free queues) are lock-free but not wait-free.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Lock-Based</th><th>Lock-Free</th><th>Wait-Free</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Progress guarantee</strong></td><td>Only if lock holder progresses</td><td>At least one thread progresses</td><td>All threads progress</td></tr>
+<tr><td><strong>Deadlock possible?</strong></td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+<tr><td><strong>Starvation possible?</strong></td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Low</td><td>High</td><td>Very High</td></tr>
+<tr><td><strong>Performance (low contention)</strong></td><td>Good</td><td>Good</td><td>OK</td></tr>
+<tr><td><strong>Performance (high contention)</strong></td><td>Poor</td><td>OK</td><td>OK</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Lock-Free Stack with CAS</h3>
+
+<p>A classic lock-free data structure is the <strong>Treiber stack</strong> — a LIFO stack using
+CAS for push and pop. To push, you create a new node, set its <code class="code-inline">next</code>
+pointer to the current head, and CAS the head pointer from old-head to new-node. If the CAS
+fails (someone else changed head), you retry. Pop is similar: read head, read head->next, CAS
+head from old-head to head->next.</p>
+
+<div class="code-block"><span class="comment">// Lock-free push (Treiber stack)</span>
+<span class="keyword">void</span> push(Node **head, Node *node) {
+    Node *old_head;
+    <span class="keyword">do</span> {
+        old_head = *head;           <span class="comment">// snapshot</span>
+        node->next = old_head;      <span class="comment">// link to current head</span>
+    } <span class="keyword">while</span> (!CAS(head, old_head, node));  <span class="comment">// retry if changed</span>
+}
+
+<span class="comment">// Lock-free pop</span>
+Node *pop(Node **head) {
+    Node *old_head, *next;
+    <span class="keyword">do</span> {
+        old_head = *head;
+        <span class="keyword">if</span> (old_head == NULL) <span class="keyword">return</span> NULL;
+        next = old_head->next;      <span class="comment">// DANGER: old_head may be freed!</span>
+    } <span class="keyword">while</span> (!CAS(head, old_head, next));
+    <span class="keyword">return</span> old_head;
+}</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">The Pop Problem: Use-After-Free</div>
+<p style="margin:0">The pop operation above has a subtle bug: after reading
+<code class="code-inline">old_head</code>, another thread might pop it, <em>free</em> it, and
+then our <code class="code-inline">next = old_head->next</code> dereferences freed memory. This
+is the <strong>ABA problem</strong> combined with use-after-free. Solving it requires
+<strong>hazard pointers</strong> or <strong>epoch-based reclamation</strong>.</p>
+</div>
+
+<h3>Hazard Pointers</h3>
+
+<p>A <strong>hazard pointer</strong> is a per-thread pointer that says "I'm using this memory,
+don't free it." Before accessing a shared node, a thread publishes its address in a hazard
+pointer. Before freeing a node, a thread checks all hazard pointers — if any match, the free
+is deferred. This prevents use-after-free in lock-free code.</p>
+
+<div class="code-block"><span class="comment">// Hazard pointer protected pop (simplified)</span>
+Node *pop(Node **head) {
+    Node *old_head, *next;
+<span class="label">retry:</span>
+    old_head = *head;
+    <span class="keyword">if</span> (old_head == NULL) <span class="keyword">return</span> NULL;
+    <span class="comment">// Publish hazard pointer: "I'm using old_head"</span>
+    my_hazard = old_head;
+    <span class="comment">// Re-check: is head still old_head? (might have changed)</span>
+    <span class="keyword">if</span> (*head != old_head) <span class="keyword">goto</span> retry;
+    next = old_head->next;  <span class="comment">// safe now: node won't be freed</span>
+    <span class="keyword">if</span> (!CAS(head, old_head, next)) <span class="keyword">goto</span> retry;
+    <span class="comment">// Retire old_head: check all hazards, defer if needed</span>
+    retire_node(old_head);
+    my_hazard = NULL;
+    <span class="keyword">return</span> old_head;
+}</div>
+
+<h3>RCU (Read-Copy-Update) Basics</h3>
+
+<p><strong>RCU</strong> is a synchronization mechanism used heavily in the Linux kernel for
+read-heavy data structures. The idea: readers don't lock at all — they just access the data.
+Writers create a <em>copy</em>, modify the copy, and atomically swap the pointer. Old data is
+freed only after all readers that might be using it have finished (a "grace period"). RCU is
+extremely fast for readers (no atomic operations) but adds complexity for writers.</p>
+
+<div class="code-block"><span class="comment">// RCU-style update (conceptual)</span>
+<span class="keyword">void</span> update(Data **ptr, Data *new_data) {
+    Data *old = *ptr;
+    <span class="keyword">rcu_assign_pointer</span>(*ptr, new_data);  <span class="comment">// publish new</span>
+    <span class="keyword">synchronize_rcu</span>();                    <span class="comment">// wait for all readers</span>
+    <span class="keyword">free</span>(old);                            <span class="comment">// now safe to free</span>
+}
+
+<span class="comment">// RCU read (no locks!)</span>
+Data *read(Data **ptr) {
+    <span class="keyword">rcu_read_lock</span>();
+    Data *d = <span class="keyword">rcu_dereference</span>(*ptr);  <span class="comment">// safe read</span>
+    <span class="comment">// use d...</span>
+    <span class="keyword">rcu_read_unlock</span>();
+    <span class="keyword">return</span> d;
+}</div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: When to Use Lock-Free</div>
+<p style="margin:0">Use lock-free when: (1) contention is high and locks cause too much blocking,
+(2) you can't afford deadlock (e.g., signal handlers), or (3) latency must be bounded. Use
+locks when: (1) the critical section is long, (2) correctness matters more than peak
+performance, or (3) the data structure is complex. <strong>Default to locks</strong> — lock-free
+should be a last resort, not a first choice.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch10">10. Context Switching</h2>
+
+<p>A context switch is the mechanism by which the OS saves one process's state and restores
+another's, allowing multiple programs to share a single CPU. At the assembly level, this means
+saving all registers, switching the stack pointer, and potentially switching page tables. In
+xv6, the context switch code lives in <code class="code-inline">kernel/swtch.S</code> — a small,
+carefully written assembly file that is the heart of the scheduler.</p>
+
+<h3>The swtch.S Function</h3>
+
+<p>xv6's <code class="code-inline">swtch</code> function is remarkably simple: it saves
+<strong>callee-saved registers</strong> (<code class="code-inline">ra</code>,
+<code class="code-inline">sp</code>, and <code class="code-inline">s0</code>–<code class="code-inline">s11</code>)
+from the old context and loads them from the new context. It does <em>not</em> save
+caller-saved registers — those are the caller's responsibility. It also doesn't switch page
+tables; that's done separately. The beauty of <code class="code-inline">swtch</code> is its
+minimalism: it saves exactly what's needed to resume execution later.</p>
+
+<div class="code-block"><span class="comment"># xv6 kernel/swtch.S (RISC-V)</span>
+<span class="comment"># void swtch(struct context *old, struct context *new);</span>
+<span class="comment"># a0 = old context, a1 = new context</span>
+
+<span class="label">.globl swtch</span>
+<span class="label">swtch:</span>
+    <span class="keyword">sd</span> <span class="reg">ra</span>, <span class="number">0</span>(<span class="reg">a0</span>)        <span class="comment"># save return address</span>
+    <span class="keyword">sd</span> <span class="reg">sp</span>, <span class="number">8</span>(<span class="reg">a0</span>)        <span class="comment"># save stack pointer</span>
+    <span class="keyword">sd</span> <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">a0</span>)       <span class="comment"># save s0 (frame pointer)</span>
+    <span class="keyword">sd</span> <span class="reg">s1</span>, <span class="number">24</span>(<span class="reg">a0</span>)       <span class="comment"># save s1</span>
+    <span class="comment"># ... save s2-s11 ...</span>
+    <span class="keyword">sd</span> <span class="reg">s11</span>, <span class="number">104</span>(<span class="reg">a0</span>)     <span class="comment"># save s11</span>
+
+    <span class="keyword">ld</span> <span class="reg">ra</span>, <span class="number">0</span>(<span class="reg">a1</span>)        <span class="comment"># restore return address</span>
+    <span class="keyword">ld</span> <span class="reg">sp</span>, <span class="number">8</span>(<span class="reg">a1</span>)        <span class="comment"># restore stack pointer</span>
+    <span class="keyword">ld</span> <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">a1</span>)       <span class="comment"># restore s0</span>
+    <span class="keyword">ld</span> <span class="reg">s1</span>, <span class="number">24</span>(<span class="reg">a1</span>)       <span class="comment"># restore s1</span>
+    <span class="comment"># ... restore s2-s11 ...</span>
+    <span class="keyword">ld</span> <span class="reg">s11</span>, <span class="number">104</span>(<span class="reg">a1</span>)     <span class="comment"># restore s11</span>
+
+    <span class="keyword">ret</span>                  <span class="comment"># jump to new ra (new context)</span></div>
+
+<h3>What swtch Does NOT Do</h3>
+
+<p><code class="code-inline">swtch</code> is deliberately minimal. It does <strong>not</strong>
+switch page tables (that's done by <code class="code-inline">scheduler()</code> via
+<code class="code-inline">w_satp</code>), does <strong>not</strong> save floating-point registers
+(xv6 doesn't use them), and does <strong>not</strong> save caller-saved registers (the caller
+must save those if needed). The key insight is that <code class="code-inline">swtch</code> only
+needs to save what the C compiler expects to be preserved across function calls — the
+callee-saved registers plus <code class="code-inline">ra</code> and <code class="code-inline">sp</code>.</p>
+
+<h3>Kernel Stack vs User Stack</h3>
+
+<p>Each process has <strong>two stacks</strong>: a user stack (for user-mode code) and a kernel
+stack (for kernel code executing on behalf of that process). When a user program makes a
+syscall or triggers a trap, the CPU switches to the kernel stack automatically (via
+<code class="code-inline">sscratch</code> in RISC-V). The context switch
+(<code class="code-inline">swtch</code>) operates on kernel stacks — it switches from one
+process's kernel stack to another's. The user stack is saved in the trapframe and restored
+when returning to user mode.</p>
+
+<div class="code-block"><span class="comment">/* Process memory layout (xv6) */</span>
+
+    ┌──────────────────────┐
+    │  User stack           │  ← user sp (user mode)
+    │  (user program)       │
+    ├──────────────────────┤  ← trampoline page
+    │  Trapframe            │  ← saved user registers
+    ├──────────────────────┤
+    │  Kernel stack         │  ← kernel sp (kernel mode)
+    │  (kernel code for     │
+    │   this process)       │
+    └──────────────────────┘
+         ↑ swtch switches between
+           different processes' kernel stacks</div>
+
+<h3>The Scheduler Context</h3>
+
+<p>The scheduler itself runs in a special context. In xv6, each CPU has a
+<code class="code-inline">scheduler()</code> function that loops forever, picking the next
+runnable process and calling <code class="code-inline">swtch</code> to switch to it. When a
+process yields (or is preempted), <code class="code-inline">swtch</code> switches
+<em>back</em> to the scheduler's context. This means <code class="code-inline">swtch</code> is
+always called from two places: <code class="code-inline">scheduler()</code> (switching
+<em>to</em> a process) and <code class="code-inline">yield()</code> (switching
+<em>from</em> a process back to the scheduler).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: swtch is Symmetric</div>
+<p style="margin:0"><code class="code-inline">swtch(old, new)</code> saves the current state into
+<code class="code-inline">old</code> and loads from <code class="code-inline">new</code>. When
+the <code class="code-inline">new</code> context was previously saved by a
+<code class="code-inline">swtch</code> call, <code class="code-inline">ret</code> returns
+<em>into</em> that previous call's caller. This is how execution "resumes" — it's not a new
+call, it's a return to a previously suspended call.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch11">11. Trap Handling in Detail</h2>
+
+<p>When a user program makes a syscall, triggers a page fault, or is interrupted by a timer,
+the CPU transfers control to the OS via a <strong>trap</strong>. In RISC-V, the trap mechanism
+is controlled by several Control and Status Registers (CSRs): <code class="code-inline">stvec</code>
+(trap vector), <code class="code-inline">scause</code> (trap cause),
+<code class="code-inline">sepc</code> (exception PC), and <code class="code-inline">sscratch</code>
+(scratch register). Understanding this flow is essential for OS development.</p>
+
+<h3>RISC-V Trap Registers</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>CSR</th><th>Purpose</th><th>Set By</th></tr>
+</thead>
+<tbody>
+<tr><td><code>stvec</code></td><td>Address of trap handler</td><td>OS (at boot)</td></tr>
+<tr><td><code>scause</code></td><td>Trap cause code</td><td>Hardware (on trap)</td></tr>
+<tr><td><code>sepc</code></td><td>PC of faulting instruction</td><td>Hardware (on trap)</td></tr>
+<tr><td><code>sscratch</code></td><td>Scratch register (holds user sp or 0)</td><td>OS (trap handler)</td></tr>
+<tr><td><code>sstatus</code></td><td>Status (SPP bit = previous privilege)</td><td>Hardware (on trap)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>The Trap Flow</h3>
+
+<p>When a trap occurs in supervisor mode (or user mode traps to supervisor), the hardware does
+the following atomically: (1) saves the current PC to <code class="code-inline">sepc</code>,
+(2) records the cause in <code class="code-inline">scause</code>, (3) sets the SPP bit in
+<code class="code-inline">sstatus</code> to indicate the previous privilege level, (4) loads
+<code class="code-inline">stvec</code> into the PC. The OS trap handler then runs, examines
+<code class="code-inline">scause</code>, and dispatches to the appropriate handler.</p>
+
+<div class="code-block"><span class="comment"># RISC-V trap entry (xv6 kernel/trampoline.S, simplified)</span>
+<span class="label">.globl uservec</span>
+<span class="label">uservec:</span>
+    <span class="comment"># At this point: a0 = user's a0, sscratch = user sp</span>
+    <span class="comment"># Swap: put user sp in a0, put trapframe addr in sscratch</span>
+    <span class="keyword">csrrw</span>  <span class="reg">a0</span>, <span class="reg">sscratch</span>, <span class="reg">a0</span>
+
+    <span class="comment"># Save all user registers into trapframe (at a0)</span>
+    <span class="keyword">sd</span> <span class="reg">ra</span>, <span class="number">40</span>(<span class="reg">a0</span>)
+    <span class="keyword">sd</span> <span class="reg">sp</span>, <span class="number">48</span>(<span class="reg">a0</span>)
+    <span class="keyword">sd</span> <span class="reg">gp</span>, <span class="number">56</span>(<span class="reg">a0</span>)
+    <span class="keyword">sd</span> <span class="reg">tp</span>, <span class="number">64</span>(<span class="reg">a0</span>)
+    <span class="keyword">sd</span> <span class="reg">t0</span>, <span class="number">72</span>(<span class="reg">a0</span>)
+    <span class="comment"># ... save all 32 registers ...</span>
+
+    <span class="comment"># Restore kernel stack pointer from trapframe</span>
+    <span class="keyword">ld</span> <span class="reg">sp</span>, <span class="number">8</span>(<span class="reg">a0</span>)     <span class="comment"># kernel sp</span>
+
+    <span class="comment"># Call the C trap handler</span>
+    <span class="keyword">call</span> <span class="label">usertrap</span></div>
+
+<h3>The Trampoline Page</h3>
+
+<p>xv6 maps a special <strong>trampoline page</strong> at the same virtual address in both user
+and kernel page tables. This is critical: when a trap occurs, the page table is still the
+user's. The trap handler code (in the trampoline page) must be accessible in the user's address
+space. The trampoline saves user registers into the <strong>trapframe</strong>, switches to the
+kernel stack, switches the page table to the kernel's, and then calls the C-level trap handler
+(<code class="code-inline">usertrap</code>).</p>
+
+<div class="code-block"><span class="comment">/* Trampoline page mapping */</span>
+
+    User page table:              Kernel page table:
+    ┌──────────────┐              ┌──────────────┐
+    │ TRAMPOLINE   │ ← same VA →  │ TRAMPOLINE   │
+    │ (trap code)  │              │ (trap code)  │
+    ├──────────────┤              ├──────────────┤
+    │ TRAPFRAME    │              │              │
+    │ (saved regs) │              │  kernel data │
+    ├──────────────┤              ├──────────────┤
+    │ user code    │              │  kernel code │
+    │ user data    │              │  kernel data │
+    └──────────────┘              └──────────────┘
+
+    Trap: uservec (in trampoline) saves regs to TRAPFRAME,
+          switches to kernel page table, calls usertrap()</div>
+
+<h3>Returning from Trap: sret</h3>
+
+<p>To return to user mode, the OS uses the <code class="code-inline">sret</code> instruction.
+Before <code class="code-inline">sret</code>, the OS restores the user's registers from the
+trapframe, sets <code class="code-inline">sepc</code> to the saved user PC, switches the page
+table back to the user's, and then executes <code class="code-inline">sret</code>. The hardware
+then: (1) sets the PC to <code class="code-inline">sepc</code>, (2) restores the privilege level
+from SPP, (3) resumes user execution.</p>
+
+<div class="code-block"><span class="comment"># RISC-V trap return (xv6 kernel/trampoline.S, simplified)</span>
+<span class="label">.globl userret</span>
+<span class="label">userret:</span>
+    <span class="comment"># a0 = trapframe address</span>
+    <span class="comment"># a1 = user page table (satp)</span>
+
+    <span class="comment"># Switch to user page table</span>
+    <span class="keyword">csrw</span> <span class="reg">satp</span>, <span class="reg">a1</span>
+    <span class="keyword">sfence.vma</span> <span class="reg">zero</span>, <span class="reg">zero</span>   <span class="comment"># flush TLB</span>
+
+    <span class="comment"># Restore all user registers from trapframe</span>
+    <span class="keyword">ld</span> <span class="reg">ra</span>, <span class="number">40</span>(<span class="reg">a0</span>)
+    <span class="keyword">ld</span> <span class="reg">sp</span>, <span class="number">48</span>(<span class="reg">a0</span>)
+    <span class="comment"># ... restore all registers ...</span>
+
+    <span class="comment"># Swap a0 and sscratch: a0 = user's a0, sscratch = trapframe</span>
+    <span class="keyword">csrrw</span> <span class="reg">a0</span>, <span class="reg">sscratch</span>, <span class="reg">a0</span>
+
+    <span class="comment"># Return to user mode</span>
+    <span class="keyword">sret</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: sscratch Trick</div>
+<p style="margin:0">The <code class="code-inline">sscratch</code> register holds the user stack
+pointer while in kernel mode, and the trapframe address while in user mode. The
+<code class="code-inline">csrrw</code> instruction atomically swaps
+<code class="code-inline">a0</code> and <code class="code-inline">sscratch</code>, so in one
+instruction: (1) the user's <code class="code-inline">a0</code> is saved to
+<code class="code-inline">sscratch</code>, and (2) the trapframe address (previously in
+<code class="code-inline">sscratch</code>) is loaded into <code class="code-inline">a0</code>.
+This is how the trap handler gets the trapframe address without clobbering any user register.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch12">12. Boot Code and Startup</h2>
+
+<p>When you power on a computer, the CPU starts executing at a fixed address (the
+<strong>reset vector</strong>). At this point, there is no stack, no C runtime, no page tables
+— just raw hardware. The <strong>boot code</strong> (written in assembly) must set up the
+minimum environment needed before any C code can run. In xv6 on RISC-V, this code lives in
+<code class="code-inline">kernel/entry.S</code> and <code class="code-inline">kernel/start.c</code>.</p>
+
+<h3>The Reset Vector</h3>
+
+<p>On RISC-V, the CPU starts in <strong>machine mode</strong> (the most privileged mode) at
+address <code class="code-inline">0x80000000</code> (on QEMU). The first instructions must be
+assembly because no C runtime exists yet. The very first task is to set up a stack pointer so
+that C functions can be called. Without a valid <code class="code-inline">sp</code>, any function
+call (which pushes to the stack) will crash.</p>
+
+<div class="code-block"><span class="comment"># xv6 kernel/entry.S (RISC-V, simplified)</span>
+<span class="comment"># QEMU loads the kernel at 0x80000000 and jumps here</span>
+
+<span class="label">.section .text</span>
+<span class="label">.globl _entry</span>
+<span class="label">_entry:</span>
+    <span class="comment"># Set up stack pointer for each hart (CPU core)</span>
+    <span class="comment"># stack0 is defined in start.c, each hart gets its own stack</span>
+    <span class="keyword">la</span> <span class="reg">sp</span>, <span class="label">stack0</span>
+    <span class="keyword">li</span> <span class="reg">a0</span>, <span class="number">1024</span>      <span class="comment"># stack size per hart</span>
+    <span class="keyword">csrr</span> <span class="reg">a1</span>, <span class="reg">mhartid</span>   <span class="comment"># get hart ID</span>
+    <span class="keyword">addi</span> <span class="reg">a1</span>, <span class="reg">a1</span>, <span class="number">1</span>      <span class="comment"># hart 0 uses stack[0..1024]</span>
+    <span class="keyword">mul</span> <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>   <span class="comment"># offset = 1024 * (hartid+1)</span>
+    <span class="keyword">add</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="reg">a0</span>   <span class="comment"># sp = stack0 + offset</span>
+
+    <span class="comment"># Now we have a stack — call start()</span>
+    <span class="keyword">call</span> <span class="label">start</span>
+
+<span class="comment"># Unreachable</span>
+<span class="label">spin:</span>
+    <span class="keyword">j</span> <span class="label">spin</span></div>
+
+<h3>What Happens Before main()</h3>
+
+<p>After <code class="code-inline">entry.S</code> sets up the stack, it calls
+<code class="code-inline">start()</code> (in <code class="code-inline">start.c</code>). This
+function runs in machine mode and performs critical setup: (1) <strong>delegating traps</strong>
+to supervisor mode (so the OS can handle them), (2) setting up
+<strong>page tables</strong> (creating the initial mapping), (3) configuring
+<strong>timers</strong> (for preemption), and (4) <strong>dropping to supervisor mode</strong>
+via <code class="code-inline">mret</code>. Only then does it jump to
+<code class="code-inline">main()</code>.</p>
+
+<div class="code-block"><span class="comment">// xv6 kernel/start.c (simplified)</span>
+<span class="keyword">void</span> start() {
+    <span class="comment">// Set MPP (Machine Previous Privilege) to Supervisor</span>
+    <span class="keyword">unsigned long</span> x = r_mstatus();
+    x |= MSTATUS_MPP_S;
+    w_mstatus(x);
+
+    <span class="comment">// Set return address to main()</span>
+    w_mepc((<span class="keyword">uint64</span>)main);
+
+    <span class="comment">// Delegate traps to supervisor mode</span>
+    w_medeleg(<span class="number">0xffff</span>);
+    w_mideleg(<span class="number">0xffff</span>);
+
+    <span class="comment">// Set up page tables (identity mapping)</span>
+    <span class="comment">// ... kvmmake() ...</span>
+
+    <span class="comment">// Drop to supervisor mode and jump to main()</span>
+    <span class="keyword">asm volatile</span>(<span class="string">"mret"</span>);
+}</div>
+
+<h3>Clearing BSS and Initializing .data</h3>
+
+<p>Before <code class="code-inline">main()</code> runs, the C runtime must initialize the
+<strong>BSS segment</strong> (uninitialized globals) to zero. In a normal Linux program, the
+OS and C runtime (<code class="code-inline">crt0</code>) handle this. In a bare-metal OS like
+xv6, the startup code must do it manually. If BSS isn't zeroed, uninitialized global variables
+will contain garbage, leading to unpredictable behavior.</p>
+
+<div class="code-block"><span class="comment"># Clearing BSS (typical startup code)</span>
+<span class="label">clear_bss:</span>
+    <span class="keyword">la</span>   <span class="reg">t0</span>, <span class="label">__bss_start</span>   <span class="comment"># start of BSS</span>
+    <span class="keyword">la</span>   <span class="reg">t1</span>, <span class="label">__bss_end</span>     <span class="comment"># end of BSS</span>
+<span class="label">.Lbss_loop:</span>
+    <span class="keyword">bgeu</span> <span class="reg">t0</span>, <span class="reg">t1</span>, <span class="label">.Lbss_done</span>
+    <span class="keyword">sd</span>   <span class="reg">zero</span>, <span class="number">0</span>(<span class="reg">t0</span>)       <span class="comment"># zero 8 bytes</span>
+    <span class="keyword">addi</span> <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="number">8</span>         <span class="comment"># advance</span>
+    <span class="keyword">j</span>    <span class="label">.Lbss_loop</span>
+<span class="label">.Lbss_done:</span></div>
+
+<h3>Setting Up Page Tables</h3>
+
+<p>Before enabling paging, the OS must create page tables that map virtual addresses to physical
+addresses. In xv6, <code class="code-inline">start()</code> creates an <strong>identity
+mapping</strong> (virtual address = physical address) so that when paging is enabled, the
+existing code continues to work. The <code class="code-inline">satp</code> register is set to
+point to the root page table, and then paging is enabled by setting a bit in
+<code class="code-inline">sstatus</code>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: Boot Order</div>
+<p style="margin:0">The boot sequence is a strict chain: (1) <strong>entry.S</strong> sets up
+the stack, (2) <strong>start.c</strong> configures the CPU (trap delegation, page tables,
+timer), (3) <strong>main()</strong> initializes subsystems (console, virtual memory, file
+system), (4) the first user process is created. Each step depends on the previous one. Skip a
+step, and the system crashes immediately.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch13">13. Interrupts and Exception Handling</h2>
+
+<p>Exceptions and interrupts are both "traps" — transfers of control to the OS — but they differ
+in origin. An <strong>exception</strong> is <em>synchronous</em>: it's caused by the current
+instruction (page fault, illegal instruction, division by zero). An <strong>interrupt</strong>
+is <em>asynchronous</em>: it comes from outside the CPU (timer, disk, keyboard) and can arrive
+at any time. The OS must handle both, but the strategies differ.</p>
+
+<h3>Synchronous vs Asynchronous</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Exception (Synchronous)</th><th>Interrupt (Asynchronous)</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Cause</strong></td><td>Current instruction</td><td>External event</td></tr>
+<tr><td><strong>Timing</strong></td><td>Predictable (same instruction)</td><td>Unpredictable (any time)</td></tr>
+<tr><td><strong>Examples</strong></td><td>Page fault, div-by-zero, syscall</td><td>Timer, disk I/O, keyboard</td></tr>
+<tr><td><strong>Resume?</strong></td><td>Often retry the instruction</td><td>Resume next instruction</td></tr>
+<tr><td><strong>scause</strong></td><td>Low values (0-15)</td><td>High values + interrupt bit</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Interrupt Controller Basics</h3>
+
+<p>External devices don't connect directly to the CPU. Instead, they connect to an
+<strong>interrupt controller</strong> (like the PLIC on RISC-V, or APIC on x86). The interrupt
+controller collects interrupts from all devices, prioritizes them, and delivers them to the
+CPU one at a time. The OS must <strong>acknowledge</strong> each interrupt (tell the controller
+it's been received) and <strong>enable/disable</strong> specific interrupt sources.</p>
+
+<div class="code-block"><span class="comment">/* RISC-V PLIC (Platform-Level Interrupt Controller) */</span>
+
+<span class="comment">// Enable timer interrupt (interrupt source 5)</span>
+*(<span class="keyword">uint32</span>*)PLIC_SENABLE(hart) |= (<span class="number">1</span> &lt;&lt; <span class="number">5</span>);
+
+<span class="comment">// Claim interrupt: read claim register</span>
+<span class="keyword">uint32</span> irq = *(<span class="keyword">uint32</span>*)PLIC_SCLAIM(hart);
+
+<span class="comment">// Handle the interrupt...</span>
+
+<span class="comment">// Complete: tell PLIC we're done</span>
+*(<span class="keyword">uint32</span>*)PLIC_SCLAIM(hart) = irq;</div>
+
+<h3>Top-Half and Bottom-Half</h3>
+
+<p>Interrupt handlers run with interrupts disabled, so they must be <strong>fast</strong>. A
+common strategy splits handling into two parts: the <strong>top-half</strong> (the actual
+interrupt handler) does the minimum — acknowledge the interrupt, copy data, schedule deferred
+work — and returns quickly. The <strong>bottom-half</strong> (deferred work) does the heavy
+processing later, with interrupts enabled. In Linux, bottom-halves are called "softirqs" or
+"tasklets"; in xv6, the pattern is simpler but the concept is the same.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">Analogy: Top-Half = Triage Nurse</div>
+<p style="margin:0">Think of the top-half as a triage nurse in an emergency room: they quickly
+assess the situation, stop the bleeding, and schedule the patient for full treatment later.
+The bottom-half is the full treatment — it takes time but can be done without blocking other
+emergencies. You never want the triage nurse doing surgery — that would block the whole ER.</p>
+</div>
+
+<h3>Interrupt Stacking</h3>
+
+<p>When an interrupt arrives, the CPU must save enough state to resume the interrupted code. In
+RISC-V, the hardware saves the PC to <code class="code-inline">sepc</code> and the cause to
+<code class="code-inline">scause</code>, but <em>does not</em> save general-purpose registers.
+The trap handler (in the trampoline page) must save all registers to the trapframe. This is
+why the trapframe is so large — it holds all 32 general-purpose registers plus the saved PC
+and status.</p>
+
+<h3>Reentrant Interrupts</h3>
+
+<p>By default, the CPU disables interrupts of the same or lower priority when entering an
+interrupt handler. This prevents <strong>nested interrupts</strong> (an interrupt inside an
+interrupt), which can cause stack overflow if they nest too deeply. Some systems allow
+<strong>reentrant interrupts</strong> — re-enabling interrupts inside the handler — but this
+requires careful design: the handler must be reentrant (no static variables), and the stack
+must be large enough for nesting.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">Warning: Interrupt Handler Constraints</div>
+<p style="margin:0">Interrupt handlers run in a restricted context: you cannot sleep, cannot
+acquire certain locks, and cannot access user space directly (in some OS designs). Violating
+these constraints causes deadlocks or crashes. Always check what's safe in your handler — when
+in doubt, defer work to a bottom-half.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch14">14. Compiler Optimization and Assembly</h2>
+
+<p>The C compiler doesn't just translate your code to assembly — it <strong>transforms</strong>
+it. With optimization flags like <code class="code-inline">-O2</code> and
+<code class="code-inline">-O3</code>, the compiler reorders instructions, eliminates redundant
+code, unrolls loops, and even rewrites your logic entirely. Understanding what the compiler does
+is essential for reading generated assembly, debugging, and writing high-performance code.</p>
+
+<h3>Optimization Levels</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Flag</th><th>What It Does</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td><code>-O0</code></td><td>No optimization; 1:1 with source</td><td>Debugging (gdb)</td></tr>
+<tr><td><code>-O1</code></td><td>Basic optimizations; reduce code size</td><td>Fast builds, some optimization</td></tr>
+<tr><td><code>-O2</code></td><td>Standard optimizations; safe reordering</td><td>Production (default for many)</td></tr>
+<tr><td><code>-O3</code></td><td>Aggressive; vectorization, unrolling</td><td>Maximum speed (may increase size)</td></tr>
+<tr><td><code>-Os</code></td><td>Optimize for size</td><td>Embedded systems</td></tr>
+<tr><td><code>-Ofast</code></td><td>O3 + unsafe math optimizations</td><td>Numerical code (careful!)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Register Allocation</h3>
+
+<p>At <code class="code-inline">-O0</code>, the compiler stores every variable in memory (on the
+stack) and loads/stores it for each operation. At <code class="code-inline">-O2</code>, the
+compiler performs <strong>register allocation</strong>: it analyzes which variables are live
+simultaneously and assigns them to CPU registers, eliminating most loads and stores. This is
+the single biggest optimization — memory access is 100x slower than register access.</p>
+
+<div class="code-block"><span class="comment">// C code</span>
+<span class="keyword">int</span> sum(<span class="keyword">int</span> a, <span class="keyword">int</span> b, <span class="keyword">int</span> c) {
+    <span class="keyword">return</span> a + b + c;
+}
+
+<span class="comment"># -O0: loads from stack, adds, stores back</span>
+<span class="label">sum:</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-16</span>
+    <span class="keyword">sw</span>   <span class="reg">a0</span>, <span class="number">12</span>(<span class="reg">sp</span>)      <span class="comment"># store a</span>
+    <span class="keyword">sw</span>   <span class="reg">a1</span>, <span class="number">8</span>(<span class="reg">sp</span>)       <span class="comment"># store b</span>
+    <span class="keyword">sw</span>   <span class="reg">a2</span>, <span class="number">4</span>(<span class="reg">sp</span>)       <span class="comment"># store c</span>
+    <span class="keyword">lw</span>   <span class="reg">a0</span>, <span class="number">12</span>(<span class="reg">sp</span>)      <span class="comment"># reload a</span>
+    <span class="keyword">lw</span>   <span class="reg">a1</span>, <span class="number">8</span>(<span class="reg">sp</span>)       <span class="comment"># reload b</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>       <span class="comment"># a + b</span>
+    <span class="keyword">lw</span>   <span class="reg">a1</span>, <span class="number">4</span>(<span class="reg">sp</span>)       <span class="comment"># reload c</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>       <span class="comment"># + c</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">16</span>
+    <span class="keyword">ret</span>
+
+<span class="comment"># -O2: everything in registers, 1 instruction!</span>
+<span class="label">sum:</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a1</span>       <span class="comment"># a + b</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">a2</span>       <span class="comment"># + c</span>
+    <span class="keyword">ret</span></div>
+
+<h3>Instruction Scheduling</h3>
+
+<p>The compiler reorders instructions to avoid <strong>pipeline stalls</strong>. If an
+instruction depends on a load from memory (which takes several cycles), the compiler moves
+independent instructions into the gap so the CPU doesn't idle. This is called
+<strong>instruction scheduling</strong>. The result: the assembly may not match your source
+code's order at all, even though the observable behavior is the same.</p>
+
+<h3>Loop Unrolling</h3>
+
+<p>A loop has overhead: incrementing the counter, checking the condition, and jumping back.
+<strong>Loop unrolling</strong> duplicates the loop body multiple times, reducing the overhead
+per iteration. At <code class="code-inline">-O3</code>, the compiler unrolls loops
+automatically. This trades code size for speed.</p>
+
+<div class="code-block"><span class="comment">// C: sum array</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++)
+    sum += arr[i];
+
+<span class="comment"># -O3: unrolled by 4</span>
+<span class="label">.Lloop:</span>
+    <span class="keyword">lw</span>   <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">a1</span>)     <span class="comment"># arr[i]</span>
+    <span class="keyword">lw</span>   <span class="reg">t1</span>, <span class="number">4</span>(<span class="reg">a1</span>)     <span class="comment"># arr[i+1]</span>
+    <span class="keyword">lw</span>   <span class="reg">t2</span>, <span class="number">8</span>(<span class="reg">a1</span>)     <span class="comment"># arr[i+2]</span>
+    <span class="keyword">lw</span>   <span class="reg">t3</span>, <span class="number">12</span>(<span class="reg">a1</span>)    <span class="comment"># arr[i+3]</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">t0</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">t1</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">t2</span>
+    <span class="keyword">add</span>  <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="reg">t3</span>
+    <span class="keyword">addi</span> <span class="reg">a1</span>, <span class="reg">a1</span>, <span class="number">16</span>    <span class="comment"># advance by 4 elements</span>
+    <span class="keyword">addi</span> <span class="reg">a2</span>, <span class="reg">a2</span>, <span class="number">-4</span>     <span class="comment"># count -= 4</span>
+    <span class="keyword">bnez</span> <span class="reg">a2</span>, <span class="label">.Lloop</span>    <span class="comment"># loop if more</span></div>
+
+<h3>Common Subexpression Elimination</h3>
+
+<p>If the same expression is computed multiple times, the compiler computes it once and reuses
+the result. This is <strong>common subexpression elimination (CSE)</strong>. For example,
+<code class="code-inline">a[i] + a[i]</code> loads <code class="code-inline">a[i]</code> once
+and doubles it, rather than loading twice.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: -O0 vs -O2</div>
+<p style="margin:0">At <code class="code-inline">-O0</code>, assembly is easy to read but slow:
+every variable lives in memory, every operation loads and stores. At
+<code class="code-inline">-O2</code>, the compiler is aggressive: variables stay in registers,
+loops are transformed, dead code is removed. When debugging, use
+<code class="code-inline">-O0</code> for predictable behavior. For production, always use
+<code class="code-inline">-O2</code> (or <code class="code-inline">-O3</code> for
+compute-heavy code).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch15">15. Branch Prediction and Pipeline</h2>
+
+<p>Modern CPUs are deeply <strong>pipelined</strong>: they work on multiple instructions
+simultaneously, like an assembly line. When a branch instruction (like
+<code class="code-inline">if</code>/<code class="code-inline">else</code>) is encountered, the
+CPU doesn't know which path to take until the branch is resolved — which may be many cycles
+later. To avoid stalling, the CPU <strong>guesses</strong> the branch outcome using a
+<strong>branch predictor</strong>. If the guess is wrong, the pipeline must be
+<strong>flushed</strong>, wasting 10-20 cycles.</p>
+
+<h3>Branch Penalty</h3>
+
+<p>When the CPU mispredicts a branch, it must discard all the instructions it speculatively
+fetched and start over from the correct path. This is the <strong>branch misprediction
+penalty</strong>. On modern CPUs, this can be 15-20 cycles. In tight loops with unpredictable
+branches, mispredictions can dominate execution time.</p>
+
+<div class="code-block"><span class="comment">// Branch-heavy code: hard to predict</span>
+<span class="keyword">if</span> (data[i] &lt; threshold)
+    count++;
+<span class="keyword">else</span>
+    count--;
+
+<span class="comment"># Assembly: branch may mispredict ~50% if data is random</span>
+    <span class="keyword">lw</span>   <span class="reg">t0</span>, (<span class="reg">a1</span>)
+    <span class="keyword">bge</span>  <span class="reg">t0</span>, <span class="reg">a2</span>, <span class="label">.Lelse</span>   <span class="comment"># 50% mispredict = 10 cycle penalty</span>
+    <span class="keyword">addi</span> <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">1</span>
+    <span class="keyword">j</span>    <span class="label">.Lnext</span>
+<span class="label">.Lelse:</span>
+    <span class="keyword">addi</span> <span class="reg">a0</span>, <span class="reg">a0</span>, <span class="number">-1</span>
+<span class="label">.Lnext:</span></div>
+
+<h3>Branch Prediction Buffers</h3>
+
+<p>CPUs use several prediction mechanisms: <strong>branch history tables</strong> (remember the
+last outcome of each branch), <strong>branch target buffers</strong> (remember the target
+address), and <strong>two-level adaptive predictors</strong> (track patterns of
+taken/not-taken). Modern predictors achieve >95% accuracy on typical code, but pathological
+cases (random data, adversarial patterns) can drop accuracy to 50%.</p>
+
+<h3>Branch-Free Code: cmov</h3>
+
+<p>One way to avoid branch mispredictions is to eliminate branches entirely. The
+<strong>conditional move</strong> (<code class="code-inline">cmov</code> on x86-64,
+<code class="code-inline">sel</code>/<code class="code-inline">ite</code> on ARM64) instruction
+selects between two values based on a condition — without branching. RISC-V doesn't have a
+conditional move instruction in the base ISA, but the compiler can emulate it with
+arithmetic.</p>
+
+<div class="code-block"><span class="comment">// Branch-free version</span>
+<span class="keyword">int</span> delta = (data[i] &lt; threshold) ? <span class="number">1</span> : <span class="number">-1</span>;
+count += delta;
+
+<span class="comment"># x86-64: cmov (no branch!)</span>
+    <span class="keyword">mov</span>  <span class="reg">eax</span>, <span class="number">1</span>          <span class="comment"># assume true</span>
+    <span class="keyword">mov</span>  <span class="reg">edx</span>, <span class="number">-1</span>         <span class="comment"># alternative</span>
+    <span class="keyword">cmp</span>  [<span class="reg">a1</span>], <span class="reg">a2</span>       <span class="comment"># compare</span>
+    <span class="keyword">cmovl</span> <span class="reg">eax</span>, <span class="reg">edx</span>      <span class="comment"># if less, use -1 (no branch!)</span>
+    <span class="keyword">add</span>  [<span class="reg">count</span>], <span class="reg">eax</span>
+
+<span class="comment"># RISC-V: branch-free with arithmetic</span>
+    <span class="keyword">lw</span>   <span class="reg">t0</span>, (<span class="reg">a1</span>)
+    <span class="keyword">slt</span>  <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="reg">a2</span>      <span class="comment"># t0 = (data < threshold) ? 1 : 0</span>
+    <span class="keyword">addi</span> <span class="reg">t1</span>, <span class="reg">zero</span>, <span class="number">-1</span>   <span class="comment"># t1 = -1</span>
+    <span class="keyword">addi</span> <span class="reg">t2</span>, <span class="reg">zero</span>, <span class="number">1</span>    <span class="comment"># t2 = 1</span>
+    <span class="comment"># select: if t0==1, use t2; else use t1</span>
+    <span class="keyword">mul</span>  <span class="reg">t0</span>, <span class="reg">t0</span>, <span class="reg">t2</span>      <span class="comment"># t0 = t0 * 1 = 0 or 1</span>
+    <span class="comment"># ... (or use: neg + and + or trick)</span></div>
+
+<h3>Predication in ARM64</h3>
+
+<p>ARM64 takes predication further: many instructions can be <strong>conditionally
+executed</strong> based on flags. Instead of branching, the instruction simply does nothing
+if the condition is false. This is called <strong>predication</strong>. The
+<code class="code-inline">ite</code> (if-then-else) suffix makes the next 1-4 instructions
+conditional.</p>
+
+<div class="code-block"><span class="comment"># ARM64: conditional execution (predication)</span>
+    <span class="keyword">cmp</span>   <span class="reg">w0</span>, <span class="reg">w1</span>          <span class="comment"># compare</span>
+    <span class="keyword">csel</span>  <span class="reg">w0</span>, <span class="reg">w2</span>, <span class="reg">w3</span>, lt   <span class="comment"># if less: w0=w2, else w0=w3 (no branch!)</span></div>
+
+<div class="callout callout-tip">
+<div class="callout-title">Key Idea: When to Go Branch-Free</div>
+<p style="margin:0">Branch-free code helps when the branch is <strong>unpredictable</strong>
+(~50% taken). If the branch is highly predictable (>90%, like a loop condition), a branch is
+better — the predictor gets it right, and branch-free code adds extra instructions. Rule of
+thumb: use branch-free for data-dependent branches on random data; use normal branches for
+loop control and common cases.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch16">16. SIMD and Vector Instructions</h2>
+
+<p><strong>Single Instruction, Multiple Data (SIMD)</strong> instructions process multiple data
+elements in parallel using a single instruction. Instead of adding two numbers, a SIMD add can
+add 4, 8, or 16 numbers at once. This is one of the most powerful performance optimizations
+available: if your code processes arrays or streams of data, SIMD can give 2-8x speedup with
+no algorithmic change.</p>
+
+<h3>How SIMD Works</h3>
+
+<p>SIMD uses <strong>wide registers</strong> that hold multiple values. A 128-bit register can
+hold 4 × 32-bit integers, or 2 × 64-bit doubles, or 16 × 8-bit characters. A single SIMD
+instruction operates on all elements simultaneously. For example, adding two arrays of 4
+floats takes 1 SIMD instruction instead of 4 scalar instructions.</p>
+
+<div class="code-block"><span class="comment">/* SIMD: 4 floats in one 128-bit register */</span>
+
+  Register A:  [ f0 | f1 | f2 | f3 ]    (128 bits = 4 × 32-bit floats)
+  Register B:  [ g0 | g1 | g2 | g3 ]
+               ─────────────────────
+  A + B    →   [f0+g0|f1+g1|f2+g2|f3+g3]   (one instruction, 4 additions!)</div>
+
+<h3>RISC-V V Extension</h3>
+
+<p>The RISC-V <strong>V extension</strong> adds vector instructions with configurable vector
+length (VLEN). Unlike fixed-width SIMD (like x86 SSE), RISC-V vectors can be any length the
+hardware supports. The <code class="code-inline">vsetvli</code> instruction configures the
+vector length and element width before a vector operation.</p>
+
+<div class="code-block"><span class="comment"># RISC-V V extension: add two arrays</span>
+<span class="comment"># void vec_add(float *a, float *b, float *c, int n)</span>
+
+    <span class="keyword">vsetvli</span> <span class="reg">t0</span>, <span class="reg">a3</span>, e32   <span class="comment"># set VL: 32-bit elements, up to n</span>
+    <span class="keyword">vle32.v</span> <span class="reg">v0</span>, (<span class="reg">a0</span>)       <span class="comment"># load vector from a</span>
+    <span class="keyword">vle32.v</span> <span class="reg">v1</span>, (<span class="reg">a1</span>)       <span class="comment"># load vector from b</span>
+    <span class="keyword">vfadd.vv</span> <span class="reg">v2</span>, <span class="reg">v0</span>, <span class="reg">v1</span>   <span class="comment"># v2 = v0 + v1 (all elements!)</span>
+    <span class="keyword">vse32.v</span> <span class="reg">v2</span>, (<span class="reg">a2</span>)       <span class="comment"># store vector to c</span></div>
+
+<h3>ARM64 NEON</h3>
+
+<p>ARM64 includes <strong>NEON</strong> (also called Advanced SIMD), with 32 vector registers
+of 128 bits each. NEON instructions can operate on lanes of 8, 16, 32, or 64 bits.</p>
+
+<div class="code-block"><span class="comment"># ARM64 NEON: add 4 floats at once</span>
+    <span class="keyword">ld1</span>  {<span class="reg">v0.4s</span>}, [<span class="reg">x0</span>]    <span class="comment"># load 4 × 32-bit floats</span>
+    <span class="keyword">ld1</span>  {<span class="reg">v1.4s</span>}, [<span class="reg">x1</span>]    <span class="comment"># load 4 × 32-bit floats</span>
+    <span class="keyword">fadd</span> <span class="reg">v2.4s</span>, <span class="reg">v0.4s</span>, <span class="reg">v1.4s</span>  <span class="comment"># 4 parallel adds</span>
+    <span class="keyword">st1</span>  {<span class="reg">v2.4s</span>}, [<span class="reg">x2</span>]    <span class="comment"># store result</span></div>
+
+<h3>x86-64 SSE/AVX</h3>
+
+<p>x86-64 has <strong>SSE</strong> (128-bit, 16 registers) and <strong>AVX/AVX2</strong>
+(256-bit, 16 registers). AVX-512 extends to 512 bits. The instructions use
+<code class="code-inline">xmm</code> (128-bit), <code class="code-inline">ymm</code> (256-bit),
+and <code class="code-inline">zmm</code> (512-bit) registers.</p>
+
+<div class="code-block"><span class="comment"># x86-64 AVX: add 8 floats at once</span>
+    <span class="keyword">vmovups</span> <span class="reg">ymm0</span>, [<span class="reg">rdi</span>]     <span class="comment"># load 8 × 32-bit floats</span>
+    <span class="keyword">vmovups</span> <span class="reg">ymm1</span>, [<span class="reg">rsi</span>]     <span class="comment"># load 8 × 32-bit floats</span>
+    <span class="keyword">vaddps</span>  <span class="reg">ymm0</span>, <span class="reg">ymm0</span>, <span class="reg">ymm1</span> <span class="comment"># 8 parallel adds</span>
+    <span class="keyword">vmovups</span> [<span class="reg">rdx</span>], <span class="reg">ymm0</span>     <span class="comment"># store result</span></div>
+
+<h3>Auto-Vectorization</h3>
+
+<p>At <code class="code-inline">-O3</code>, the compiler attempts to <strong>auto-vectorize</strong>
+loops: it detects simple loops over arrays and converts them to SIMD instructions. This is
+free performance — but only if your loop is "vectorizable" (no data dependencies between
+iterations, no branches, contiguous memory access).</p>
+
+<div class="code-block"><span class="comment">// Auto-vectorizable loop</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++)
+    c[i] = a[i] + b[i];  <span class="comment">// compiler turns this into SIMD!</span>
+
+<span class="comment">// NOT vectorizable: data dependency</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="number">1000</span>; i++)
+    a[i] = a[i] + a[i-<span class="number">1</span>];  <span class="comment">// depends on previous iteration</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: SIMD for String Operations</div>
+<p style="margin:0">SIMD is excellent for string operations. Instead of checking one character
+at a time, SIMD can check 16 characters (128 bits) per instruction. This is how
+<code class="code-inline">strlen</code>, <code class="code-inline">strcmp</code>, and
+<code class="code-inline">memcpy</code> are optimized in modern libc — they use SSE/AVX to process
+16-32 bytes per cycle instead of 1.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch17">17. Cache-Aware Assembly</h2>
+
+<p>The CPU cache is the single most important factor in performance. A cache hit takes ~4
+cycles; a cache miss (going to main memory) takes ~100-300 cycles. Writing
+<strong>cache-aware</strong> code — code that accesses memory in patterns the cache likes — can
+give 10-100x speedups. Understanding cache behavior at the assembly level lets you write code
+that works <em>with</em> the cache, not against it.</p>
+
+<h3>Cache Lines</h3>
+
+<p>Memory is not accessed byte-by-byte. The cache loads data in <strong>cache lines</strong>
+(typically 64 bytes). When you read one byte, the entire 64-byte line containing it is loaded
+into cache. If you then read adjacent bytes, they're already in cache — a hit. But if you jump
+around randomly, every access is a miss. This is why <strong>sequential access</strong> is much
+faster than <strong>random access</strong>.</p>
+
+<div class="code-block"><span class="comment">/* Cache line: 64 bytes = 8 × 8-byte values */</span>
+
+    ┌──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+    │  [0] │  [1] │  [2] │  [3] │  [4] │  [5] │  [6] │  [7] │
+    └──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
+     ←─────────────── 64 bytes, loaded together ──────────────→
+
+    <span class="comment"># Sequential: 1 miss, 7 hits per line</span>
+    <span class="keyword">ld</span> <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">a0</span>)    <span class="comment"># MISS (loads whole line)</span>
+    <span class="keyword">ld</span> <span class="reg">t1</span>, <span class="number">8</span>(<span class="reg">a0</span>)    <span class="comment"># HIT</span>
+    <span class="keyword">ld</span> <span class="reg">t2</span>, <span class="number">16</span>(<span class="reg">a0</span>)   <span class="comment"># HIT</span>
+    <span class="comment"># ...</span>
+
+    <span class="comment"># Strided: every access is a miss!</span>
+    <span class="keyword">ld</span> <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">a0</span>)     <span class="comment"># MISS</span>
+    <span class="keyword">ld</span> <span class="reg">t1</span>, <span class="number">64</span>(<span class="reg">a0</span>)    <span class="comment"># MISS (different line)</span>
+    <span class="keyword">ld</span> <span class="reg">t2</span>, <span class="number">128</span>(<span class="reg">a0</span>)   <span class="comment"># MISS</span></div>
+
+<h3>False Sharing</h3>
+
+<p><strong>False sharing</strong> occurs when two threads write to different variables that
+happen to be on the same cache line. Even though they're not sharing data, the cache coherence
+protocol invalidates the line on every write, causing a performance collapse. The fix is
+<strong>padding</strong>: add unused bytes to push each thread's variable onto its own cache
+line.</p>
+
+<div class="code-block"><span class="comment">// False sharing: counter1 and counter2 on same cache line</span>
+<span class="keyword">struct</span> {
+    <span class="keyword">long</span> counter1;    <span class="comment">// Thread A writes this</span>
+    <span class="keyword">long</span> counter2;    <span class="comment">// Thread B writes this</span>
+} stats;                     <span class="comment">// SAME cache line → false sharing!</span>
+
+<span class="comment">// Fix: pad to 64 bytes (cache line size)</span>
+<span class="keyword">struct</span> {
+    <span class="keyword">long</span> counter1;
+    <span class="keyword">char</span> pad[<span class="number">56</span>];    <span class="comment">// pad to 64 bytes</span>
+    <span class="keyword">long</span> counter2;
+    <span class="keyword">char</span> pad2[<span class="number">56</span>];
+} stats;                     <span class="comment">// now on separate lines</span></div>
+
+<h3>Prefetching</h3>
+
+<p>The CPU has a hardware <strong>prefetcher</strong> that detects sequential access patterns
+and loads data into cache before you ask for it. You can also explicitly prefetch using the
+<code class="code-inline">prefetch</code> instruction (x86) or
+<code class="code-inline">prefetch.i</code>/<code class="code-inline">prefetch.r</code>
+(RISC-V). Prefetching is useful when you know you'll need data soon but can't access it
+sequentially.</p>
+
+<div class="code-block"><span class="comment"># RISC-V: prefetch hint (if available)</span>
+    <span class="comment"># Prefetch next iteration's data while processing current</span>
+    <span class="keyword">prefetch.r</span> <span class="number">128</span>(<span class="reg">a0</span>)   <span class="comment"># hint: will need this soon</span>
+    <span class="keyword">ld</span>  <span class="reg">t0</span>, <span class="number">0</span>(<span class="reg">a0</span>)       <span class="comment"># process current</span>
+    <span class="comment"># ...</span></div>
+
+<h3>Non-Temporal Stores</h3>
+
+<p>When you're writing a large block of data that you won't read again soon (like streaming
+video), normal stores pollute the cache, evicting useful data. <strong>Non-temporal
+stores</strong> bypass the cache, writing directly to memory. This avoids cache pollution and
+can be faster for large, write-once data.</p>
+
+<div class="code-block"><span class="comment"># x86-64: non-temporal store (bypass cache)</span>
+    <span class="keyword">movntps</span> [<span class="reg">rdi</span>], <span class="reg">xmm0</span>    <span class="comment"># store without caching</span>
+
+<span class="comment"># RISC-V: no direct non-temporal store, but can use</span>
+<span class="comment"># fence and cache management instructions</span></div>
+
+<h3>Cache Flush and DMA Coherency</h3>
+
+<p>When using <strong>DMA</strong> (Direct Memory Access) — where a device reads/writes memory
+directly — the CPU's cache may be stale. The CPU must <strong>flush</strong> (write back dirty
+cache lines) before DMA reads, and <strong>invalidate</strong> (discard cache lines) after DMA
+writes. On RISC-V, this is done with the <code class="code-inline">fence</code> instruction and
+cache management instructions (<code class="code-inline">cflush</code>,
+<code class="code-inline">cinval</code>).</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">Warning: DMA and Cache Coherency</div>
+<p style="margin:0">If you forget to flush the cache before DMA reads your buffer, the device may
+read stale data from memory (the CPU's writes are still in cache, not written back). If you
+forget to invalidate after DMA writes, the CPU may read stale data from cache. This is one of
+the hardest bugs to find — it works "most of the time" and fails unpredictably.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch18">18. Stack Smashing and Buffer Overflows</h2>
+
+<p>A <strong>buffer overflow</strong> occurs when a program writes past the end of a buffer,
+corrupting adjacent memory. If the buffer is on the stack, the overflow can overwrite the
+return address — allowing an attacker to redirect execution to arbitrary code. This is called
+<strong>stack smashing</strong>, and it's one of the oldest and most dangerous security
+vulnerabilities. Understanding how it works at the assembly level is essential for writing
+secure code and understanding modern defenses.</p>
+
+<h3>How Buffer Overflows Work</h3>
+
+<p>Consider a function with a local buffer. On the stack, the buffer is below the saved return
+address. If you write past the end of the buffer, you overwrite the saved
+<code class="code-inline">ra</code>/<code class="code-inline">rip</code>. When the function
+returns, it jumps to the overwritten address — which an attacker can set to the address of
+their own code (shellcode) or to a chain of existing code fragments (ROP).</p>
+
+<div class="code-block"><span class="comment">/* Stack layout: buffer below return address */</span>
+
+    ┌──────────────────┐
+    │  saved ra (0x...42a)│  &lt;── attacker overwrites this!
+    ├──────────────────┤
+    │  saved fp          │
+    ├──────────────────┤
+    │  buf[60]           │
+    │  buf[59]           │
+    │  ...               │
+    │  buf[1]            │
+    │  buf[0]  ← writes start here
+    └──────────────────┘
+
+<span class="comment">// Vulnerable function</span>
+<span class="keyword">void</span> vulnerable() {
+    <span class="keyword">char</span> buf[<span class="number">64</span>];
+    <span class="keyword">gets</span>(buf);  <span class="comment">// no bounds checking!</span>
+    <span class="comment">// If input > 64 bytes, overflows into saved ra</span>
+}</div>
+
+<div class="code-block"><span class="comment"># Assembly of vulnerable function (RISC-V)</span>
+<span class="label">vulnerable:</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-80</span>   <span class="comment"># allocate 80 bytes</span>
+    <span class="keyword">sd</span>   <span class="reg">ra</span>, <span class="number">72</span>(<span class="reg">sp</span>)    <span class="comment"># save return address at sp+72</span>
+    <span class="keyword">addi</span> <span class="reg">a0</span>, <span class="reg">sp</span>, <span class="number">8</span>     <span class="comment"># buf starts at sp+8</span>
+    <span class="keyword">call</span> <span class="label">gets</span>           <span class="comment"># reads unlimited input into buf</span>
+    <span class="keyword">ld</span>   <span class="reg">ra</span>, <span class="number">72</span>(<span class="reg">sp</span>)    <span class="comment"># load (possibly overwritten) ra</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">80</span>
+    <span class="keyword">ret</span>                  <span class="comment"># jumps to overwritten ra!</span>
+
+    <span class="comment"># buf is at sp+8, ra is at sp+72</span>
+    <span class="comment"># Overflow: 72-8 = 64 bytes to reach ra</span>
+    <span class="comment"># Input: 64 bytes of padding + 8 bytes of new ra</span></div>
+
+<h3>Stack Canaries</h3>
+
+<p>The first line of defense is the <strong>stack canary</strong>: a random value placed on the
+stack between the buffer and the return address. Before returning, the function checks if the
+canary has been modified. If it has, the program aborts. The canary value is random (set at
+program start), so an attacker can't easily guess it. GCC adds canaries with the
+<code class="code-inline">-fstack-protector</code> flag.</p>
+
+<div class="code-block"><span class="comment"># Stack with canary (RISC-V, -fstack-protector)</span>
+<span class="label">vulnerable:</span>
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">-96</span>
+    <span class="keyword">sd</span>   <span class="reg">ra</span>, <span class="number">88</span>(<span class="reg">sp</span>)
+    <span class="comment"># Load canary from global variable __stack_chk_guard</span>
+    <span class="keyword">la</span>   <span class="reg">t0</span>, <span class="label">__stack_chk_guard</span>
+    <span class="keyword">ld</span>   <span class="reg">t1</span>, (<span class="reg">t0</span>)
+    <span class="keyword">sd</span>   <span class="reg">t1</span>, <span class="number">80</span>(<span class="reg">sp</span>)    <span class="comment"># save canary at sp+80</span>
+
+    <span class="comment"># ... function body with buffer at sp+8 ...</span>
+
+    <span class="comment"># Check canary before return</span>
+    <span class="keyword">la</span>   <span class="reg">t0</span>, <span class="label">__stack_chk_guard</span>
+    <span class="keyword">ld</span>   <span class="reg">t1</span>, (<span class="reg">t0</span>)
+    <span class="keyword">ld</span>   <span class="reg">t2</span>, <span class="number">80</span>(<span class="reg">sp</span>)    <span class="comment"># load saved canary</span>
+    <span class="keyword">bne</span>  <span class="reg">t1</span>, <span class="reg">t2</span>, <span class="label">__stack_chk_fail</span>  <span class="comment"># abort if changed!</span>
+    <span class="keyword">ld</span>   <span class="reg">ra</span>, <span class="number">88</span>(<span class="reg">sp</span>)
+    <span class="keyword">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="number">96</span>
+    <span class="keyword">ret</span></div>
+
+<h3>NX Bit (DEP)</h3>
+
+<p>The <strong>NX bit</strong> (No-Execute, also called DEP — Data Execution Prevention) marks
+certain memory pages as non-executable. Even if an attacker writes shellcode to the stack,
+the CPU will refuse to execute it. This is enforced by the MMU: the stack's page table entries
+have the execute permission bit cleared. NX makes classic stack-smashing attacks (inject
+shellcode + jump to it) much harder.</p>
+
+<h3>ASLR</h3>
+
+<p><strong>Address Space Layout Randomization (ASLR)</strong> randomizes the base addresses of
+the stack, heap, libraries, and (with PIE) the executable. This means an attacker can't predict
+where their shellcode or target functions will be in memory. Each time the program runs, the
+addresses are different. ASLR doesn't prevent overflows, but it makes exploiting them much
+harder — the attacker must either leak an address or guess (with
+$1/2^{32}$ or $1/2^{64}$ probability).</p>
+
+<h3>Return-Oriented Programming (ROP)</h3>
+
+<p>Even with NX and ASLR, attackers use <strong>Return-Oriented Programming (ROP)</strong>.
+Instead of injecting new code, ROP chains together fragments of <em>existing</em> code (called
+<strong>gadgets</strong>) — typically ending in <code class="code-inline">ret</code>
+instructions. By overwriting the stack with a sequence of return addresses, each pointing to a
+gadget, the attacker builds a "program" out of existing code. Since the code is already
+executable (it's in <code class="code-inline">.text</code>), NX doesn't help.</p>
+
+<div class="code-block"><span class="comment">/* ROP chain on the stack */</span>
+
+    ┌──────────────────┐
+    │  addr of gadget1  │  ← ret jumps here (e.g., pop rdi; ret)
+    ├──────────────────┤
+    │  argument for g1  │  ← popped into rdi by gadget1
+    ├──────────────────┤
+    │  addr of gadget2  │  ← next ret jumps here (e.g., pop rsi; ret)
+    ├──────────────────┤
+    │  argument for g2  │  ← popped into rsi
+    ├──────────────────┤
+    │  addr of system() │  ← call system("/bin/sh")</span>
+    └──────────────────┘</div>
+
+<div class="callout callout-danger">
+<div class="callout-title">Security: Defense in Depth</div>
+<p style="margin:0">No single defense is sufficient. Modern systems use <strong>defense in
+depth</strong>: canaries (detect overflow), NX (prevent code execution on stack), ASLR
+(randomize addresses), and <strong>CFI</strong> (Control Flow Integrity, restrict valid
+targets). Each defense closes some attack vectors; together, they make exploitation extremely
+difficult. But determined attackers still find ways — security is an ongoing arms race.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ch19">19. Spectre and Meltdown</h2>
+
+<p>In 2018, two of the most severe CPU vulnerabilities in history were disclosed:
+<strong>Meltdown</strong> (CVE-2017-5754) and <strong>Spectre</strong> (CVE-2017-5753,
+CVE-2017-5715). These are not software bugs — they exploit fundamental features of modern CPU
+architecture: <strong>speculative execution</strong> and <strong>caches</strong>. Understanding
+them requires understanding how the CPU pipeline and cache interact, and how side channels can
+leak information.</p>
+
+<h3>Speculative Execution</h3>
+
+<p>Modern CPUs execute instructions <strong>speculatively</strong>: when they encounter a
+branch, they guess the outcome and start executing the predicted path before the branch is
+resolved. If the guess is wrong, the results are discarded — the architectural state
+(registers, memory) is rolled back. <em>But the cache is not rolled back.</em> This is the
+crack that Spectre and Meltdown exploit: speculative execution leaves <strong>cache
+traces</strong> that can be measured.</p>
+
+<div class="code-block"><span class="comment">// Spectre v1: Bounds Check Bypass</span>
+<span class="keyword">if</span> (x &lt; array1_size) {
+    <span class="comment">// Speculatively executed even if x is out of bounds!</span>
+    y = array2[array1[x] * <span class="number">512</span>];
+    <span class="comment">// array1[x] reads SECRET data (out of bounds)</span>
+    <span class="comment">// array2[...] loads a cache line based on SECRET</span>
+    <span class="comment">// Even though result is discarded, cache is modified!</span>
+}</div>
+
+<h3>Cache Side Channels</h3>
+
+<p>The attack measures <strong>cache timing</strong>: if a memory location is cached, accessing
+it is fast (~4 cycles); if not, it's slow (~100+ cycles). By measuring access time to different
+cache lines, the attacker can determine which lines were loaded during speculative execution —
+and thus infer the secret value. This is a <strong>side-channel attack</strong>: information
+leaks through a channel (cache timing) that wasn't designed to carry data.</p>
+
+<div class="code-block"><span class="comment">// Meltdown: measure cache timing to extract secret</span>
+<span class="comment">// Step 1: Flush all cache lines in probe array</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">256</span>; i++)
+    clflush(probe[i * <span class="number">4096</span>]);
+
+<span class="comment">// Step 2: Trigger speculative access (Meltdown)</span>
+<span class="comment">// Speculatively read kernel memory (forbidden!)</span>
+<span class="comment">// value = *kernel_addr;  ← raises exception</span>
+<span class="comment">// probe[value * 4096] accessed speculatively</span>
+
+<span class="comment">// Step 3: Measure access time to each probe line</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">256</span>; i++) {
+    <span class="keyword">long</span> t1 = rdtsc();       <span class="comment">// read timestamp counter</span>
+    <span class="keyword">volatile</span> <span class="keyword">char</span> v = probe[i * <span class="number">4096</span>];
+    <span class="keyword">long</span> t2 = rdtsc();
+    <span class="keyword">if</span> (t2 - t1 &lt; THRESHOLD) {
+        <span class="comment">// This line was cached → i is the secret byte!</span>
+        secret = i;
+    }
+}</div>
+
+<h3>Meltdown (Variant 3)</h3>
+
+<p><strong>Meltdown</strong> exploits <strong>exception handling</strong> and
+<strong>out-of-order execution</strong>. The attacker tries to read kernel memory (which is
+mapped but inaccessible). The CPU starts executing the load speculatively, reads the value,
+and uses it to access a probe array — all before the permission check completes. When the
+permission check fails, an exception is raised and the results are discarded. But the cache
+line corresponding to the secret value is already loaded. The attacker catches the exception
+(e.g., via signal handler) and measures cache timing to recover the secret.</p>
+
+<div class="code-block"><span class="comment"># Meltdown assembly (x86-64, simplified)</span>
+<span class="comment"># rcx = kernel address (secret)</span>
+<span class="comment"># rbx = probe array base</span>
+
+<span class="label">.Ltry:</span>
+    <span class="comment"># Speculatively read kernel memory</span>
+    <span class="keyword">mov</span> <span class="reg">al</span>, [<span class="reg">rcx</span>]        <span class="comment"># FORBIDDEN: reads kernel byte</span>
+    <span class="comment"># At this point, CPU has speculatively loaded the byte</span>
+    <span class="keyword">shl</span> <span class="reg">rax</span>, <span class="number">12</span>        <span class="comment"># multiply by 4096 (page offset)</span>
+    <span class="keyword">mov</span> <span class="reg">dl</span>, [<span class="reg">rbx</span> + <span class="reg">rax</span>]  <span class="comment"># access probe[secret * 4096]</span>
+    <span class="comment"># Exception fires here, but cache is already modified!</span>
+
+<span class="label">.Lexcept:</span>
+    <span class="comment"># Signal handler jumps here</span>
+    <span class="comment"># Now measure cache timing to find which probe line is hot</span></div>
+
+<h3>Spectre v1 (Bounds Check Bypass)</h3>
+
+<p><strong>Spectre v1</strong> tricks a victim program into speculatively executing code that
+leaks data. The attacker trains the branch predictor to expect the bounds check to pass, then
+provides an out-of-bounds index. The CPU speculatively executes the body (reading secret data
+and touching a probe array) before the bounds check fails. The result is discarded, but the
+cache trace remains. Unlike Meltdown, Spectre works across privilege levels and even across
+processes.</p>
+
+<h3>Spectre v2 (Branch Target Injection)</h3>
+
+<p><strong>Spectre v2</strong> poisons the <strong>branch target buffer (BTB)</strong> — the
+predictor that guesses indirect branch targets. The attacker trains the BTB to redirect an
+indirect branch in the victim to a gadget (like in ROP). The victim speculatively executes
+the gadget, leaking data through the cache. This is harder to exploit but can leak data across
+process boundaries.</p>
+
+<h3>Mitigations</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Mitigation</th><th>Defends Against</th><th>How</th><th>Cost</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>fence / lfence</strong></td><td>Spectre v1</td><td>Stop speculation at bounds checks</td><td>Performance (serializing)</td></tr>
+<tr><td><strong>Retpoline</strong></td><td>Spectre v2</td><td>Replace indirect branches with safe RET-based thunk</td><td>Performance (indirect calls)</td></tr>
+<tr><td><strong>KPTI</strong></td><td>Meltdown</td><td>Unmap kernel on user mode (page table isolation)</td><td>High (syscall overhead)</td></tr>
+<tr><td><strong>IBRS/STIBP</strong></td><td>Spectre v1/v2</td><td>Microcode: restrict branch prediction</td><td>Performance</td></tr>
+<tr><td>Cache flushing</td><td>All</td><td>Flush cache between contexts</td><td>Performance</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="code-block"><span class="comment"># Retpoline: safe indirect call (x86-64)</span>
+<span class="comment"># Instead of: call [rax]  (vulnerable to BTB poisoning)</span>
+<span class="comment"># Use a thunk that prevents speculative execution:</span>
+
+<span class="label">__x86_indirect_thunk_rax:</span>
+    <span class="keyword">call</span> <span class="label">.Lspec_trap</span>       <span class="comment"># call to next instruction</span>
+<span class="label">.Lspec_trap:</span>
+    <span class="keyword">pause</span>                <span class="comment"># speculatively: infinite loop</span>
+    <span class="keyword">lfence</span>               <span class="comment"># stop speculation</span>
+    <span class="keyword">jmp</span> <span class="label">.Lspec_trap</span>
+    <span class="comment"># Non-speculatively: actual target</span>
+    <span class="keyword">mov</span> [<span class="reg">rsp</span>], <span class="reg">rax</span>     <span class="comment"># overwrite return addr with target</span>
+    <span class="keyword">ret</span>                   <span class="comment"># jump to rax (not speculatively!)</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">Key Idea: Speculation Leaks Through Cache</div>
+<p style="margin:0">The fundamental issue is that <strong>speculative execution modifies the
+cache</strong>, and cache state is observable through timing. Even though the CPU discards
+speculative results architecturally, the microarchitectural state (cache) is not rolled back.
+This is not a bug in any specific CPU — it's a consequence of the performance optimization
+(speculation + caching) that all modern CPUs use. The mitigations add barriers
+(<code class="code-inline">fence</code>, retpoline) or isolate address spaces (KPTI) at a
+performance cost.</p>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Warning: Mitigations Have Cost</div>
+<p style="margin:0">Spectre/Meltdown mitigations have real performance costs. KPTI (Kernel Page
+Table Isolation) can add 5-30% overhead to syscall-heavy workloads. Retpolines slow indirect
+calls. This is why some systems allow disabling mitigations
+(<code class="code-inline">mitigations=off</code> in Linux) for trusted environments where
+performance matters more than security. Always understand the tradeoff.</p>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Assembly Handbook Part II: Advanced Topics - August 2026<br>
+<a href="main.html">Back to Handbook Part I</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = this.dataset.target;
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      // Hide section if all items hidden
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../sidebar.js"></script>
+</body>
+</html>

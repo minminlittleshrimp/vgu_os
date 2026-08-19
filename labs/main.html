@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS Labs - Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div class="app">
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>VGU OS Labs</h1>
+    <div class="subtitle">Operating Systems</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Main</div>
+      <a class="nav-item active" href="main.html"><span class="nav-num">00</span>Home</a>
+      <a class="nav-item" href="handbook/main.html">Assembly Handbook</a>
+      <a class="nav-item" href="simulator/main.html">Compiler Explorer</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Labs</div>
+      <a class="nav-item" href="labs/lab01-riscv-asm-basics.html"><span class="nav-num">01</span>RISC-V Basics</a>
+      <a class="nav-item" href="labs/lab02-riscv-stack-frames.html"><span class="nav-num">02</span>Stack Frames</a>
+      <a class="nav-item" href="labs/lab03-x86-64-asm.html"><span class="nav-num">03</span>x86-64 ASM</a>
+      <a class="nav-item" href="labs/lab04-arm64-asm.html"><span class="nav-num">04</span>ARM64 ASM</a>
+      <a class="nav-item" href="labs/lab05-cross-isa-comparison.html"><span class="nav-num">05</span>Cross-ISA</a>
+      <a class="nav-item" href="labs/lab06-c-to-asm-explorer.html"><span class="nav-num">06</span>C to ASM</a>
+      <a class="nav-item" href="labs/lab07-os-syscalls-traps.html"><span class="nav-num">07</span>Syscalls & Traps</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main">
+<div class="content">
+
+<h1>VGU Operating Systems Labs</h1>
+<p style="color:var(--text-dim);font-size:14px">Vietnamese-German University - Operating Systems - August 2026</p>
+
+<div class="callout callout-info">
+<div class="callout-title">Welcome</div>
+<p style="margin:0">This is the home page for the VGU OS lab series. Use the sidebar to navigate to
+labs, the assembly handbook, and the compiler explorer simulator.
+All pages open in your browser - no installation needed.</p>
+</div>
+
+<h2>Quick Start</h2>
+<div class="steps">
+<div class="step">
+<div class="step-title">Open the Compiler Explorer</div>
+<p>Go to <a href="simulator/main.html">simulator/main.html</a> to compile C/C++ code to real assembly
+using the Godbolt API. Supports x86-64, ARM64, RISC-V, and MIPS compilers.</p>
+</div>
+<div class="step">
+<div class="step-title">Read the Handbook</div>
+<p>Go to <a href="handbook/main.html">handbook/main.html</a> for a comprehensive assembly cheat sheet
+covering RISC-V, x86-64, ARM64, and MIPS with step-by-step explanations.</p>
+</div>
+<div class="step">
+<div class="step-title">Start with Lab 01</div>
+<p>Go to <a href="labs/lab01-riscv-asm-basics.html">Lab 01: RISC-V Basics</a> to begin hands-on exercises.</p>
+</div>
+</div>
+
+<h2>Lab Overview</h2>
+<table>
+<thead><tr><th>Lab</th><th>Topic</th><th>Hands-on</th></tr></thead>
+<tbody>
+<tr><td>01</td><td>RISC-V Assembly Basics</td><td><a href="labs/lab01-riscv-asm-basics.html">Open</a></td></tr>
+<tr><td>02</td><td>Stack Frames & Calling Convention</td><td><a href="labs/lab02-riscv-stack-frames.html">Open</a></td></tr>
+<tr><td>03</td><td>x86-64 Assembly</td><td><a href="labs/lab03-x86-64-asm.html">Open</a></td></tr>
+<tr><td>04</td><td>ARM64 Assembly</td><td><a href="labs/lab04-arm64-asm.html">Open</a></td></tr>
+<tr><td>05</td><td>Cross-ISA Comparison</td><td><a href="labs/lab05-cross-isa-comparison.html">Open</a></td></tr>
+<tr><td>06</td><td>C-to-Assembly Explorer</td><td><a href="labs/lab06-c-to-asm-explorer.html">Open</a></td></tr>
+<tr><td>07</td><td>Syscalls & Traps</td><td><a href="labs/lab07-os-syscalls-traps.html">Open</a></td></tr>
+</tbody>
+</table>
+
+<h2>Resources</h2>
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge reading">Reference</span>
+<span class="exercise-title">Assembly Handbook</span>
+</div>
+<p>A comprehensive cheat sheet for RISC-V, x86-64, ARM64, and MIPS assembly.
+Explained step by step, from the ground up.</p>
+<p><a href="handbook/main.html">Open Handbook -></a></p>
+</div>
+
+<div class="exercise">
+<div class="exercise-header">
+<span class="exercise-badge hands-on">Tool</span>
+<span class="exercise-title">Compiler Explorer Simulator</span>
+</div>
+<p>Compile C/C++ to real assembly using the Godbolt API. Compare x86-64, ARM64, RISC-V, and MIPS.
+RISC-V assembly can be executed in-browser.</p>
+<p><a href="simulator/main.html">Open Simulator -></a></p>
+</div>
+
+<h2>About the Labs</h2>
+<div class="callout callout-tip">
+<div class="callout-title">Hands-on Exercises</div>
+<ul style="margin:0">
+<li><strong>Labs</strong> (in <code class="code-inline">labs/</code>): Step-by-step hands-on exercises for students.
+Brief instructions, code to write, things to observe.</li>
+</ul>
+</div>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - August 2026
+</p>
+
+</div>
+</div>
+</div>
+<script src="sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RISC-V Assembly Programming - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">RISC-V Assembly Programming</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Registers . Calling Convention . Stack Frames . Inline Assembly in xv6</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:820px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How do I read and write RISC-V assembly, what is the calling convention, how do stack frames work, and how does inline assembly bridge C and hardware in xv6?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>Assembly Basics</h2>
+<p>Why we still write assembly . C-to-asm mapping . pseudo-instructions</p>
+</div>
+
+<!-- SLIDE 3: WHY ASSEMBLY -->
+<div class="slide">
+<h2 class="st">Why Assembly?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"Assembly is like reading the chef's recipe instead of the menu. You see exactly what goes into each dish."</p>
+</div>
+<div class="block ok">
+<h4>When you need assembly</h4>
+<p>Most OS code is written in C. But some pieces <strong>must</strong> be in assembly because they touch hardware directly or have no C equivalent:</p>
+<ul>
+<li><strong>Boot code</strong> - runs before C runtime is ready</li>
+<li><strong>Trap handlers</strong> - save/restore registers at the ISA level</li>
+<li><strong>Context switches</strong> - swap register sets atomically</li>
+<li><strong>Inline asm</strong> - atomic operations, CSR access from C</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>In xv6, assembly lives in .S files</h4>
+<p>These are the files you will read and modify throughout the course:</p>
+</div>
+<table class="tbl">
+<tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>entry.S</code></td><td>M-mode boot: set up PMP, switch to S-mode</td></tr>
+<tr><td><code>trampoline.S</code></td><td>User trap entry (uservec) and exit (userret)</td></tr>
+<tr><td><code>swtch.S</code></td><td>Context switch: save/restore callee-saved regs</td></tr>
+<tr><td><code>kernelvec.S</code></td><td>Kernel trap handler</td></tr>
+</table>
+<div class="block warn">
+<h4>Convention</h4>
+<p><code>.S</code> (capital S) files are processed by the C preprocessor - you can use <code>#include</code> and macros. <code>.s</code> (lowercase) files are not.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: C TO ASSEMBLY -->
+<div class="slide">
+<h2 class="st">From C to Assembly</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>C function</h4>
+</div>
+<pre><code class="language-c">int add(int a, int b)
+{
+    return a + b;
+}</code></pre>
+<div class="block">
+<h4>Equivalent RISC-V assembly</h4>
+</div>
+<pre><code class="language-asm">add:
+    add a0, a0, a1   # a0 = a0 + a1
+    ret              # return to caller</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Register mapping</h4>
+<p>The compiler follows the <strong>calling convention</strong> to map C constructs to registers:</p>
+</div>
+<table class="tbl">
+<tr><th>C concept</th><th>Register</th><th>ABI name</th></tr>
+<tr><td>First argument (<code>a</code>)</td><td>x10</td><td><code>a0</code></td></tr>
+<tr><td>Second argument (<code>b</code>)</td><td>x11</td><td><code>a1</code></td></tr>
+<tr><td>Return value</td><td>x10</td><td><code>a0</code></td></tr>
+<tr><td>Return address</td><td>x1</td><td><code>ra</code></td></tr>
+</table>
+<div class="block note">
+<h4>Key insight</h4>
+<p>The same register <code>a0</code> carries the first argument <em>in</em> and the return value <em>out</em>. The function body overwrites it with the result before returning.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 5: KEY PSEUDO-INSTRUCTIONS -->
+<div class="slide">
+<h2 class="st">Key Pseudo-Instructions</h2>
+<p>Pseudo-instructions are convenience aliases. The assembler expands them into one or more real machine instructions.</p>
+<table class="tbl">
+<tr><th>Pseudo-instruction</th><th>Expands to</th><th>Meaning</th></tr>
+<tr><td><code>li rd, imm</code></td><td><code>lui</code> + <code>addi</code></td><td>Load immediate (any 64-bit constant)</td></tr>
+<tr><td><code>mv rd, rs</code></td><td><code>addi rd, rs, 0</code></td><td>Move (copy register)</td></tr>
+<tr><td><code>la rd, symbol</code></td><td><code>auipc</code> + <code>addi</code></td><td>Load address of a symbol</td></tr>
+<tr><td><code>j label</code></td><td><code>jal x0, offset</code></td><td>Unconditional jump (discard return addr)</td></tr>
+<tr><td><code>ret</code></td><td><code>jalr x0, 0(ra)</code></td><td>Return to caller (jump to <code>ra</code>)</td></tr>
+<tr><td><code>call symbol</code></td><td><code>jal ra, offset</code></td><td>Call function (save return addr in <code>ra</code>)</td></tr>
+<tr><td><code>nop</code></td><td><code>addi x0, x0, 0</code></td><td>No operation</td></tr>
+<tr><td><code>neg rd, rs</code></td><td><code>sub rd, x0, rs</code></td><td>Negate (two's complement)</td></tr>
+<tr><td><code>not rd, rs</code></td><td><code>xori rd, rs, -1</code></td><td>Bitwise NOT</td></tr>
+</table>
+<div class="block note">
+<h4>Why pseudo-instructions matter</h4>
+<p>You will see <code>ret</code>, <code>call</code>, <code>mv</code>, and <code>la</code> everywhere in xv6 assembly. Knowing what they expand to helps you understand the actual machine code.</p>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>Calling Convention</h2>
+<p>The contract between caller and callee . stack frames . prologue/epilogue</p>
+</div>
+
+<!-- SLIDE 7: RISC-V CALLING CONVENTION -->
+<div class="slide">
+<h2 class="st">RISC-V Calling Convention</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>The contract</h4>
+<p>The calling convention defines <strong>who is responsible for which registers</strong> across a function call. Both caller and callee must agree, or data gets corrupted.</p>
+</div>
+<table class="tbl">
+<tr><th>Role</th><th>Registers</th><th>ABI names</th></tr>
+<tr><td>Arguments</td><td>x10-x17</td><td><code>a0</code>-<code>a7</code></td></tr>
+<tr><td>Return value</td><td>x10</td><td><code>a0</code></td></tr>
+<tr><td>Return address</td><td>x1</td><td><code>ra</code></td></tr>
+<tr><td>Stack pointer</td><td>x2</td><td><code>sp</code></td></tr>
+<tr><td>Frame pointer</td><td>x8</td><td><code>s0</code> / <code>fp</code></td></tr>
+</table>
+</div>
+<div>
+<div class="block warn">
+<h4>Caller-saved (volatile)</h4>
+<p>The callee may freely clobber these. If the caller needs them after a call, it must save them first.</p>
+<ul>
+<li><code>t0</code>-<code>t6</code> - temporaries</li>
+<li><code>a0</code>-<code>a7</code> - arguments / return</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>Callee-saved (preserved)</h4>
+<p>The callee must save and restore these if it uses them. The caller can rely on them surviving a call.</p>
+<ul>
+<li><code>s0</code>-<code>s11</code> - saved registers</li>
+<li><code>sp</code> - stack pointer</li>
+<li><code>ra</code> - return address (if callee calls others)</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Alignment rule</h4>
+<p><code>sp</code> must be <strong>16-byte aligned</strong> at every call boundary.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: STACK FRAME LAYOUT -->
+<div class="slide">
+<h2 class="st">Stack Frame Layout</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arr-down" markerWidth="8" markerHeight="8" refX="4" refY="8" viewBox="0 0 10 10" orient="auto"><path d="M0,0 L5,8 L10,0 Z" fill="#64748b"/></marker>
+<marker id="arr-up" markerWidth="8" markerHeight="8" refX="4" refY="0" viewBox="0 0 10 10" orient="auto"><path d="M0,10 L5,0 L10,10 Z" fill="#64748b"/></marker>
+</defs>
+<!-- High address label -->
+<text class="cl-label" x="60" y="40">High address</text>
+<line stroke="#94a3b8" stroke-width="1.5" x1="60" x2="840" y1="50" y2="50"/>
+<!-- Caller's frame -->
+<rect class="cl-lane" height="60" width="680" x="120" y="60"/>
+<text class="cl-title" x="460" y="90">Caller's frame (above)</text>
+<!-- Frame boundary line -->
+<line stroke="#475569" stroke-dasharray="6 4" stroke-width="2" x1="120" x2="840" y1="130" y2="130"/>
+<text class="cl-small" x="860" y="130"><- fp (s0)</text>
+<!-- Saved ra -->
+<rect class="cl-aad" height="50" width="680" x="120" y="130"/>
+<text class="cl-title" x="460" y="155">saved ra (return address)</text>
+<!-- Saved s0/fp -->
+<rect class="cl-aad" height="50" width="680" x="120" y="180"/>
+<text class="cl-title" x="460" y="205">saved s0 / fp (old frame pointer)</text>
+<!-- Saved s1-s11 -->
+<rect class="cl-aad" height="60" width="680" x="120" y="230"/>
+<text class="cl-title" x="460" y="260">saved s1-s11 (callee-saved, if used)</text>
+<!-- Local variables -->
+<rect class="cl-data" height="70" width="680" x="120" y="290"/>
+<text class="cl-title" x="460" y="325">local variables &amp; temporaries</text>
+<!-- Frame boundary line -->
+<line stroke="#475569" stroke-dasharray="6 4" stroke-width="2" x1="120" x2="840" y1="370" y2="370"/>
+<text class="cl-small" x="860" y="370"><- sp</text>
+<!-- Spilled args -->
+<rect class="cl-lane" height="50" width="680" x="120" y="370"/>
+<text class="cl-title" x="460" y="395">spilled arguments (if &gt; 8 args)</text>
+<!-- Low address label -->
+<line stroke="#94a3b8" stroke-width="1.5" x1="120" x2="840" y1="430" y2="430"/>
+<text class="cl-label" x="60" y="450">Low address</text>
+<!-- Growth arrow -->
+<path class="cl-arr" d="M 60 420 L 60 60" marker-end="url(#arr-up)"/>
+<text class="cl-small" style="text-anchor:middle" x="40" y="240">stack grows ^</text>
+<!-- fp points -->
+<path class="cl-arr" d="M 860 130 L 800 130" marker-end="url(#arr-down)"/>
+<!-- sp points -->
+<path class="cl-arr" d="M 860 370 L 800 370" marker-end="url(#arr-down)"/>
+</svg>
+</div>
+<div class="block note" style="margin-top:4px">
+<h4>Key points</h4>
+<p>The stack <strong>grows down</strong> (toward lower addresses). <code>fp</code> (<code>s0</code>) marks the top of the current frame; <code>sp</code> marks the bottom. The frame size = <code>fp - sp</code>.</p>
+</div>
+</div>
+
+<!-- SLIDE 9: FUNCTION PROLOGUE AND EPILOGUE -->
+<div class="slide">
+<h2 class="st">Function Prologue and Epilogue</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Standard function template</h4>
+</div>
+<pre><code class="language-asm">func:
+    # ---- prologue ----
+    addi sp, sp, -16    # allocate frame
+    sd   ra, 8(sp)      # save return address
+    sd   s0, 0(sp)     # save callee-saved reg
+    mv   s0, a0         # use s0 for local work
+
+    # ---- function body ----
+    # ... do work using s0 ...
+
+    mv   a0, s0         # set return value
+
+    # ---- epilogue ----
+    ld   s0, 0(sp)      # restore callee-saved
+    ld   ra, 8(sp)      # restore return addr
+    addi sp, sp, 16     # deallocate frame
+    ret                 # return to caller</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Prologue (setup)</h4>
+<p>1. <strong>Allocate</strong> frame: <code>addi sp, sp, -N</code> - move <code>sp</code> down by N bytes.</p>
+<p>2. <strong>Save</strong> <code>ra</code> and any callee-saved registers you plan to use.</p>
+<p>3. <strong>Move</strong> arguments into <code>s</code> registers if you need them preserved across calls.</p>
+</div>
+<div class="block warn">
+<h4>Epilogue (teardown)</h4>
+<p>1. <strong>Set</strong> return value in <code>a0</code>.</p>
+<p>2. <strong>Restore</strong> callee-saved registers and <code>ra</code> from the stack.</p>
+<p>3. <strong>Deallocate</strong> frame: <code>addi sp, sp, N</code> - move <code>sp</code> back up.</p>
+<p>4. <code>ret</code> - jump to <code>ra</code>.</p>
+</div>
+<div class="block note">
+<h4>Mirror symmetry</h4>
+<p>The epilogue is the exact <strong>mirror</strong> of the prologue. Every <code>sd</code> has a matching <code>ld</code>; the <code>addi</code> signs are reversed.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 10: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Memory Access Patterns</h2>
+<p>Load/store instructions . struct field access . stack push/pop</p>
+</div>
+
+<!-- SLIDE 11: LOAD AND STORE -->
+<div class="slide">
+<h2 class="st">Load and Store Instructions</h2>
+<p>RISC-V is a <strong>load/store architecture</strong>: arithmetic operates only on registers. Memory access happens through explicit load/store instructions.</p>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Load instructions (memory -> register)</h4>
+</div>
+<table class="tbl">
+<tr><th>Instruction</th><th>Size</th><th>Extension</th></tr>
+<tr><td><code>lw rd, off(rs)</code></td><td>4 bytes (word)</td><td>sign-extend</td></tr>
+<tr><td><code>ld rd, off(rs)</code></td><td>8 bytes (double)</td><td>sign-extend</td></tr>
+<tr><td><code>lb rd, off(rs)</code></td><td>1 byte</td><td>sign-extend</td></tr>
+<tr><td><code>lbu rd, off(rs)</code></td><td>1 byte</td><td>zero-extend</td></tr>
+<tr><td><code>lwu rd, off(rs)</code></td><td>4 bytes</td><td>zero-extend</td></tr>
+</table>
+</div>
+<div>
+<div class="block">
+<h4>Store instructions (register -> memory)</h4>
+</div>
+<table class="tbl">
+<tr><th>Instruction</th><th>Size</th></tr>
+<tr><td><code>sw rs, off(rs1)</code></td><td>4 bytes (word)</td></tr>
+<tr><td><code>sd rs, off(rs1)</code></td><td>8 bytes (double)</td></tr>
+<tr><td><code>sb rs, off(rs1)</code></td><td>1 byte</td></tr>
+<tr><td><code>sh rs, off(rs1)</code></td><td>2 bytes (half)</td></tr>
+</table>
+<div class="block ok">
+<h4>Addressing form</h4>
+<p>Every load/store uses <code>base_reg + offset</code>:</p>
+<p><code>ld t0, 8(sp)</code> -> loads 8 bytes from address <code>sp + 8</code> into <code>t0</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: WORKING WITH STRUCTS -->
+<div class="slide">
+<h2 class="st">Working with Structs</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Accessing struct fields</h4>
+<p>A struct's fields live at <strong>fixed offsets</strong> from the struct base pointer. You access them with <code>ld</code>/<code>lw</code> using the offset.</p>
+</div>
+<div class="mono-box">
+<span class="hl">// a0 = pointer to trapframe</span><br/>
+ld t0, 24(a0)<br/>
+<span class="g"># loads 8 bytes from a0+24</span><br/>
+<span class="g"># = trapframe-&gt;epc</span>
+</div>
+<div class="block note">
+<h4>Why this works</h4>
+<p>The compiler knows the layout. <code>24</code> is the byte offset of the <code>epc</code> field within <code>struct trapframe</code>. In hand-written assembly, <em>you</em> compute these offsets manually.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="min-height:280px">
+<svg class="clean-svg" viewBox="0 0 460 400" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="10" y="30">struct trapframe layout</text>
+<rect class="cl-aad" height="40" width="360" x="60" y="40"/>
+<text class="cl-title" x="240" y="60">kernel_satp</text>
+<text class="cl-small" x="430" y="60">offset 0</text>
+<rect class="cl-aad" height="40" width="360" x="60" y="80"/>
+<text class="cl-title" x="240" y="100">kernel_sp</text>
+<text class="cl-small" x="430" y="100">offset 8</text>
+<rect class="cl-aad" height="40" width="360" x="60" y="120"/>
+<text class="cl-title" x="240" y="140">kernel_trap</text>
+<text class="cl-small" x="430" y="140">offset 16</text>
+<rect class="cl-key" height="40" width="360" x="60" y="160"/>
+<text class="cl-title" x="240" y="180">epc <- highlighted</text>
+<text class="cl-small" x="430" y="180">offset 24</text>
+<rect class="cl-aad" height="40" width="360" x="60" y="200"/>
+<text class="cl-title" x="240" y="220">kernel_hartid</text>
+<text class="cl-small" x="430" y="220">offset 32</text>
+<rect class="cl-data" height="40" width="360" x="60" y="240"/>
+<text class="cl-title" x="240" y="260">ra</text>
+<text class="cl-small" x="430" y="260">offset 40</text>
+<rect class="cl-data" height="40" width="360" x="60" y="280"/>
+<text class="cl-title" x="240" y="300">sp</text>
+<text class="cl-small" x="430" y="300">offset 48</text>
+<rect class="cl-lane" height="40" width="360" x="60" y="320"/>
+<text class="cl-title" x="240" y="340">... (gp, tp, t0-t6, ...)</text>
+<text class="cl-small" x="430" y="340">offset 56+</text>
+<text class="cl-label" x="60" y="380">a0 -> base of struct</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: STACK OPERATIONS -->
+<div class="slide">
+<h2 class="st">Stack Operations: Push and Pop</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block ok">
+<h4>Push (save a register onto the stack)</h4>
+</div>
+<pre><code class="language-asm"># push one 8-byte register
+addi sp, sp, -8     # make room
+sd   ra, 0(sp)      # store register
+
+# push two registers (keep 16-byte alignment)
+addi sp, sp, -16
+sd   ra, 8(sp)
+sd   s0, 0(sp)</code></pre>
+<div class="block warn">
+<h4>Pop (restore a register from the stack)</h4>
+</div>
+<pre><code class="language-asm"># pop one register
+ld   ra, 0(sp)      # load register
+addi sp, sp, 8      # reclaim space
+
+# pop two registers
+ld   ra, 8(sp)
+ld   s0, 0(sp)
+addi sp, sp, 16</code></pre>
+</div>
+<div>
+<div class="block note">
+<h4>The stack grows DOWN</h4>
+<p>To <strong>push</strong>, you first <em>decrease</em> <code>sp</code>, then store. To <strong>pop</strong>, you first load, then <em>increase</em> <code>sp</code>.</p>
+</div>
+<div class="block warn">
+<h4>16-byte alignment</h4>
+<p><code>sp</code> must always be a multiple of 16 at a <code>call</code> instruction. If you push an odd number of 8-byte registers, add padding.</p>
+</div>
+<div class="eq-box">
+push = addi sp,sp,-N ; sd reg,0(sp)<br/>
+pop  = ld reg,0(sp) ; addi sp,sp,N
+</div>
+<div class="block ok">
+<h4>Mental model</h4>
+<p>Think of the stack as a stack of plates. You add to the <em>bottom</em> (lower address) and remove from the <em>bottom</em>. The top of the stack is always at <code>sp</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>Control Flow in Assembly</h2>
+<p>Branches . jumps . if-else . loops</p>
+</div>
+
+<!-- SLIDE 15: BRANCHES AND JUMPS -->
+<div class="slide">
+<h2 class="st">Branches and Jumps</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Conditional branches</h4>
+<p>All take <code>rs1, rs2, offset</code>. They compare two registers and branch if the condition is true.</p>
+</div>
+<table class="tbl">
+<tr><th>Instruction</th><th>Condition</th></tr>
+<tr><td><code>beq rs1, rs2, label</code></td><td>if rs1 == rs2</td></tr>
+<tr><td><code>bne rs1, rs2, label</code></td><td>if rs1 != rs2</td></tr>
+<tr><td><code>blt rs1, rs2, label</code></td><td>if rs1 &lt; rs2 (signed)</td></tr>
+<tr><td><code>bge rs1, rs2, label</code></td><td>if rs1 >= rs2 (signed)</td></tr>
+<tr><td><code>bltu rs1, rs2, label</code></td><td>if rs1 &lt; rs2 (unsigned)</td></tr>
+<tr><td><code>bgeu rs1, rs2, label</code></td><td>if rs1 >= rs2 (unsigned)</td></tr>
+</table>
+<div class="block note">
+<h4>Pseudo-branches</h4>
+<p><code>beqz rs, label</code> = <code>beq rs, x0, label</code>; <code>bnez</code>, <code>bgt</code>, <code>ble</code>, etc. are also available.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Unconditional jumps</h4>
+</div>
+<table class="tbl">
+<tr><th>Instruction</th><th>Effect</th></tr>
+<tr><td><code>jal rd, offset</code></td><td><code>rd</code> = PC+4; PC += offset</td></tr>
+<tr><td><code>jalr rd, rs1, imm</code></td><td><code>rd</code> = PC+4; PC = rs1 + imm</td></tr>
+</table>
+<div class="block ok">
+<h4>Pseudo-jump forms</h4>
+<table class="tbl" style="margin-top:4px">
+<tr><th>Pseudo</th><th>Expands to</th></tr>
+<tr><td><code>j label</code></td><td><code>jal x0, offset</code></td></tr>
+<tr><td><code>ret</code></td><td><code>jalr x0, 0(ra)</code></td></tr>
+<tr><td><code>call symbol</code></td><td><code>jal ra, offset</code></td></tr>
+<tr><td><code>jr rs</code></td><td><code>jalr x0, 0(rs)</code></td></tr>
+</table>
+</div>
+<div class="block warn">
+<h4>jal vs jalr</h4>
+<p><code>jal</code> uses a <strong>PC-relative offset</strong> (good for nearby code). <code>jalr</code> uses a <strong>register + immediate</strong> (good for indirect calls, returns, function pointers).</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: IF-ELSE IN ASSEMBLY -->
+<div class="slide">
+<h2 class="st">If-Else in Assembly</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>C code</h4>
+</div>
+<pre><code class="language-c">if (a0 > 0)
+    a0 = 1;
+else
+    a0 = 0;</code></pre>
+<div class="block">
+<h4>Equivalent assembly</h4>
+</div>
+<pre><code class="language-asm">    bgt  a0, x0, true   # if a0 > 0, goto true
+    li   a0, 0           # else: a0 = 0
+    j    end            # skip the true branch
+true:
+    li   a0, 1           # a0 = 1
+end:
+    ret</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Pattern: inverted condition</h4>
+<p>Assembly branches on the <strong>condition to skip</strong> the body. The C <code>if (cond) body</code> becomes <code>b!cond, skip; body; skip:</code>.</p>
+</div>
+<div class="block note">
+<h4>Step by step</h4>
+<ol>
+<li><code>bgt a0, x0, true</code> - if <code>a0 &gt; 0</code>, jump to <code>true</code> label.</li>
+<li>If not taken, fall through: <code>li a0, 0</code> (else branch).</li>
+<li><code>j end</code> - skip over the true branch.</li>
+<li><code>true:</code> label - <code>li a0, 1</code>.</li>
+<li><code>end:</code> - both paths converge here, then <code>ret</code>.</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Common mistake</h4>
+<p>Forgetting the <code>j end</code> after the else-body causes fall-through into the true branch - both branches execute!</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 17: LOOPS IN ASSEMBLY -->
+<div class="slide">
+<h2 class="st">Loops in Assembly</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>C code</h4>
+</div>
+<pre><code class="language-c">int sum = 0;
+for (int i = 0; i < n; i++)
+    sum += a[i];</code></pre>
+<div class="block">
+<h4>Equivalent assembly</h4>
+</div>
+<pre><code class="language-asm"># a0 = array ptr, a1 = n
+# s0 = sum, s1 = i, s2 = ptr
+
+    li   s0, 0           # sum = 0
+    li   s1, 0           # i = 0
+    mv   s2, a0          # ptr = a0
+loop:
+    bge  s1, a1, done    # if i >= n, exit
+    lw   t0, 0(s2)       # t0 = *ptr
+    add  s0, s0, t0      # sum += t0
+    addi s2, s2, 4       # ptr++ (4 bytes)
+    addi s1, s1, 1       # i++
+    j    loop            # repeat
+done:
+    mv   a0, s0          # return sum
+    ret</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Loop structure</h4>
+<p>Every loop has three parts:</p>
+<ol>
+<li><strong>Init</strong> - set up counters, pointers, accumulators.</li>
+<li><strong>Condition</strong> - branch <em>out</em> when done (<code>bge</code> here).</li>
+<li><strong>Body + increment</strong> - do work, advance, jump back.</li>
+</ol>
+</div>
+<div class="block note">
+<h4>Pointer arithmetic</h4>
+<p><code>addi s2, s2, 4</code> advances by 4 bytes (one <code>int</code>). For <code>long</code> or pointers (8 bytes), use <code>addi s2, s2, 8</code>.</p>
+</div>
+<div class="block warn">
+<h4>Register choice</h4>
+<p><code>s0</code>, <code>s1</code>, <code>s2</code> are callee-saved - they survive across calls inside the loop. If the loop body calls a function, use <code>s</code> registers for loop variables.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>Inline Assembly in C</h2>
+<p>GCC asm syntax . CSR access . atomic operations</p>
+</div>
+
+<!-- SLIDE 19: GCC INLINE ASSEMBLY -->
+<div class="slide">
+<h2 class="st">GCC Inline Assembly</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Syntax</h4>
+</div>
+<div class="eq-box" style="font-size:clamp(11px,1vw,14px)">
+asm volatile("instruction"<br/>
+&nbsp;&nbsp;: output_operands<br/>
+&nbsp;&nbsp;: input_operands<br/>
+&nbsp;&nbsp;: clobber_list);
+</div>
+<div class="block ok">
+<h4>Operands</h4>
+<ul>
+<li><strong>output</strong> - <code>"=r" (var)</code> means "write result to <code>var</code> via any register."</li>
+<li><strong>input</strong> - <code>"r" (var)</code> means "read <code>var</code> from any register."</li>
+<li><strong>clobber</strong> - <code>"memory"</code> tells the compiler the asm may read/write memory.</li>
+</ul>
+</div>
+<div class="block note">
+<h4>volatile</h4>
+<p>Prevents the compiler from optimizing away or reordering the asm - critical for hardware register access.</p>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Example from xv6 - riscv.h</h4>
+</div>
+<pre><code class="language-c">// Read the satp CSR (page table base)
+static inline uint64
+r_satp()
+{
+  uint64 x;
+  asm volatile("csrr %0, satp"
+               : "=r" (x));
+  return x;
+}</code></pre>
+<div class="block warn">
+<h4>What happens here</h4>
+<ul>
+<li><code>%0</code> is a placeholder for the first operand (<code>x</code>).</li>
+<li><code>"=r" (x)</code> tells GCC: "put the output in <code>x</code>, using any general register."</li>
+<li>The assembler emits <code>csrr &lt;reg&gt;, satp</code>.</li>
+<li><code>volatile</code> ensures the read is not optimized away.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: READING/WRITING CSRs -->
+<div class="slide">
+<h2 class="st">Reading and Writing CSRs</h2>
+<p>CSR = Control and Status Register. These are special registers for privilege, traps, and configuration - accessible only in S-mode or M-mode.</p>
+<div class="cols cols-2">
+<div>
+<table class="tbl">
+<tr><th>Instruction</th><th>Action</th></tr>
+<tr><td><code>csrr rd, csr</code></td><td>Read CSR -> <code>rd</code></td></tr>
+<tr><td><code>csrw csr, rs</code></td><td>Write <code>rs</code> -> CSR</td></tr>
+<tr><td><code>csrrw rd, csr, rs</code></td><td>Read CSR -> <code>rd</code>, then write <code>rs</code> -> CSR</td></tr>
+<tr><td><code>csrrs rd, csr, rs</code></td><td>Read CSR, set bits from <code>rs</code></td></tr>
+<tr><td><code>csrrc rd, csr, rs</code></td><td>Read CSR, clear bits from <code>rs</code></td></tr>
+</table>
+<div class="block note">
+<h4>Pseudo forms</h4>
+<p><code>csrw csr, imm</code> = <code>csrrw x0, csr, imm</code> (write immediate, discard old value).</p>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>xv6 CSR accessor functions</h4>
+<p>These inline-asm wrappers live in <code>riscv.h</code> and are used throughout the kernel:</p>
+</div>
+<table class="tbl">
+<tr><th>Function</th><th>CSR</th><th>Purpose</th></tr>
+<tr><td><code>r_sstatus()</code></td><td><code>sstatus</code></td><td>Supervisor status</td></tr>
+<tr><td><code>w_stvec()</code></td><td><code>stvec</code></td><td>Trap vector address</td></tr>
+<tr><td><code>r_sepc()</code></td><td><code>sepc</code></td><td>Exception PC</td></tr>
+<tr><td><code>r_scause()</code></td><td><code>scause</code></td><td>Trap cause</td></tr>
+<tr><td><code>r_satp()</code></td><td><code>satp</code></td><td>Page table base</td></tr>
+<tr><td><code>r_tp()</code></td><td><code>tp</code></td><td>Thread pointer (hartid)</td></tr>
+</table>
+<div class="block warn">
+<h4>Why inline asm?</h4>
+<p>There is no C operator for "read CSR." Inline asm is the only way to access these from C without dropping to a full assembly file.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: ATOMIC OPERATIONS -->
+<div class="slide">
+<h2 class="st">Atomic Operations</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>Atomic memory operation</h4>
+</div>
+<div class="mono-box">
+<span class="hl">amoswap.w.aq rd, rs, (rs1)</span><br/>
+<span class="g"># atomically:</span><br/>
+<span class="g">#   rd = M[rs1]       (load old)</span><br/>
+<span class="g">#   M[rs1] = rs       (store new)</span><br/>
+<span class="g"># all in one indivisible step</span>
+</div>
+<div class="block ok">
+<h4>Breakdown</h4>
+<ul>
+<li><strong>amo</strong> - atomic memory operation</li>
+<li><strong>swap</strong> - swap register with memory</li>
+<li><strong>.w</strong> - word size (4 bytes)</li>
+<li><strong>.aq</strong> - acquire fence (no later loads/stores move before this)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>xv6 spinlock acquire</h4>
+<p>From <code>spinlock.c</code> - the heart of mutual exclusion:</p>
+</div>
+<pre><code class="language-c">void
+acquire(struct spinlock *lk)
+{
+    push_off();  // disable interrupts
+    while (atomic_swap(&lk->locked, 1) != 0)
+        ;  // spin until we get the lock
+    lk->cpu = mycpu();
+}
+
+static inline int
+atomic_swap(int *addr, int val)
+{
+    int old;
+    asm volatile("amoswap.w.aq %0, %1, (%2)"
+                 : "=r" (old)
+                 : "r" (val), "r" (addr)
+                 : "memory");
+    return old;
+}</code></pre>
+<div class="block note">
+<h4>Why atomic?</h4>
+<p>Without atomicity, two CPUs could both read <code>locked == 0</code> and both write <code>1</code> - a race condition. <code>amoswap</code> makes the load+store indivisible.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 22: SECTION 6 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 6</p>
+<h2>xv6 Assembly Files</h2>
+<p>entry.S . trampoline.S . swtch.S . kernelvec.S</p>
+</div>
+
+<!-- SLIDE 23: XV6 ASSEMBLY FILES OVERVIEW -->
+<div class="slide">
+<h2 class="st">xv6 Assembly Files Overview</h2>
+<table class="tbl">
+<tr><th>File</th><th>Mode</th><th>Purpose</th><th>Key symbols</th></tr>
+<tr>
+<td><code>entry.S</code></td>
+<td>M-mode</td>
+<td>First code to run after QEMU boot. Sets up PMP, stack, switches to S-mode.</td>
+<td><code>_entry</code>, <code>start</code></td>
+</tr>
+<tr>
+<td><code>trampoline.S</code></td>
+<td>S <-> U</td>
+<td>User trap entry (<code>uservec</code>) and exit (<code>userret</code>). Saves/restores user registers via <code>trapframe</code>.</td>
+<td><code>uservec</code>, <code>userret</code></td>
+</tr>
+<tr>
+<td><code>swtch.S</code></td>
+<td>S-mode</td>
+<td>Context switch between kernel threads. Saves/restores callee-saved registers.</td>
+<td><code>swtch</code></td>
+</tr>
+<tr>
+<td><code>kernelvec.S</code></td>
+<td>S-mode</td>
+<td>Kernel trap handler for interrupts/exceptions while in the kernel.</td>
+<td><code>kernelvec</code>, <code>kerneltrap</code></td>
+</tr>
+</table>
+<div class="cols cols-2" style="margin-top:10px">
+<div class="block ok">
+<h4>When each runs</h4>
+<ul>
+<li><code>entry.S</code> - once, at boot</li>
+<li><code>trampoline.S</code> - every user trap (syscall, timer, fault)</li>
+<li><code>swtch.S</code> - every context switch (scheduler)</li>
+<li><code>kernelvec.S</code> - device interrupts while in kernel</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Reading order</h4>
+<p>Start with <code>entry.S</code> (simplest), then <code>swtch.S</code> (short), then <code>trampoline.S</code> (most complex). <code>kernelvec.S</code> is similar to <code>trampoline.S</code> but simpler.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: ENTRY.S WALKTHROUGH -->
+<div class="slide">
+<h2 class="st">entry.S Walkthrough</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code (simplified)</h4>
+</div>
+<pre><code class="language-asm">.section .text.init
+.globl _entry
+_entry:
+    # 1. Read hart ID into tp
+    csrr  t0, mhartid
+
+    # 2. Compute stack for this hart
+    la    sp, stack0
+    li    t1, 4096       # PGSIZE
+    mul   t1, t1, t0
+    add   sp, sp, t1     # sp = stack0 + hartid*PGSIZE
+
+    # 3. Jump to C code (start.c)
+    call  start
+
+spin:
+    wfi
+    j     spin</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Step-by-step</h4>
+<ol>
+<li><strong><code>csrr t0, mhartid</code></strong> - read the hardware thread ID. Each CPU core (hart) gets a unique number.</li>
+<li><strong><code>la sp, stack0</code></strong> - load the base address of the pre-allocated stack array.</li>
+<li><strong><code>mul + add</code></strong> - offset the stack by <code>hartid x PGSIZE</code> so each hart has its own 4 KB stack.</li>
+<li><strong><code>call start</code></strong> - jump to the C function <code>start()</code> in <code>start.c</code>, which configures PMP, delegation, and does <code>mret</code> into S-mode.</li>
+<li><strong><code>wfi</code> + <code>j spin</code></strong> - if <code>start</code> ever returns (it shouldn't), spin forever waiting for interrupts.</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Key details</h4>
+<ul>
+<li>This runs in <strong>M-mode</strong> (machine mode) - the most privileged level.</li>
+<li><code>tp</code> (thread pointer) is set later in <code>start()</code> and used by <code>mycpu()</code>.</li>
+<li>The stack is <strong>per-hart</strong> - multiple CPUs boot simultaneously and must not share a stack.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 25: SWTCH.S WALKTHROUGH -->
+<div class="slide">
+<h2 class="st">swtch.S Walkthrough</h2>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code (simplified)</h4>
+</div>
+<pre><code class="language-asm">.globl swtch
+swtch:
+    # a0 = old context ptr
+    # a1 = new context ptr
+
+    # --- save old context ---
+    sd   ra,  0(a0)
+    sd   sp,  8(a0)
+    sd   s0, 16(a0)
+    sd   s1, 24(a0)
+    # ... s2-s11 ...
+    sd   s11, 96(a0)
+
+    # --- load new context ---
+    ld   ra,  0(a1)
+    ld   sp,  8(a1)
+    ld   s0, 16(a1)
+    ld   s1, 24(a1)
+    # ... s2-s11 ...
+    ld   s11, 96(a1)
+
+    ret   # jump to new ra</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What swtch does</h4>
+<p><code>swtch(old, new)</code> saves the <strong>callee-saved registers</strong> of the currently running thread into <code>old</code>, then loads the callee-saved registers from <code>new</code> and returns.</p>
+</div>
+<div class="block note">
+<h4>Why only callee-saved?</h4>
+<p>Caller-saved registers (<code>t0</code>-<code>t6</code>, <code>a0</code>-<code>a7</code>) are already on the stack or dead at the call site. Only <code>ra</code>, <code>sp</code>, and <code>s0</code>-<code>s11</code> need saving - the compiler guarantees they are live across calls.</p>
+</div>
+<div class="block warn">
+<h4>The magic of ret</h4>
+<p>After loading <code>ra</code> from the <em>new</em> context, <code>ret</code> jumps to <em>that</em> <code>ra</code> - not the original caller. This is how execution "switches" to the new thread. The new thread's <code>ra</code> was saved when <em>it</em> was last switched out.</p>
+</div>
+<div class="block ok">
+<h4>Context = struct context</h4>
+<p>The "context" is just a struct holding <code>ra</code>, <code>sp</code>, and <code>s0</code>-<code>s11</code> - 14 registers x 8 bytes = 112 bytes. Each process has one in its <code>proc</code> struct.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 26: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key Takeaways</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="tiles tiles-2">
+<div class="tile b">
+<h4><i class="fas fa-code"></i> Assembly is the chef's recipe</h4>
+<p>You see exactly what the CPU executes - no abstraction layer. Needed for boot, traps, context switches, and atomic ops.</p>
+</div>
+<div class="tile g">
+<h4><i class="fas fa-handshake"></i> Calling convention is the contract</h4>
+<p>Caller-saved vs callee-saved. Arguments in <code>a0</code>-<code>a7</code>, return in <code>a0</code>, <code>sp</code> 16-byte aligned. Break it and data corrupts.</p>
+</div>
+<div class="tile o">
+<h4><i class="fas fa-layer-group"></i> Stack frames are the workspace</h4>
+<p>Prologue allocates + saves; epilogue restores + deallocates. The stack grows down. <code>fp</code> marks the top, <code>sp</code> the bottom.</p>
+</div>
+<div class="tile r">
+<h4><i class="fas fa-link"></i> Inline asm bridges C and hardware</h4>
+<p>CSR access, atomic operations, and special instructions - all done via <code>asm volatile</code> with output/input/clobber operands.</p>
+</div>
+</div>
+<div class="block note" style="margin-top:14px">
+<h4>What to do next</h4>
+<p>Open <code>entry.S</code>, <code>swtch.S</code>, and <code>trampoline.S</code> in xv6. Trace through them line by line. You now have every concept needed to understand them fully.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 27: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;overflow:auto">
+<div class="ref-item">
+<div class="ref-badge">SPEC</div>
+<div>
+<h4>RISC-V Instruction Set Manual - Volume I: Unprivileged ISA</h4>
+<p>The authoritative reference for RISC-V instructions, registers, and calling convention. <a href="https://riscv.org/technical/specifications/" style="color:var(--blue)">riscv.org/technical/specifications</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">SPEC</div>
+<div>
+<h4>RISC-V ELF psABI - Calling Convention</h4>
+<p>Detailed register usage rules, stack frame layout, and ABI requirements. <a href="https://github.com/riscv-non-isa/riscv-elf-psabi-doc" style="color:var(--blue)">github.com/riscv-non-isa/riscv-elf-psabi-doc</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code</h4>
+<p>MIT 6.S081 teaching OS. Key files: <code>entry.S</code>, <code>trampoline.S</code>, <code>swtch.S</code>, <code>kernelvec.S</code>, <code>riscv.h</code>, <code>spinlock.c</code>. <a href="https://github.com/mit-pdos/xv6-riscv" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">GCC</div>
+<div>
+<h4>GCC Inline Assembly Documentation</h4>
+<p>Extended asm syntax, operand constraints, clobbers, and the <code>volatile</code> qualifier. <a href="https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html" style="color:var(--blue)">gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">BOOK</div>
+<div>
+<h4>R. H. Arpaci-Dusseau and A. C. Arpaci-Dusseau - OSTEP</h4>
+<p>Operating Systems: Three Easy Pieces. Chapters on processes, virtual memory, and concurrency provide the OS context for why these assembly mechanisms exist. <a href="https://pages.cs.wisc.edu/~remzi/OSTEP/" style="color:var(--blue)">pages.cs.wisc.edu/~remzi/OSTEP</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 27</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L03 RISC-V ASSEMBLY</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

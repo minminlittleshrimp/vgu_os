@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OS Overview - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Operating Systems: Overview</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Isolation . System Calls . Processes . fork/exec/wait . xv6</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:780px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"What does an OS actually do, why is isolation the core problem, and how do system calls, fork, exec, and wait form the Unix process model?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: WHAT IS AN OS -->
+<div class="slide">
+<h2 class="st">What is an Operating System?</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- User row -->
+<text class="cl-label" x="40" y="40">USER</text>
+<rect class="cl-tag" x="100" y="20" width="160" height="50" rx="8"/><text class="cl-title" x="180" y="45">shell</text>
+<rect class="cl-tag" x="280" y="20" width="160" height="50" rx="8"/><text class="cl-title" x="360" y="45">compiler</text>
+<rect class="cl-tag" x="460" y="20" width="160" height="50" rx="8"/><text class="cl-title" x="540" y="45">database</text>
+<rect class="cl-tag" x="640" y="20" width="160" height="50" rx="8"/><text class="cl-title" x="720" y="45">your app</text>
+<!-- SVC row -->
+<text class="cl-label" x="40" y="110">SVC</text>
+<rect class="cl-data" x="100" y="90" width="700" height="40" rx="8"/><text class="cl-title" x="450" y="110">System Call Interface (open, read, write, fork, exec, ...)</text>
+<!-- Kernel row -->
+<text class="cl-label" x="40" y="180">KERNEL</text>
+<rect class="cl-box" x="100" y="160" width="160" height="50" rx="8"/><text class="cl-title" x="180" y="185">File system</text>
+<rect class="cl-box" x="280" y="160" width="160" height="50" rx="8"/><text class="cl-title" x="360" y="185">Processes</text>
+<rect class="cl-box" x="460" y="160" width="160" height="50" rx="8"/><text class="cl-title" x="540" y="185">Memory</text>
+<rect class="cl-box" x="640" y="160" width="160" height="50" rx="8"/><text class="cl-title" x="720" y="185">Network</text>
+<!-- HW row -->
+<text class="cl-label" x="40" y="250">HW</text>
+<rect class="cl-bad" x="100" y="230" width="160" height="50" rx="8"/><text class="cl-title" x="180" y="255">CPU</text>
+<rect class="cl-bad" x="280" y="230" width="160" height="50" rx="8"/><text class="cl-title" x="360" y="255">RAM</text>
+<rect class="cl-bad" x="460" y="230" width="160" height="50" rx="8"/><text class="cl-title" x="540" y="255">Disk</text>
+<rect class="cl-bad" x="640" y="230" width="160" height="50" rx="8"/><text class="cl-title" x="720" y="255">NIC</text>
+<!-- Arrows -->
+<path class="cl-arr" d="M180 70 V90" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M360 70 V90" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M540 70 V90" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M720 70 V90" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M180 130 V160" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M360 130 V160" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M540 130 V160" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M720 130 V160" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M180 210 V230" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M360 210 V230" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M540 210 V230" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M720 210 V230" marker-end="url(#a1)"/>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 3: PURPOSE OF AN OS -->
+<div class="slide">
+<h2 class="st">What is the purpose of an OS?</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="block note">
+<p>An OS is like a building manager. It makes sure everyone gets a desk (CPU), a room (memory), and access to the filing cabinet (disk) - without anyone trampling anyone else.</p>
+</div>
+<div class="tiles tiles-2" style="margin-top:12px">
+<div class="tile b"><h4>Multiplex</h4><p>Share hardware among many applications. Time-slice the CPU, partition memory, queue disk requests.</p></div>
+<div class="tile g"><h4>Isolate</h4><p>Protect apps from each other. A bug in one program must not crash the system or steal another's data.</p></div>
+<div class="tile o"><h4>Share</h4><p>Allow controlled data sharing between cooperating applications - pipes, files, shared memory.</p></div>
+<div class="tile r"><h4>Abstract</h4><p>Hide hardware details for portability and convenience. Programs see files, not disk blocks.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: DESIGN TENSIONS -->
+<div class="slide">
+<h2 class="st">Design tensions</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="cols cols-2">
+<div>
+<div class="block warn"><h4>Every design decision is a compromise</h4><p>Different OSes make different choices. There is no "correct" answer - only trade-offs appropriate to the target workload.</p></div>
+<table class="tbl" style="margin-top:10px">
+<tr><th>Goal A</th><th>vs.</th><th>Goal B</th></tr>
+<tr><td>Efficient</td><td><-></td><td>Abstract / portable</td></tr>
+<tr><td>Powerful</td><td><-></td><td>Simple interfaces</td></tr>
+<tr><td>Flexible</td><td><-></td><td>Secure</td></tr>
+<tr><td>Portable</td><td><-></td><td>Exploit new hardware</td></tr>
+</table>
+</div>
+<div>
+<div class="block ok"><h4>Example: system call interface</h4><p>A thin syscall layer (like xv6's 22 syscalls) is simple and portable, but every operation crosses the user/kernel boundary. A thick library OS can batch operations for efficiency, but is harder to reason about.</p></div>
+<div class="block note"><h4>Example: page table granularity</h4><p>4 KB pages (xv6 default) give fine-grained protection but large page tables. 2 MB huge pages reduce table size but waste memory on small allocations.</p></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 5: SECTION BREAK - ISOLATION -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>Isolation: The Core Problem</h2>
+<p>Without it, a bug in one program can crash the entire system</p>
+</div>
+
+<!-- SLIDE 6: WHY ISOLATION -->
+<div class="slide">
+<h2 class="st">Why isolation?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn"><h4>The problem</h4><p>Without isolation, a bug in one program can crash the entire system or steal another program's data.</p></div>
+<div class="block"><h4>Three facets</h4>
+<ul>
+<li><strong>Resource isolation</strong> - one app can't hog all CPU, memory, or disk.</li>
+<li><strong>Memory isolation</strong> - one app can't read or write another app's memory.</li>
+<li><strong>Security</strong> - malicious code can't break out of its sandbox.</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note"><h4>Analogy</h4><p>Imagine a shared apartment where anyone can enter any room, eat anyone's food, and use the bathroom for hours. Chaos. Isolation is giving each person their own locked room.</p></div>
+<div class="block ok"><h4>Hardware support required</h4>
+<ul>
+<li><strong>User/supervisor mode</strong> - user code can't execute privileged instructions.</li>
+<li><strong>Virtual memory</strong> - each process gets its own address space.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 7: STRAWMAN NO OS -->
+<div class="slide">
+<h2 class="st">Strawman: no OS (apps touch hardware directly)</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<rect class="cl-tag" x="100" y="30" width="180" height="60" rx="8"/><text class="cl-title" x="190" y="55">App 1</text><text class="cl-small" x="190" y="72">user program</text>
+<rect class="cl-tag" x="520" y="30" width="180" height="60" rx="8"/><text class="cl-title" x="610" y="55">App 2</text><text class="cl-small" x="610" y="72">user program</text>
+<rect class="cl-bad" x="200" y="170" width="400" height="60" rx="8"/><text class="cl-title" x="400" y="195">CPU, RAM, Disk</text><text class="cl-small" x="400" y="212">raw hardware</text>
+<path class="cl-arr" d="M190 90 V170" marker-end="url(#a2)"/>
+<path class="cl-arr" d="M610 90 V170" marker-end="url(#a2)"/>
+<text class="cl-small" style="fill:#ef4444" x="250" y="130">direct access</text>
+<text class="cl-small" style="fill:#ef4444" x="550" y="130">direct access</text>
+</svg>
+</div>
+<div class="cols cols-2" style="margin-top:8px">
+<div class="block ok"><h4>Pros</h4><p>Efficient and flexible - no overhead, full hardware access.</p></div>
+<div class="block warn"><h4>Cons - no isolation!</h4><p>App 1 can read App 2's memory. App 1 can hog the CPU. App 1 can overwrite the disk. This is why we need a protected kernel.</p></div>
+</div>
+</div>
+
+<!-- SLIDE 8: HARDWARE SUPPORT FOR ISOLATION -->
+<div class="slide">
+<h2 class="st">Hardware support for isolation</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<rect class="cl-tag" x="100" y="20" width="200" height="50" rx="8"/><text class="cl-title" x="200" y="45">User app 1</text>
+<rect class="cl-tag" x="500" y="20" width="200" height="50" rx="8"/><text class="cl-title" x="600" y="45">User app 2</text>
+<rect class="cl-data" x="150" y="110" width="500" height="50" rx="8"/><text class="cl-title" x="400" y="135">Supervisor mode (kernel)</text>
+<rect class="cl-bad" x="150" y="210" width="500" height="50" rx="8"/><text class="cl-title" x="400" y="235">Hardware (CPU, RAM, Disk)</text>
+<path class="cl-arr" d="M200 70 V110" marker-end="url(#a3)"/>
+<path class="cl-arr" d="M600 70 V110" marker-end="url(#a3)"/>
+<path class="cl-arr" d="M400 160 V210" marker-end="url(#a3)"/>
+<text class="cl-small" style="fill:#3b82f6" x="260" y="95">ecall</text>
+<text class="cl-small" style="fill:#3b82f6" x="560" y="95">ecall</text>
+<text class="cl-small" style="fill:#64748b" x="430" y="190">privileged</text>
+</svg>
+</div>
+<div class="block ok" style="margin-top:8px">
+<h4>Key principle</h4>
+<p>Kernel runs in supervisor mode; apps run in user mode. The <strong>only</strong> way to cross the boundary is through <strong>system calls</strong> (the <code>ecall</code> instruction on RISC-V).</p>
+</div>
+</div>
+
+<!-- SLIDE 9: SECTION BREAK - SYSTEM CALLS -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>System Calls</h2>
+<p>The controlled bridge between user and kernel</p>
+</div>
+
+<!-- SLIDE 10: WHAT IS A SYSTEM CALL -->
+<div class="slide">
+<h2 class="st">What is a system call?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block"><h4>Definition</h4><p>A <strong>system call</strong> is a controlled transfer from user mode to kernel mode, allowing user programs to request kernel services.</p></div>
+<div class="block note"><h4>Analogy</h4><p>A system call is like going to the bank teller. You can't walk into the vault yourself. You fill out a form (arguments), hand it to the teller (<code>ecall</code>), the teller does the work in the vault (kernel), and hands you the result (return value).</p></div>
+</div>
+<div>
+<div class="block"><h4>What happens</h4>
+<ul>
+<li>Looks like a function call, but it's a special CPU instruction (<code>ecall</code> on RISC-V).</li>
+<li>The CPU switches to supervisor mode and jumps to a known kernel entry point.</li>
+<li>The kernel validates arguments and performs the operation.</li>
+<li>Return value comes back in register <code>a0</code>.</li>
+</ul>
+</div>
+<div class="block ok"><h4>xv6 syscall numbers (from <code>syscall.h</code>)</h4>
+<p><code>SYS_fork=1</code> . <code>SYS_exit=2</code> . <code>SYS_wait=3</code> . <code>SYS_read=5</code> . <code>SYS_write=16</code> . <code>SYS_exec=7</code> . <code>SYS_open=15</code> . <code>SYS_close=21</code> . <code>SYS_sbrk=12</code> . <code>SYS_pipe=4</code></p>
+</div>
+</div>
+</div>
+
+</div>
+<!-- SLIDE 11: READ AND WRITE EXAMPLE -->
+<div class="slide">
+<h2 class="st">Example: read and write</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">ex1.c - copy input to output</p>
+<pre><code class="language-c">#include "kernel/types.h"
+#include "user/user.h"
+
+int main() {
+    char buf[64];
+    int n;
+    while ((n = read(0, buf, sizeof(buf))) > 0) {
+        write(1, buf, n);
+    }
+    exit(0);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What each call does</h4>
+<ul>
+<li><code>read(fd, buf, n)</code> - read up to <code>n</code> bytes from FD <code>fd</code> into <code>buf</code>.</li>
+<li><code>write(fd, buf, n)</code> - write <code>n</code> bytes from <code>buf</code> to FD <code>fd</code>.</li>
+<li>FD 0 = stdin, FD 1 = stdout.</li>
+<li>Return value: bytes read/written, or <code>-1</code> on error.</li>
+</ul>
+</div>
+<div class="block note"><h4>Behind the scenes</h4><p>Each <code>read()</code> and <code>write()</code> is a stub generated by <code>usys.pl</code>: it loads the syscall number into <code>a7</code>, executes <code>ecall</code>, and returns. The kernel dispatches via <code>syscalls[]</code> array in <code>syscall.c</code>.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: WHAT HAPPENS DURING A SYSCALL -->
+<div class="slide">
+<h2 class="st">What happens during a system call?</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 420" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<rect class="cl-tag" x="340" y="10" width="400" height="40" rx="8"/><text class="cl-title" x="540" y="30">User calls write(fd, buf, n)</text>
+<path class="cl-arr" d="M540 50 V75" marker-end="url(#a4)"/>
+<rect class="cl-data" x="340" y="75" width="400" height="40" rx="8"/><text class="cl-title" x="540" y="95">C stub: a7=SYS_write, a0=fd, a1=buf, a2=n</text>
+<path class="cl-arr" d="M540 115 V140" marker-end="url(#a4)"/>
+<rect class="cl-key" x="340" y="140" width="400" height="40" rx="8"/><text class="cl-title" x="540" y="160">ecall instruction</text>
+<path class="cl-arr" d="M540 180 V205" marker-end="url(#a4)"/>
+<rect class="cl-aad" x="290" y="205" width="500" height="40" rx="8"/><text class="cl-title" x="540" y="225">Hardware: U->S mode, sepc=PC, jump to stvec</text>
+<path class="cl-arr" d="M540 245 V270" marker-end="url(#a4)"/>
+<rect class="cl-box" x="290" y="270" width="500" height="40" rx="8"/><text class="cl-title" x="540" y="290">uservec (trampoline.S): save 32 regs to trapframe</text>
+<path class="cl-arr" d="M540 310 V335" marker-end="url(#a4)"/>
+<rect class="cl-bad" x="290" y="335" width="500" height="40" rx="8"/><text class="cl-title" x="540" y="355">usertrap() -> syscall() -> sys_write() -> kernel I/O</text>
+<path class="cl-arr" d="M540 375 V395" marker-end="url(#a4)" style="stroke-dasharray:4 3"/>
+<text class="cl-small" x="560" y="412">sret -> return to user, a0 = return value</text>
+</svg>
+</div>
+</div>
+
+<!-- SLIDE 13: SECTION BREAK - PROCESSES -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>Processes: fork, exec, wait</h2>
+<p>The Unix process model</p>
+</div>
+
+<!-- SLIDE 14: FORK -->
+<div class="slide">
+<h2 class="st">fork: creating a new process</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">ex3.c - fork a child process</p>
+<pre><code class="language-c">int main() {
+    int pid = fork();
+    if (pid == 0) {
+        // child process
+        printf("I am the child\n");
+    } else {
+        // parent process
+        printf("I am the parent, child pid=%d\n", pid);
+    }
+    exit(0);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What fork() does</h4>
+<ul>
+<li>Creates a <strong>copy</strong> of the calling process.</li>
+<li>Both parent and child continue running from the same point.</li>
+<li><code>fork()</code> returns the child's PID to the parent, and 0 to the child.</li>
+<li>The child gets its own memory space, file descriptors, and PID.</li>
+</ul>
+</div>
+<div class="block ok"><h4>In xv6 source (<code>proc.c</code>)</h4><p><code>kfork()</code> calls <code>allocproc()</code> to get a new <code>struct proc</code>, copies the parent's page table via <code>uvmcopy()</code>, duplicates file descriptors with <code>filedup()</code>, and sets <code>np->state = RUNNABLE</code>.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 15: EXEC -->
+<div class="slide">
+<h2 class="st">exec: running a program</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">ex4.c - replace current process with a program</p>
+<pre><code class="language-c">int main() {
+    char *argv[] = {"echo", "hello", "world", 0};
+    exec("echo", argv);
+    // exec does NOT return if successful!
+    printf("this line never runs\n");
+    exit(0);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What exec() does</h4>
+<ul>
+<li><code>exec(filename, argv)</code> replaces current memory with the program.</li>
+<li>Preserves file descriptors and PID.</li>
+<li>Does <strong>not return</strong> if successful - the old code is gone.</li>
+<li><code>argv</code> is the array of command-line arguments passed to <code>main()</code>.</li>
+</ul>
+</div>
+<div class="block warn"><h4>Why fork + exec (not one call)?</h4><p>Between <code>fork()</code> and <code>exec()</code>, the child can do things - like redirect I/O. This separation gives flexibility.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: SHELL PATTERN -->
+<div class="slide">
+<h2 class="st">The shell pattern: fork + exec + wait</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">ex5.c - the shell pattern</p>
+<pre><code class="language-c">int main() {
+    int pid = fork();
+    if (pid == 0) {
+        // child: run the command
+        char *argv[] = {"ls", 0};
+        exec("ls", argv);
+    } else {
+        // parent: wait for child
+        int status;
+        wait(&status);
+        printf("child exited: %d\n", status);
+    }
+    exit(0);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>What the shell does</h4>
+<ul>
+<li>The shell does this <strong>for every command</strong> you type.</li>
+<li><code>fork()</code> creates child; child calls <code>exec()</code>; parent <code>wait()</code>s.</li>
+<li><code>exit(status)</code> -> <code>wait(&status)</code>: exit status passed to parent.</li>
+<li>Convention: status 0 = success, 1 = error.</li>
+</ul>
+</div>
+<div class="block note"><h4>I/O redirection</h4><p>For <code>echo hello > out</code>: child does <code>close(1); open("out", ...); exec("echo", ...)</code>. <code>open()</code> picks the lowest unused FD - after <code>close(1)</code>, that's FD 1. <code>exec()</code> preserves FDs, so <code>echo</code> writes to the file without knowing it.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 17: PIPES -->
+<div class="slide">
+<h2 class="st">Pipes: connecting processes</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">ex7.c - pipe between processes</p>
+<pre><code class="language-c">int main() {
+    int p[2];
+    pipe(p);          // p[0]=read, p[1]=write
+    int pid = fork();
+    if (pid == 0) {
+        close(p[0]);  // child doesn't read
+        char *argv[] = {"ls", 0};
+        close(1); dup(p[1]);
+        exec("ls", argv);
+    } else {
+        close(p[1]);  // parent doesn't write
+        char *argv[] = {"wc", 0};
+        close(0); dup(p[0]);
+        exec("wc", argv);
+    }
+    exit(0);
+}</code></pre>
+</div>
+<div>
+<div class="block"><h4>How pipes work</h4>
+<ul>
+<li><code>pipe(p)</code> creates a unidirectional data channel.</li>
+<li><code>p[0]</code> = read end, <code>p[1]</code> = write end.</li>
+<li><code>dup()</code> copies an FD to the lowest unused number.</li>
+<li>This is how the shell implements <code>ls | wc</code>.</li>
+</ul>
+</div>
+<div class="block ok"><h4>In xv6 source (<code>pipe.c</code>)</h4><p>A pipe is a 512-byte circular buffer (<code>struct pipe</code>) with <code>nread</code>/<code>nwrite</code> counters. Writers sleep when full (<code>sleep()</code>), readers sleep when empty. <code>wakeup()</code> on each operation.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: SECTION BREAK - XV6 -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>xv6: A Teaching Operating System</h2>
+<p>Small enough to read in a weekend, real enough to boot</p>
+</div>
+
+<!-- SLIDE 19: WHAT IS XV6 -->
+<div class="slide">
+<h2 class="st">What is xv6?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note"><h4>Analogy</h4><p>xv6 is like a teaching version of Unix. It's small enough to read in a weekend, but real enough to boot, run programs, and handle files. It is the "Hello World" of operating systems.</p></div>
+<div class="block"><h4>Facts</h4>
+<ul>
+<li>A <strong>teaching OS</strong> developed at MIT (R. Cox, F. Kaashoek, R. Morris).</li>
+<li>Re-implements Unix 6th edition (1975) for RISC-V.</li>
+<li>~10,000 lines of C + assembly.</li>
+<li>Runs on QEMU emulator.</li>
+<li>Source: <code>kernel/</code>, <code>user/</code>, <code>mkfs/</code>.</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block ok"><h4>Repository</h4><p><code>https://github.com/mit-pdos/xv6-riscv</code></p></div>
+<div class="block"><h4>Key source files</h4>
+<table class="tbl">
+<tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>kernel/proc.c</code></td><td>Process management</td></tr>
+<tr><td><code>kernel/vm.c</code></td><td>Virtual memory</td></tr>
+<tr><td><code>kernel/trap.c</code></td><td>Trap handling</td></tr>
+<tr><td><code>kernel/syscall.c</code></td><td>Syscall dispatch</td></tr>
+<tr><td><code>kernel/fs.c</code></td><td>File system</td></tr>
+<tr><td><code>kernel/file.c</code></td><td>File table</td></tr>
+<tr><td><code>kernel/spinlock.c</code></td><td>Locking</td></tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: BUILDING AND RUNNING -->
+<div class="slide">
+<h2 class="st">Building and running xv6</h2>
+<div class="cols cols-2">
+<div>
+<p class="code-label">Build and run</p>
+<pre><code class="language-bash"># Build everything
+$ make
+
+# Run in QEMU
+$ make qemu
+xv6 kernel is booting
+hart 1 starting
+init: starting sh
+$
+
+# Try some commands
+$ ls
+$ echo hello
+$ cat README
+$ Ctrl-a x    # exit QEMU</code></pre>
+</div>
+<div>
+<div class="block"><h4>What happens</h4>
+<ul>
+<li><code>make</code> compiles kernel + user programs, builds <code>fs.img</code>.</li>
+<li><code>make qemu</code> launches QEMU with the kernel and disk image.</li>
+<li>The shell (<code>sh</code>) starts automatically.</li>
+</ul>
+</div>
+<div class="block note"><h4>Boot sequence</h4><p><code>entry.S</code> (M-mode) -> <code>start.c</code> -> switch to S-mode -> <code>main()</code> -> <code>consoleinit()</code> -> <code>kvminit()</code> -> <code>kvmmake()</code> -> <code>procinit()</code> -> <code>userinit()</code> -> <code>scheduler()</code>.</p></div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key takeaways</h2>
+<div class="tiles tiles-2">
+<div class="tile b"><h4>1. OS = multiplex + isolate + share + abstract</h4><p>The OS manages hardware resources, protects programs from each other, enables controlled sharing, and hides hardware details.</p></div>
+<div class="tile g"><h4>2. Isolation is the core problem</h4><p>Hardware support: user/supervisor mode + virtual memory. System calls are the only bridge.</p></div>
+<div class="tile o"><h4>3. fork + exec + wait = Unix process model</h4><p>fork copies, exec replaces, wait collects. Separation enables I/O redirection.</p></div>
+<div class="tile r"><h4>4. xv6 is our lab</h4><p>~10K lines, RISC-V, real enough to boot. We will read and modify it throughout the course.</p></div>
+</div>
+</div>
+
+<!-- SLIDE 22: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div class="ref-item"><span class="ref-badge">xv6</span><div><h4>xv6: a simple, Unix-like teaching operating system</h4><p>R. Cox, F. Kaashoek, R. Morris, MIT. Source: https://github.com/mit-pdos/xv6-riscv</p></div></div>
+<div class="ref-item"><span class="ref-badge">MIT 6.1810</span><div><h4>Lecture 1: O/S Overview</h4><p>MIT 6.1810 Operating Systems, 2025.</p></div></div>
+<div class="ref-item"><span class="ref-badge">OSTEP</span><div><h4>Operating Systems: Three Easy Pieces</h4><p>R. H. Arpaci-Dusseau and A. C. Arpaci-Dusseau, 2023.</p></div></div>
+<div class="ref-item"><span class="ref-badge">Silberschatz</span><div><h4>Operating System Concepts</h4><p>A. Silberschatz et al., 10th Ed., Wiley, 2018.</p></div></div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 22</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L01 INTRO</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

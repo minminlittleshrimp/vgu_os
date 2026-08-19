@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Interrupts and Drivers - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Interrupts and Drivers</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">Interrupt handling . PLIC . UART driver . console . device I/O</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:820px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"How do hardware interrupts reach the CPU, how does the PLIC route them, how does the UART driver send and receive bytes, and how does the console layer turn raw UART input into readable lines?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>Interrupts Overview</h2>
+<p>What is an interrupt . polling vs interrupt . RISC-V interrupt types</p>
+</div>
+
+<!-- SLIDE 3: WHAT IS AN INTERRUPT -->
+<div class="slide">
+<h2 class="st">What is an Interrupt?</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"An interrupt is like a doorbell. You're working on something, the doorbell rings, you put down your work (save state), answer the door (handle interrupt), then pick up where you left off (restore state)."</p>
+</div>
+<div class="block ok">
+<h4>Definition</h4>
+<p>A <strong>hardware signal</strong> that suspends current execution. The CPU saves state, runs a handler, then resumes.</p>
+</div>
+<div class="block">
+<h4>Three types in xv6</h4>
+<ul>
+<li><strong>External</strong> - device I/O (UART, virtio disk)</li>
+<li><strong>Timer</strong> - periodic clock tick</li>
+<li><strong>Software</strong> - inter-processor (not used in xv6)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>RISC-V: scause high bit</h4>
+<p>When bit 63 of <code>scause</code> is set, the trap is an <strong>interrupt</strong> (not an exception). The remaining bits identify which one.</p>
+</div>
+<div class="mono-box">
+<span class="hl">scause</span> = 0x8000000000000009<br/>
+<span class="g">// bit 63 = 1 -> interrupt</span><br/>
+<span class="g">// bits 0-62 = 9 -> external (PLIC)</span>
+</div>
+<div class="block note">
+<h4>Where it starts</h4>
+<p>All interrupts enter <code>kernelvec</code> (kernel mode) or <code>uservec</code> (user mode), then dispatch to <code>trap.c</code> functions.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: INTERRUPT VS POLLING -->
+<div class="slide">
+<h2 class="st">Interrupt vs Polling</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Polling</h4>
+<p>CPU repeatedly checks device status in a loop. Simple to implement, but <strong>wastes CPU cycles</strong> spinning while waiting.</p>
+</div>
+<pre><code class="language-c">// Polling: spin until device is ready
+while ((ReadReg(LSR) & LSR_TX_IDLE) == 0)
+    ;  // burn CPU cycles</code></pre>
+<div class="block note">
+<h4>When polling is fine</h4>
+<p>Early boot before interrupts are configured, or panic output where you cannot afford to sleep.</p>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>Interrupt</h4>
+<p>Device notifies CPU only when ready. <strong>Efficient</strong> - CPU does other work meanwhile. But more complex: need PLIC, handler, locking.</p>
+</div>
+<pre><code class="language-c">// Interrupt: sleep until woken
+sleep_prepare(&tx_chan);
+if (ReadReg(LSR) & LSR_TX_IDLE) {
+    WriteReg(THR, c);  // send
+} else {
+    sleep();  // yield, no spinning
+}</code></pre>
+<div class="block note">
+<h4>xv6 uses both</h4>
+<p>Interrupts for UART RX and timer. <code>uartputc_sync()</code> uses polling for panic/early boot. <code>uartwrite()</code> uses interrupt-driven sleep.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 5: RISC-V INTERRUPT TYPES -->
+<div class="slide">
+<h2 class="st">RISC-V Interrupt Types</h2>
+<p>From <code>trap.c</code> <code>devintr()</code>: checks <code>scause</code> high bit, then dispatches.</p>
+<table class="tbl">
+<tr><th>scause value</th><th>Type</th><th>Handler</th><th>Source</th></tr>
+<tr>
+<td><code>0x8000000000000009</code></td>
+<td>External (PLIC)</td>
+<td><code>uartintr()</code> or <code>virtio_disk_intr()</code></td>
+<td>UART, virtio disk</td>
+</tr>
+<tr>
+<td><code>0x8000000000000005</code></td>
+<td>Timer</td>
+<td><code>clockintr()</code></td>
+<td>Supervisor timer</td>
+</tr>
+</table>
+<div class="cols cols-2" style="margin-top:10px">
+<div>
+<div class="block ok">
+<h4>devintr() dispatch</h4>
+<pre><code class="language-c">int
+devintr()
+{
+  uint64 scause = r_scause();
+  if ((scause & 0x8000000000000000L) &&
+       scause == 0x8000000000000009L) {
+    int irq = plic_claim();
+    if (irq == UART0_IRQ)
+      uartintr();
+    else if (irq == VIRTIO0_IRQ)
+      virtio_disk_intr();
+    plic_complete(irq);
+    return 1;  // external
+  } else if (scause == 0x8000000000000005L) {
+    clockintr();
+    return 2;  // timer
+  }
+  return 0;
+}</code></pre>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>Return value matters</h4>
+<p><code>devintr()</code> returns <strong>1</strong> for external, <strong>2</strong> for timer, <strong>0</strong> for unknown. The caller (<code>usertrap</code> / <code>kerneltrap</code>) uses this to decide whether to call <code>yield()</code>.</p>
+</div>
+<div class="block warn">
+<h4>Timer -> yield()</h4>
+<p>If <code>which_dev == 2</code> (timer), <code>usertrap()</code> calls <code>yield()</code> to give another process a turn. This is preemptive scheduling.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>PLIC</h2>
+<p>Platform-Level Interrupt Controller . routing external interrupts</p>
+</div>
+
+<!-- SLIDE 7: WHAT IS PLIC -->
+<div class="slide">
+<h2 class="st">What is PLIC?</h2>
+<p>The <strong>Platform-Level Interrupt Controller</strong> routes external interrupts from devices to the CPU. Each device has an IRQ number.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>IRQ numbers (memlayout.h)</h4>
+<table class="tbl">
+<tr><th>Device</th><th>IRQ</th></tr>
+<tr><td>UART0</td><td>10</td></tr>
+<tr><td>VIRTIO0</td><td>1</td></tr>
+</table>
+</div>
+<div class="block note">
+<h4>PLIC base address</h4>
+<p><code>0x0C000000</code> - memory-mapped registers for enable, priority, threshold, claim, and complete.</p>
+</div>
+<div class="block">
+<h4>Key registers</h4>
+<ul>
+<li><strong>Priority</strong> - per-IRQ priority level</li>
+<li><strong>Enable</strong> - bit per IRQ, per hart</li>
+<li><strong>Threshold</strong> - minimum priority to accept</li>
+<li><strong>Claim</strong> - read to get pending IRQ</li>
+<li><strong>Complete</strong> - write to signal done</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="min-height:300px">
+<svg class="clean-svg" viewBox="0 0 460 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="plic-arr" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- Devices -->
+<rect class="cl-data" height="50" rx="8" width="160" x="20" y="40"/>
+<text class="cl-title" x="100" y="65">UART</text>
+<text class="cl-small" x="100" y="80">IRQ 10</text>
+<rect class="cl-data" height="50" rx="8" width="160" x="20" y="120"/>
+<text class="cl-title" x="100" y="145">VIRTIO disk</text>
+<text class="cl-small" x="100" y="160">IRQ 1</text>
+<!-- PLIC -->
+<rect class="cl-key" height="120" rx="10" width="180" x="240" y="45"/>
+<text class="cl-title" x="330" y="80">PLIC</text>
+<text class="cl-small" x="330" y="100">0x0C000000</text>
+<text class="cl-small" x="330" y="120">priority . enable</text>
+<text class="cl-small" x="330" y="138">threshold</text>
+<text class="cl-small" x="330" y="156">claim . complete</text>
+<!-- Arrows to PLIC -->
+<path class="cl-arr" d="M180 65 H240" marker-end="url(#plic-arr)"/>
+<path class="cl-arr" d="M180 145 H240" marker-end="url(#plic-arr)"/>
+<!-- CPU -->
+<rect class="cl-final" height="60" rx="10" width="160" x="250" y="230"/>
+<text class="cl-title" style="fill:#fff" x="330" y="255">CPU (hart)</text>
+<text class="cl-small" style="fill:#aab" x="330" y="275">receives IRQ</text>
+<!-- Arrow PLIC to CPU -->
+<path class="cl-arr" d="M330 165 V230" marker-end="url(#plic-arr)"/>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 8: PLIC FLOW -->
+<div class="slide">
+<h2 class="st">PLIC Interrupt Flow</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 980 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="flow-arr" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<rect class="cl-lane" height="240" rx="16" width="940" x="20" y="20"/>
+<g data-step="1">
+<rect class="cl-data" height="70" rx="10" width="150" x="40" y="105"/>
+<text class="cl-title" x="115" y="130">Device</text>
+<text class="cl-small" x="115" y="150">raises interrupt</text>
+</g>
+<g data-step="2">
+<path class="cl-arr" d="M190 140 H250" marker-end="url(#flow-arr)"/>
+<rect class="cl-key" height="70" rx="10" width="150" x="250" y="105"/>
+<text class="cl-title" x="325" y="130">PLIC</text>
+<text class="cl-small" x="325" y="150">notifies CPU</text>
+</g>
+<g data-step="3">
+<path class="cl-arr" d="M400 140 H460" marker-end="url(#flow-arr)"/>
+<rect class="cl-box" height="70" rx="10" width="170" x="460" y="105"/>
+<text class="cl-title" x="545" y="125">CPU reads claim</text>
+<text class="cl-small" x="545" y="145">-> gets IRQ number</text>
+<text class="cl-small" x="545" y="163">plic_claim()</text>
+</g>
+<g data-step="4">
+<path class="cl-arr" d="M630 140 H690" marker-end="url(#flow-arr)"/>
+<rect class="cl-tag" height="70" rx="10" width="170" x="690" y="105"/>
+<text class="cl-title" x="775" y="125">Dispatch handler</text>
+<text class="cl-small" x="775" y="145">uartintr() or</text>
+<text class="cl-small" x="775" y="163">virtio_disk_intr()</text>
+</g>
+<g data-step="5">
+<rect class="cl-bad" height="50" rx="10" width="800" x="80" y="200"/>
+<text class="cl-title" x="480" y="220">CPU writes complete register</text>
+<text class="cl-small" x="480" y="238">plic_complete(irq) -> PLIC clears interrupt</text>
+</g>
+</svg>
+</div>
+<div class="cols cols-2" style="margin-top:4px">
+<div class="block ok">
+<h4>From trap.c</h4>
+<p><code>plic_claim()</code> reads the claim register and returns the IRQ number. <code>plic_complete(irq)</code> writes the complete register so PLIC can deliver the next interrupt.</p>
+</div>
+<div class="block warn">
+<h4>Must complete</h4>
+<p>If you forget <code>plic_complete()</code>, the PLIC will <strong>never deliver another interrupt</strong> for that device. The claim/complete handshake is mandatory.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 9: PLIC INITIALIZATION -->
+<div class="slide">
+<h2 class="st">PLIC Initialization</h2>
+<p><code>plicinit()</code> in <code>trap.c</code> - called during boot in <code>main()</code>.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+plicinit(void)
+{
+  // Set priority for UART and VIRTIO
+  *(uint32*)(PLIC + UART0_IRQ*4) = 1;
+  *(uint32*)(PLIC + VIRTIO0_IRQ*4) = 1;
+
+  // Enable UART interrupts for hart 0
+  *(uint32*)(PLIC_MENABLE) = (1 &lt;&lt; UART0_IRQ);
+  *(uint32*)(PLIC_SENABLE) = (1 &lt;&lt; UART0_IRQ);
+
+  // Enable VIRTIO interrupts
+  *(uint32*)(PLIC_SENABLE + 4) =
+      (1 &lt;&lt; (VIRTIO0_IRQ % 32));
+
+  // Set threshold for hart 0
+  *(uint32*)(PLIC_STHRESHOLD) = 0;
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What it does</h4>
+<ol>
+<li><strong>Priority</strong> - set to 1 for both UART0 and VIRTIO0 (higher = more urgent)</li>
+<li><strong>Enable</strong> - set the bit for each IRQ in the enable register</li>
+<li><strong>Threshold</strong> - set to 0 (accept all priorities >= 0)</li>
+</ol>
+</div>
+<div class="block note">
+<h4>M-mode vs S-mode</h4>
+<p>xv6 enables interrupts in both M-mode (<code>PLIC_MENABLE</code>) and S-mode (<code>PLIC_SENABLE</code>). The S-mode enable is what matters once the kernel drops to supervisor mode.</p>
+</div>
+<div class="block warn">
+<h4>When it runs</h4>
+<p>Called early in <code>main()</code>, before <code>consoleinit()</code> and before <code>scheduler()</code>. Interrupts are not yet enabled globally (<code>r_sstatus()</code> SIE bit) until later.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 10: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>UART Driver</h2>
+<p>16550a UART . uartinit . uartwrite . uartintr</p>
+</div>
+
+<!-- SLIDE 11: 16550A UART -->
+<div class="slide">
+<h2 class="st">16550a UART</h2>
+<p>From <code>uart.c</code>: UART0 at <code>0x10000000</code>. Memory-mapped registers accessed via <code>ReadReg()</code> / <code>WriteReg()</code>.</p>
+<div class="cols cols-2">
+<div>
+<table class="tbl">
+<tr><th>Register</th><th>Offset</th><th>Purpose</th></tr>
+<tr><td>RHR</td><td>0</td><td>Receive Holding (read byte)</td></tr>
+<tr><td>THR</td><td>0</td><td>Transmit Holding (write byte)</td></tr>
+<tr><td>IER</td><td>1</td><td>Interrupt Enable</td></tr>
+<tr><td>FCR</td><td>2</td><td>FIFO Control</td></tr>
+<tr><td>ISR</td><td>2</td><td>Interrupt Status</td></tr>
+<tr><td>LCR</td><td>3</td><td>Line Control</td></tr>
+<tr><td>LSR</td><td>5</td><td>Line Status</td></tr>
+</table>
+</div>
+<div>
+<div class="block ok">
+<h4>Key status bits</h4>
+<table class="tbl">
+<tr><th>Bit</th><th>Meaning</th></tr>
+<tr><td><code>LSR_RX_READY</code> (1&lt;&lt;0)</td><td>Byte available to read</td></tr>
+<tr><td><code>LSR_TX_IDLE</code> (1&lt;&lt;5)</td><td>Transmit buffer empty</td></tr>
+</table>
+</div>
+<div class="block note">
+<h4>Key interrupt bits</h4>
+<table class="tbl">
+<tr><th>Bit</th><th>Meaning</th></tr>
+<tr><td><code>IER_RX_ENABLE</code> (1&lt;&lt;0)</td><td>Interrupt on receive</td></tr>
+<tr><td><code>IER_TX_ENABLE</code> (1&lt;&lt;1)</td><td>Interrupt on transmit ready</td></tr>
+</table>
+</div>
+<div class="block warn">
+<h4>RHR and THR share offset 0</h4>
+<p>Reading offset 0 gives received data (RHR). Writing offset 0 sends data (THR). The direction of the operation selects which register.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: UARTINIT -->
+<div class="slide">
+<h2 class="st">uartinit()</h2>
+<p>Called from <code>consoleinit()</code> during boot. Configures baud rate, line format, FIFOs, and interrupts.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+uartinit(void)
+{
+  // Disable interrupts
+  WriteReg(IER, 0x00);
+
+  // Baud rate 38.4K: enable DLAB
+  WriteReg(LCR, LCR_BAUD_LATCH);
+
+  // Divisor = 3 (38400 baud)
+  WriteReg(0, 0x03);
+  WriteReg(1, 0x00);
+
+  // 8-bit, no parity
+  WriteReg(LCR, LCR_EIGHT_BITS);
+
+  // Enable FIFOs, clear them
+  WriteReg(FCR,
+    FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
+
+  // Enable RX and TX interrupts
+  WriteReg(IER,
+    IER_RX_ENABLE | IER_TX_ENABLE);
+
+  // Init sleep lock and channel
+  initsleeplock(&tx_lock, "uart");
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Step by step</h4>
+<ol>
+<li><strong>Disable interrupts</strong> - safe to reconfigure while IER = 0</li>
+<li><strong>Baud rate</strong> - set DLAB bit in LCR, write divisor (3 = 38400 baud)</li>
+<li><strong>Line control</strong> - 8 data bits, no parity, 1 stop bit (<code>LCR_EIGHT_BITS</code>)</li>
+<li><strong>FIFOs</strong> - enable and clear both RX and TX FIFOs</li>
+<li><strong>Enable interrupts</strong> - RX (byte received) and TX (transmit ready)</li>
+<li><strong>Lock</strong> - initialize <code>tx_lock</code> sleep lock for <code>uartwrite()</code></li>
+</ol>
+</div>
+<div class="block note">
+<h4>Why a sleep lock?</h4>
+<p><code>uartwrite()</code> may need to wait for the TX buffer to drain. A <strong>sleep lock</strong> lets the process sleep (yield CPU) instead of spinning, while still preventing concurrent access.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: UARTWRITE -->
+<div class="slide">
+<h2 class="st">uartwrite() - Interrupt-Driven Write</h2>
+<p>Blocking write using a sleep lock. Sends <code>n</code> bytes from <code>buf</code>, sleeping when the TX buffer is full.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+uartwrite(char buf[], int n)
+{
+  acquiresleep(&tx_lock);
+  int i = 0;
+  while (i < n) {
+    sleep_prepare(&tx_chan);
+    if (ReadReg(LSR) & LSR_TX_IDLE) {
+      WriteReg(THR, buf[i]);
+      i += 1;
+    } else {
+      sleep();  // yield until TX ready
+    }
+  }
+  releasesleep(&tx_lock);
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>How it works</h4>
+<ol>
+<li><strong>Acquire</strong> the sleep lock - only one writer at a time</li>
+<li><strong>Prepare to sleep</strong> on <code>tx_chan</code> - register as a waiter</li>
+<li>If TX is idle, <strong>write one byte</strong> to THR and advance</li>
+<li>If TX is busy, <strong>sleep</strong> - yield CPU until <code>uartintr()</code> wakes us</li>
+<li><strong>Release</strong> the lock when done</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Why not spin?</h4>
+<p>Spinning wastes CPU while the UART slowly transmits each byte. Sleeping lets other processes run. The TX interrupt (<code>uartintr()</code>) calls <code>wakeup(&tx_chan)</code> when the buffer drains.</p>
+</div>
+<div class="block note">
+<h4>Sleep lock, not spinlock</h4>
+<p>A spinlock would disable interrupts - but <code>uartwrite</code> <em>needs</em> interrupts to fire so <code>uartintr</code> can wake it. Sleep locks do not disable interrupts.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: UARTPUTC_SYNC -->
+<div class="slide">
+<h2 class="st">uartputc_sync() - Polling Write</h2>
+<p>Non-interrupt spinning write. Used for <strong>panic</strong> and <strong>early boot</strong> when interrupts may not work.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+uartputc_sync(int c)
+{
+  if (panicking == 0)
+    push_off();  // disable interrupts
+
+  // Spin until TX buffer is empty
+  while ((ReadReg(LSR) & LSR_TX_IDLE) == 0)
+    ;
+
+  // Send the byte
+  WriteReg(THR, c);
+
+  if (panicking == 0)
+    pop_off();  // restore interrupt state
+}</code></pre>
+</div>
+<div>
+<div class="block warn">
+<h4>When to use this</h4>
+<ul>
+<li><strong>Panic</strong> - interrupts may be broken; must not sleep</li>
+<li><strong>Early boot</strong> - before <code>uartinit()</code> sets up interrupts</li>
+<li><strong>Console during init</strong> - before sleep locks are ready</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>push_off / pop_off</h4>
+<p>These manage a <strong>nested interrupt-disable counter</strong>. If we are already in a context with interrupts off (e.g., holding a spinlock), <code>push_off</code> remembers that and <code>pop_off</code> restores the original state.</p>
+</div>
+<div class="block note">
+<h4>Why not sleep?</h4>
+<p>During panic, the scheduler may be corrupted. Calling <code>sleep()</code> could deadlock forever. Polling guarantees the byte goes out, even if nothing else works.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 15: UARTINTR -->
+<div class="slide">
+<h2 class="st">uartintr() - Interrupt Handler</h2>
+<p>Called from <code>devintr()</code> when PLIC delivers a UART interrupt. Handles both RX and TX.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+uartintr(void)
+{
+  // Read ISR to acknowledge
+  ReadReg(ISR);
+
+  // If TX is idle, wake the sender
+  if (ReadReg(LSR) & LSR_TX_IDLE)
+    wakeup(&tx_chan);
+
+  // Drain all received bytes
+  while (1) {
+    int c = uartgetc();
+    if (c == -1)
+      break;
+    consoleintr(c);  // pass to console
+  }
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>Two jobs</h4>
+<ol>
+<li><strong>TX wakeup</strong> - if the transmit buffer is now idle, wake any process sleeping in <code>uartwrite()</code> on <code>tx_chan</code></li>
+<li><strong>RX drain</strong> - read all available bytes from RHR and pass each to <code>consoleintr(c)</code></li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Acknowledge first</h4>
+<p>Reading <code>ISR</code> (Interrupt Status Register) acknowledges the interrupt at the UART level. Without this, the UART keeps asserting the interrupt line.</p>
+</div>
+<div class="block note">
+<h4>Drain the FIFO</h4>
+<p>The <code>while(1)</code> loop reads until <code>uartgetc()</code> returns <code>-1</code> (no more data). This handles multiple bytes queued in the RX FIFO from a single interrupt.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>Console Driver</h2>
+<p>Console layer . input flow . consoleread . consolewrite</p>
+</div>
+
+<!-- SLIDE 17: CONSOLE LAYER -->
+<div class="slide">
+<h2 class="st">Console Layer</h2>
+<p>From <code>console.c</code>: the console sits between user-space <code>read()</code>/<code>write()</code> syscalls and the UART hardware.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>Console buffer</h4>
+<pre><code class="language-c">struct cons {
+  spinlock lock;
+  char buf[128];  // input buffer
+  uint r;          // read index
+  uint w;          // write index
+  uint e;          // edit index
+} cons;</code></pre>
+</div>
+<div class="block note">
+<h4>consoleinit()</h4>
+<pre><code class="language-c">void
+consoleinit(void)
+{
+  initlock(&cons.lock, "cons");
+  uartinit();
+  devsw[CONSOLE].read  = consoleread;
+  devsw[CONSOLE].write = consolewrite;
+}</code></pre>
+</div>
+</div>
+<div>
+<div class="block">
+<h4>Device number</h4>
+<p><code>CONSOLE = 1</code> - the major device number. When a process opens <code>/dev/console</code> (or fd 0/1/2), the kernel uses <code>devsw[CONSOLE]</code> to dispatch reads and writes.</p>
+</div>
+<div class="block warn">
+<h4>Two directions</h4>
+<ul>
+<li><strong>Input</strong> - UART RX -> <code>uartintr()</code> -> <code>consoleintr(c)</code> -> <code>cons.buf</code> -> <code>consoleread()</code> -> user space</li>
+<li><strong>Output</strong> - user space -> <code>consolewrite()</code> -> <code>uartwrite()</code> -> UART TX</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>Locking</h4>
+<p><code>cons.lock</code> is a <strong>spinlock</strong> protecting the circular buffer. It is held briefly during <code>consoleintr</code> and <code>consoleread</code> buffer operations.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: CONSOLE INPUT FLOW -->
+<div class="slide">
+<h2 class="st">Console Input Flow</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 980 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="cin-arr" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<rect class="cl-lane" height="220" rx="16" width="940" x="20" y="20"/>
+<g data-step="1">
+<rect class="cl-data" height="60" rx="10" width="130" x="40" y="100"/>
+<text class="cl-title" x="105" y="120">UART RX</text>
+<text class="cl-small" x="105" y="140">hardware</text>
+</g>
+<g data-step="2">
+<path class="cl-arr" d="M170 130 H220" marker-end="url(#cin-arr)"/>
+<rect class="cl-key" height="60" rx="10" width="130" x="220" y="100"/>
+<text class="cl-title" x="285" y="120">uartintr()</text>
+<text class="cl-small" x="285" y="140">interrupt handler</text>
+</g>
+<g data-step="3">
+<path class="cl-arr" d="M350 130 H400" marker-end="url(#cin-arr)"/>
+<rect class="cl-box" height="60" rx="10" width="130" x="400" y="100"/>
+<text class="cl-title" x="465" y="120">uartgetc()</text>
+<text class="cl-small" x="465" y="140">read RHR</text>
+</g>
+<g data-step="4">
+<path class="cl-arr" d="M530 130 H580" marker-end="url(#cin-arr)"/>
+<rect class="cl-tag" height="60" rx="10" width="140" x="580" y="100"/>
+<text class="cl-title" x="650" y="120">consoleintr(c)</text>
+<text class="cl-small" x="650" y="140">edit + store</text>
+</g>
+<g data-step="5">
+<path class="cl-arr" d="M720 130 H770" marker-end="url(#cin-arr)"/>
+<rect class="cl-aad" height="60" rx="10" width="140" x="770" y="100"/>
+<text class="cl-title" x="840" y="120">cons.buf</text>
+<text class="cl-small" x="840" y="140">wakeup(&cons.r)</text>
+</g>
+<g data-step="6">
+<rect fill="#fffbeb" height="36" rx="8" stroke="#f59e0b" width="800" x="80" y="185"/>
+<text class="cl-title" style="font-size:11.5px;fill:#92400e" x="480" y="203">On newline/EOF: wakeup(&cons.r) -> consoleread() unblocks and copies to user space</text>
+</g>
+</svg>
+</div>
+<div class="cols cols-2" style="margin-top:4px">
+<div>
+<div class="block ok">
+<h4>consoleintr() handles special keys</h4>
+<ul>
+<li><code>C('P')</code> = Ctrl-P -> <code>procdump()</code></li>
+<li><code>C('U')</code> = Ctrl-U -> kill line</li>
+<li><code>C('H')</code> / <code>\x7f</code> -> backspace</li>
+<li>Default -> echo + store in <code>cons.buf</code></li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<h4>Line discipline</h4>
+<p>The console does <strong>line editing</strong>: it buffers input until newline or EOF, then wakes <code>consoleread()</code>. This is a simple in-kernel line discipline.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 19: CONSOLEREAD -->
+<div class="slide">
+<h2 class="st">consoleread()</h2>
+<p>Called when a user process calls <code>read()</code> on the console fd. Blocks until a full line is available.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code (simplified)</h4>
+</div>
+<pre><code class="language-c">int
+consoleread(int user_dst, uint64 dst, int n)
+{
+  uint target = n;
+  acquire(&cons.lock);
+  while (cons.r == cons.w) {
+    if (myproc()->killed) {
+      release(&cons.lock);
+      return -1;
+    }
+    sleep(&cons.r, &cons.lock);
+  }
+  // Copy from cons.buf to user space
+  for (int i = 0; i < n && cons.r != cons.w; i++) {
+    char c = cons.buf[cons.r++ % 128];
+    if (copyout(...) == -1) break;
+    if (c == '\n') { i++; break; }
+  }
+  release(&cons.lock);
+  return i;
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>How it works</h4>
+<ol>
+<li><strong>Acquire</strong> <code>cons.lock</code></li>
+<li>If buffer is empty (<code>r == w</code>), <strong>sleep</strong> on <code>&cons.r</code></li>
+<li>When woken (by <code>consoleintr</code> after newline), <strong>copy</strong> bytes from <code>cons.buf</code> to user space via <code>copyout()</code></li>
+<li>Stop at newline or when <code>n</code> bytes copied</li>
+<li><strong>Release</strong> lock and return byte count</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>Sleep with lock</h4>
+<p><code>sleep(&cons.r, &cons.lock)</code> atomically releases the lock while sleeping and reacquires it before returning. This prevents <code>consoleintr</code> from writing while we read.</p>
+</div>
+<div class="block note">
+<h4>Killed check</h4>
+<p>If the process is killed while waiting, <code>consoleread</code> returns <code>-1</code> immediately. Without this check, a killed process would hang forever in <code>sleep()</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: CONSOLEWRITE -->
+<div class="slide">
+<h2 class="st">consolewrite()</h2>
+<p>Called when a user process calls <code>write()</code> on the console fd. Copies data from user space and sends to UART.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code (simplified)</h4>
+</div>
+<pre><code class="language-c">int
+consolewrite(int user_src, uint64 src, int n)
+{
+  int i;
+  for (i = 0; i < n; i++) {
+    char c;
+    // Copy byte from user space
+    if (either_copyin(
+        &c, user_src, src+i, 1) == -1)
+      break;
+    uartputc(c);
+  }
+  return i;
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>How it works</h4>
+<ol>
+<li>Loop over each byte requested</li>
+<li><strong>Copy</strong> one byte from user (or kernel) space via <code>either_copyin()</code></li>
+<li>Send it to UART via <code>uartputc()</code> (which calls <code>uartwrite</code> internally)</li>
+<li>Return number of bytes written</li>
+</ol>
+</div>
+<div class="block warn">
+<h4>No line buffering on output</h4>
+<p>Unlike input (which buffers until newline), <strong>output goes straight to UART</strong>. There is no output line discipline - bytes are sent as soon as possible.</p>
+</div>
+<div class="block note">
+<h4>either_copyin</h4>
+<p>Handles both user-space and kernel-space source addresses. This lets <code>consolewrite</code> work whether called from a syscall (user buffer) or from kernel code (e.g., <code>printf</code>).</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>Timer Interrupts</h2>
+<p>clockintr . preemptive scheduling . yield</p>
+</div>
+
+<!-- SLIDE 22: TIMER INTERRUPT -->
+<div class="slide">
+<h2 class="st">Timer Interrupt</h2>
+<p>From <code>trap.c</code> <code>clockintr()</code>: fires periodically, drives the tick counter and wakes sleepers.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Code</h4>
+</div>
+<pre><code class="language-c">void
+clockintr()
+{
+  // Increment tick counter
+  ticks++;
+
+  // Wake up all sleep()ers
+  wakeup(&ticks);
+
+  // Schedule next timer interrupt
+  w_stimecmp(r_time() + 1000000);
+}</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>What it does</h4>
+<ol>
+<li><strong>Increment</strong> <code>ticks</code> - global tick counter</li>
+<li><strong>Wakeup</strong> - wake any process sleeping on <code>&ticks</code> (e.g., <code>sleep()</code> syscall)</li>
+<li><strong>Reschedule</strong> - set next timer via <code>w_stimecmp(r_time() + 1000000)</code></li>
+</ol>
+</div>
+<div class="block warn">
+<h4>scause = 0x8000000000000005</h4>
+<p>This is the supervisor timer interrupt. <code>devintr()</code> returns <strong>2</strong> for timer, which tells <code>usertrap()</code> to call <code>yield()</code>.</p>
+</div>
+<div class="block note">
+<h4>stimecmp</h4>
+<p><code>w_stimecmp()</code> writes the <code>stimecmp</code> CSR. When <code>r_time()</code> reaches this value, the next timer interrupt fires. The <code>1000000</code> is the tick interval (in QEMU's clock units).</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 23: PREEMPTIVE SCHEDULING -->
+<div class="slide">
+<h2 class="st">Preemptive Scheduling</h2>
+<p>The timer interrupt is what makes xv6 <strong>preemptive</strong>. Without it, a process could run forever.</p>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap" style="min-height:280px">
+<svg class="clean-svg" viewBox="0 0 460 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ps-arr" markerHeight="7" markerWidth="7" orient="auto-start-reverse" refX="8" refY="5" viewBox="0 0 10 10"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<g data-step="1">
+<rect class="cl-data" height="50" rx="8" width="200" x="130" y="20"/>
+<text class="cl-title" x="230" y="45">Timer interrupt fires</text>
+</g>
+<g data-step="2">
+<path class="cl-arr" d="M230 70 V90" marker-end="url(#ps-arr)"/>
+<rect class="cl-key" height="50" rx="8" width="200" x="130" y="90"/>
+<text class="cl-title" x="230" y="115">usertrap() -> yield()</text>
+</g>
+<g data-step="3">
+<path class="cl-arr" d="M230 140 V160" marker-end="url(#ps-arr)"/>
+<rect class="cl-aad" height="50" rx="8" width="200" x="130" y="160"/>
+<text class="cl-title" x="230" y="185">sched() -> swtch()</text>
+</g>
+<g data-step="4">
+<path class="cl-arr" d="M230 210 V230" marker-end="url(#ps-arr)"/>
+<rect class="cl-tag" height="50" rx="8" width="200" x="130" y="230"/>
+<text class="cl-title" x="230" y="255">scheduler() picks next</text>
+</g>
+<g data-step="5">
+<path class="cl-arr" d="M230 280 V300" marker-end="url(#ps-arr)"/>
+<rect class="cl-final" height="40" rx="8" width="200" x="130" y="290"/>
+<text class="cl-title" style="fill:#fff" x="230" y="310">new process runs</text>
+</g>
+</svg>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>The chain</h4>
+<p>Timer -> <code>yield()</code> -> <code>sched()</code> -> <code>swtch()</code> -> <code>scheduler()</code> -> next process. This happens <strong>every tick</strong>, giving each process a time slice.</p>
+</div>
+<div class="block warn">
+<h4>Without timer interrupts</h4>
+<p>A CPU-bound process that never calls <code>yield()</code> voluntarily would <strong>monopolize the CPU</strong>. No other process would ever run. The timer interrupt forces preemption.</p>
+</div>
+<div class="block note">
+<h4>Cooperative vs preemptive</h4>
+<p>If scheduling only happened when processes voluntarily yield, it would be <strong>cooperative</strong>. The timer makes xv6 <strong>preemptive</strong> - the OS takes control back regardless of what the process is doing.</p>
+</div>
+<div class="block">
+<h4>which_dev == 2</h4>
+<p>In <code>usertrap()</code>, after handling the trap, if <code>which_dev == 2</code> (timer), the kernel calls <code>yield()</code>. Other interrupts (<code>which_dev == 1</code>) do not trigger a yield.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: SECTION 6 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 6</p>
+<h2>Device Switch</h2>
+<p>devsw table . device files . everything is a file</p>
+</div>
+
+<!-- SLIDE 25: DEVSW -->
+<div class="slide">
+<h2 class="st">devsw - Device Switch Table</h2>
+<p>From <code>file.h</code>: a table of function pointers that dispatches <code>read</code>/<code>write</code> to the right driver.</p>
+<div class="cols cols-2e">
+<div>
+<div class="block">
+<h4>Definition</h4>
+</div>
+<pre><code class="language-c">struct devsw {
+  int (*read)(int, uint64, int);
+  int (*write)(int, uint64, int);
+};
+
+struct devsw devsw[NDEV];
+
+// In consoleinit():
+devsw[CONSOLE].read  = consoleread;
+devsw[CONSOLE].write = consolewrite;</code></pre>
+</div>
+<div>
+<div class="block ok">
+<h4>How it is used</h4>
+<p>In <code>fileread()</code> and <code>filewrite()</code>, when the file type is <code>FD_DEVICE</code>:</p>
+<pre><code class="language-c">// fileread()
+if (f->type == FD_DEVICE) {
+  return devsw[f->major].read(
+      f->minor, addr, n);
+}
+
+// filewrite()
+if (f->type == FD_DEVICE) {
+  return devsw[f->major].write(
+      f->minor, addr, n);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="block note" style="margin-top:8px">
+<h4>Major and minor</h4>
+<p><strong>Major</strong> selects the driver (index into <code>devsw[]</code>). <strong>Minor</strong> selects a sub-device (passed as the first argument to the driver's read/write). For the console, major = <code>CONSOLE</code> (1), minor = 0.</p>
+</div>
+</div>
+
+<!-- SLIDE 26: DEVICE FILES -->
+<div class="slide">
+<h2 class="st">Device Files</h2>
+<p>The Unix <strong>"everything is a file"</strong> model: devices are accessed through the same <code>open</code>/<code>read</code>/<code>write</code> interface as regular files.</p>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>mknod()</h4>
+<p>Creates a device file in the filesystem:</p>
+<pre><code class="language-c">mknod("/dev/console",
+      1, 0);
+//        ^  ^
+//   major  minor</code></pre>
+<p>This creates a file whose inode records major=1 (CONSOLE), minor=0.</p>
+</div>
+<div class="block note">
+<h4>open()</h4>
+<p>When <code>open()</code> sees a device file, it returns a file descriptor with <code>type = FD_DEVICE</code> and stores the major/minor numbers.</p>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>read() / write() dispatch</h4>
+<ol>
+<li><code>read(fd, buf, n)</code> -> <code>fileread()</code></li>
+<li><code>fileread()</code> checks <code>f->type == FD_DEVICE</code></li>
+<li>Calls <code>devsw[f->major].read(f->minor, ...)</code></li>
+<li>For console: <code>consoleread()</code></li>
+</ol>
+</div>
+<div class="block ok">
+<h4>Why this matters</h4>
+<p>User programs do not need to know about UART, PLIC, or console buffers. They just call <code>read()</code> and <code>write()</code>. The kernel dispatches to the right driver transparently.</p>
+</div>
+<div class="block note">
+<h4>Extensibility</h4>
+<p>To add a new device, implement <code>read</code>/<code>write</code> functions and register them in <code>devsw[]</code>. No changes to <code>fileread</code>/<code>filewrite</code> needed.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 27: SUMMARY -->
+<div class="slide">
+<h2 class="st">Key Takeaways</h2>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+<div class="tiles tiles-2">
+<div class="tile b">
+<h4><i class="fas fa-bell"></i> Interrupts = doorbell</h4>
+<p>Hardware signals that suspend execution. Three types: external (PLIC), timer, software. <code>scause</code> bit 63 set for interrupts.</p>
+</div>
+<div class="tile g">
+<h4><i class="fas fa-route"></i> PLIC routes interrupts</h4>
+<p>Devices -> PLIC -> CPU. Claim register gets IRQ, complete register clears it. <code>plic_claim()</code> / <code>plic_complete()</code> in <code>trap.c</code>.</p>
+</div>
+<div class="tile o">
+<h4><i class="fas fa-terminal"></i> UART driver = two modes</h4>
+<p><code>uartwrite()</code> sleeps on TX interrupt. <code>uartputc_sync()</code> polls for panic/boot. <code>uartintr()</code> handles RX + TX wakeup.</p>
+</div>
+<div class="tile r">
+<h4><i class="fas fa-clock"></i> Timer = preemption</h4>
+<p><code>clockintr()</code> increments ticks, wakes sleepers, reschedules. <code>yield()</code> -> <code>sched()</code> -> <code>swtch()</code> gives each process a time slice.</p>
+</div>
+<div class="tile p">
+<h4><i class="fas fa-file-alt"></i> Everything is a file</h4>
+<p><code>devsw[]</code> dispatches <code>read</code>/<code>write</code> to drivers by major number. <code>mknod()</code> creates device files. User code sees only <code>read()</code>/<code>write()</code>.</p>
+</div>
+<div class="tile b">
+<h4><i class="fas fa-layer-group"></i> Console = line discipline</h4>
+<p><code>consoleintr()</code> buffers input until newline. <code>consoleread()</code> blocks until a line is ready. <code>consolewrite()</code> sends straight to UART.</p>
+</div>
+</div>
+<div class="block note" style="margin-top:14px">
+<h4>What to do next</h4>
+<p>Open <code>trap.c</code>, <code>uart.c</code>, and <code>console.c</code> in xv6. Trace the full path: a keypress -> UART RX -> PLIC -> <code>devintr</code> -> <code>uartintr</code> -> <code>consoleintr</code> -> <code>cons.buf</code> -> <code>consoleread</code> -> user <code>read()</code> returns.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 28: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div style="flex:1;overflow:auto">
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - uart.c</h4>
+<p>16550a UART driver: <code>uartinit</code>, <code>uartwrite</code>, <code>uartputc_sync</code>, <code>uartintr</code>, <code>uartgetc</code>. Register definitions and <code>ReadReg</code>/<code>WriteReg</code> macros. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/uart.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/uart.c</a></p>
+</div>
+</div>
+<div class="ref-item" style="border-left-color:var(--green)">
+<div class="ref-badge" style="background:var(--green)">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - console.c</h4>
+<p>Console driver: <code>consoleinit</code>, <code>consoleread</code>, <code>consolewrite</code>, <code>consoleintr</code>. Line editing, <code>cons.buf</code> circular buffer, special key handling. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/console.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/console.c</a></p>
+</div>
+</div>
+<div class="ref-item" style="border-left-color:var(--orange)">
+<div class="ref-badge" style="background:var(--orange)">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - trap.c</h4>
+<p>Trap dispatch: <code>usertrap</code>, <code>kerneltrap</code>, <code>devintr</code>, <code>clockintr</code>, <code>plicinit</code>, <code>plic_claim</code>, <code>plic_complete</code>. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/trap.c" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/trap.c</a></p>
+</div>
+</div>
+<div class="ref-item">
+<div class="ref-badge">xv6</div>
+<div>
+<h4>xv6-riscv Source Code - file.h, memlayout.h</h4>
+<p><code>struct devsw</code> definition, <code>FD_DEVICE</code> type, <code>CONSOLE</code> major number. PLIC and UART0 base addresses and IRQ numbers. <a href="https://github.com/mit-pdos/xv6-riscv/blob/master/kernel/file.h" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv/kernel/file.h</a></p>
+</div>
+</div>
+<div class="ref-item" style="border-left-color:#7C3AED">
+<div class="ref-badge" style="background:#7C3AED">MIT</div>
+<div>
+<h4>MIT 6.1810 (6.S081) - Operating System Engineering</h4>
+<p>Course materials, lecture notes, and lab assignments. xv6-riscv is the teaching OS used throughout the course. <a href="https://pdos.csail.mit.edu/6.828/2024/xv6.html" style="color:var(--blue)">pdos.csail.mit.edu/6.828</a></p>
+</div>
+</div>
+<div class="ref-item" style="border-left-color:var(--mid)">
+<div class="ref-badge" style="background:var(--mid)">SPEC</div>
+<div>
+<h4>RISC-V Instruction Set Manual - Volume II: Privileged Architecture</h4>
+<p>Supervisor interrupts, <code>scause</code> encoding, <code>stimecmp</code>, PLIC specification. <a href="https://riscv.org/technical/specifications/" style="color:var(--blue)">riscv.org/technical/specifications</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 28</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L08 INTERRUPTS AND DRIVERS</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>

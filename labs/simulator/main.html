@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGU OS Lab - Compiler Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="topbar">
+  <h1>VGU OS Lab</h1>
+  <span class="subtitle">Compiler Explorer</span>
+  <div class="spacer"></div>
+  <span style="font-size:11px;color:#94a3b8">Powered by godbolt.org API</span>
+</div>
+
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar">
+  <div class="ctrl-group">
+    <label>Lang</label>
+    <select id="lang-select">
+      <option value="c">C</option>
+      <option value="c++">C++</option>
+      <option value="riscv-asm">RISC-V ASM</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Compiler</label>
+    <select id="compiler-select"></select>
+  </div>
+  <div class="ctrl-group">
+    <label>Flags</label>
+    <input type="text" class="flags-input" id="flags-input" value="-O2" placeholder="-O2 -Wall">
+  </div>
+  <div class="ctrl-group">
+    <label>Example</label>
+    <select id="example-select">
+      <option value="">-- Select --</option>
+    </select>
+  </div>
+  <div class="spacer" style="flex:1"></div>
+  <button class="btn btn-primary" id="btn-compile">Compile</button>
+  <button class="btn btn-run" id="btn-run" style="display:none">Run</button>
+  <button class="btn" id="btn-clear">Clear</button>
+</div>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<div class="main">
+  <div class="content">
+
+    <!-- LEFT: Source Editor -->
+    <div class="pane pane-left">
+      <div class="pane-header">
+        <span class="dot"></span>
+        <span id="editor-label">Source (C)</span>
+      </div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea id="editor" spellcheck="false" wrap="off"></textarea>
+      </div>
+    </div>
+
+    <!-- RIGHT: Output -->
+    <div class="pane">
+      <div class="output-tabs">
+        <div class="tab active" data-tab="assembly">Assembly</div>
+        <div class="tab" data-tab="output">Output</div>
+        <div class="tab" data-tab="registers" style="display:none">Registers</div>
+        <div class="tab" data-tab="info">Info</div>
+      </div>
+      <div class="output-pane" id="tab-assembly"></div>
+      <div class="output-pane hidden" id="tab-output"></div>
+      <div class="output-pane hidden" id="tab-registers" style="display:none"></div>
+      <div class="output-pane hidden" id="tab-info"></div>
+    </div>
+
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span class="status-dot" id="status-dot"></span>
+    <span id="status-text">Ready</span>
+    <span style="flex:1"></span>
+    <span id="compile-time"></span>
+    <span id="step-count" style="display:none"></span>
+    <span id="exit-code"></span>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="riscv.js"></script>
+<script src="examples.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 6: File System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item active" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 13: File-System Interface</div>
+      <a class="nav-item" data-target="sec-13-1"><span class="nav-num">13.1</span>File Concept</a>
+      <a class="nav-item" data-target="sec-13-2"><span class="nav-num">13.2</span>Access Methods</a>
+      <a class="nav-item" data-target="sec-13-3"><span class="nav-num">13.3</span>Directory Structure</a>
+      <a class="nav-item" data-target="sec-13-4"><span class="nav-num">13.4</span>Protection</a>
+      <a class="nav-item" data-target="sec-13-5"><span class="nav-num">13.5</span>Memory-Mapped Files</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 14: File-System Implementation</div>
+      <a class="nav-item" data-target="sec-14-1"><span class="nav-num">14.1</span>File-System Structure</a>
+      <a class="nav-item" data-target="sec-14-2"><span class="nav-num">14.2</span>File-System Operations</a>
+      <a class="nav-item" data-target="sec-14-3"><span class="nav-num">14.3</span>Directory Implementation</a>
+      <a class="nav-item" data-target="sec-14-4"><span class="nav-num">14.4</span>Allocation Methods</a>
+      <a class="nav-item" data-target="sec-14-5"><span class="nav-num">14.5</span>Free-Space Management</a>
+      <a class="nav-item" data-target="sec-14-6"><span class="nav-num">14.6</span>Efficiency and Performance</a>
+      <a class="nav-item" data-target="sec-14-7"><span class="nav-num">14.7</span>Recovery</a>
+      <a class="nav-item" data-target="sec-14-8"><span class="nav-num">14.8</span>WAFL File System</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 15: File-System Internals</div>
+      <a class="nav-item" data-target="sec-15-1"><span class="nav-num">15.1</span>File Systems</a>
+      <a class="nav-item" data-target="sec-15-2"><span class="nav-num">15.2</span>File-System Mounting</a>
+      <a class="nav-item" data-target="sec-15-3"><span class="nav-num">15.3</span>Partitions and Mounting</a>
+      <a class="nav-item" data-target="sec-15-4"><span class="nav-num">15.4</span>File Sharing</a>
+      <a class="nav-item" data-target="sec-15-5"><span class="nav-num">15.5</span>Virtual File Systems</a>
+      <a class="nav-item" data-target="sec-15-6"><span class="nav-num">15.6</span>Remote File Systems</a>
+      <a class="nav-item" data-target="sec-15-7"><span class="nav-num">15.7</span>Consistency Semantics</a>
+      <a class="nav-item" data-target="sec-15-8"><span class="nav-num">15.8</span>NFS</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 6: File System</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 13–15 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers the file-system interface,
+file-system implementation, allocation methods, free-space management, recovery,
+virtual file systems, and network file systems.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-13-1">13.1 File Concept</a></li>
+<li><a href="#sec-13-2">13.2 Access Methods</a></li>
+<li><a href="#sec-13-3">13.3 Directory Structure</a></li>
+<li><a href="#sec-13-4">13.4 Protection</a></li>
+<li><a href="#sec-13-5">13.5 Memory-Mapped Files</a></li>
+<li><a href="#sec-14-1">14.1 File-System Structure</a></li>
+<li><a href="#sec-14-2">14.2 File-System Operations</a></li>
+<li><a href="#sec-14-3">14.3 Directory Implementation</a></li>
+<li><a href="#sec-14-4">14.4 Allocation Methods</a></li>
+<li><a href="#sec-14-5">14.5 Free-Space Management</a></li>
+<li><a href="#sec-14-6">14.6 Efficiency and Performance</a></li>
+<li><a href="#sec-14-7">14.7 Recovery</a></li>
+<li><a href="#sec-14-8">14.8 WAFL File System</a></li>
+<li><a href="#sec-15-1">15.1 File Systems</a></li>
+<li><a href="#sec-15-2">15.2 File-System Mounting</a></li>
+<li><a href="#sec-15-3">15.3 Partitions and Mounting</a></li>
+<li><a href="#sec-15-4">15.4 File Sharing</a></li>
+<li><a href="#sec-15-5">15.5 Virtual File Systems</a></li>
+<li><a href="#sec-15-6">15.6 Remote File Systems</a></li>
+<li><a href="#sec-15-7">15.7 Consistency Semantics</a></li>
+<li><a href="#sec-15-8">15.8 NFS</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-13-1">13.1 File Concept</h2>
+
+<p>A <strong>file</strong> is a named collection of related information recorded on
+secondary storage. From the user's perspective, a file is the smallest logical unit of
+data that the OS manages. The OS maps files to physical blocks on the storage device,
+hiding the details of sectors, tracks, and cylinders from the user. Files are used to
+store programs (source code, executables), data (documents, databases, images), and
+metadata (configuration, logs).</p>
+
+<p>A file has <strong>attributes</strong> (also called <em>metadata</em>) that describe
+it. These attributes are stored in the file's directory entry or inode and are managed by
+the OS. Common attributes include:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Attribute</th><th>Description</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>Name</td><td>Human-readable name</td><td>report.pdf</td></tr>
+<tr><td>Identifier</td><td>Unique file ID (inode number)</td><td>12345</td></tr>
+<tr><td>Type</td><td>File type (extension or magic number)</td><td>PDF, ELF, JPEG</td></tr>
+<tr><td>Size</td><td>Current size in bytes</td><td>1,048,576</td></tr>
+<tr><td>Protection</td><td>Access permissions</td><td>rwxr-xr-x</td></tr>
+<tr><td>Timestamps</td><td>Creation, modification, access time</td><td>2026-08-16 14:30</td></tr>
+<tr><td>Owner</td><td>User who owns the file</td><td>alice</td></tr>
+<tr><td>Location</td><td>Physical location on device</td><td>Block 1024–2048</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>File <strong>types</strong> are often indicated by the file extension (e.g.,
+<code class="code-inline">.txt</code>, <code class="code-inline">.c</code>,
+<code class="code-inline">.jpg</code>). Windows relies heavily on extensions to determine
+how to handle files. Unix-like systems use extensions as a hint but also examine the
+file's <strong>magic number</strong>—a specific byte sequence at the beginning of the file
+that identifies its format. For example, an ELF executable starts with
+<code class="code-inline">0x7f ELF</code>, a JPEG starts with
+<code class="code-inline">0xFF 0xD8</code>, and a PDF starts with
+<code class="code-inline">%PDF</code>. The <code class="code-inline">file</code> command on
+Linux uses a database of magic numbers to identify file types.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ File Structure</div>
+<p>Some OSes (notably older systems like VMS and some mainframe OSes) support
+<strong>structured files</strong> with records and fields. Unix and Windows use
+<strong>unstructured files</strong>—a file is simply a sequence of bytes, and the
+application is responsible for interpreting the structure. This is more flexible: a text
+file, a database, and an image are all just byte sequences. The OS does not need to
+understand the format.</p>
+</div>
+
+<p>File <strong>operations</strong> are the basic actions the OS provides for manipulating
+files: <code class="code-inline">create</code> (make a new file),
+<code class="code-inline">open</code> (prepare a file for access, returning a file
+descriptor), <code class="code-inline">read</code> (read data from the file),
+<code class="code-inline">write</code> (write data to the file),
+<code class="code-inline">seek</code> (move the file position),
+<code class="code-inline">close</code> (release the file descriptor), and
+<code class="code-inline">delete</code> (remove the file). The
+<code class="code-inline">open()</code> operation is important: it loads the file's metadata
+into memory, checks permissions, and returns a <strong>file descriptor</strong> (a small
+integer) that subsequent operations use to refer to the file.</p>
+
+<p>In xv6, files are represented by the <code class="code-inline">struct file</code> in
+<code class="code-inline">kernel/file.h</code>. The
+<code class="code-inline">filealloc()</code>, <code class="code-inline">fileread()</code>,
+<code class="code-inline">filewrite()</code>, and
+<code class="code-inline">fileclose()</code> functions in
+<code class="code-inline">kernel/file.c</code> implement the basic file operations. The
+<code class="code-inline">sysfile.c</code> file contains the system call implementations
+(<code class="code-inline">sys_open</code>, <code class="code-inline">sys_read</code>, etc.).
+Files are unstructured byte sequences, following the Unix model.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-13-2">13.2 Access Methods</h2>
+
+<p>File <strong>access methods</strong> define how a process reads from and writes to a
+file. The two primary methods are <strong>sequential access</strong> and
+<strong>direct access</strong> (also called <em>random access</em>).</p>
+
+<p><strong>Sequential access</strong> is the simplest: information in the file is processed
+in order, one record (or byte) after another. A <code class="code-inline">read</code>
+operation reads the next portion of the file and advances the file pointer automatically.
+A <code class="code-inline">write</code> appends to the end of the file. This model is
+natural for text files, logs, and tape storage. Early file systems (and tape drives)
+supported only sequential access.</p>
+
+<p><strong>Direct access</strong> (random access) allows a process to read or write any
+block of the file directly, without reading all preceding blocks. The process specifies a
+block number (or byte offset), and the file system reads or writes that block. This is
+essential for databases, indexed files, and any application that needs to access specific
+records quickly. Modern file systems support both sequential and direct access via the
+<code class="code-inline">lseek()</code> system call, which moves the file pointer to an
+arbitrary position.</p>
+
+<div class="code-block"><span class="comment">/* Sequential vs. direct access */</span>
+
+<span class="comment">// Sequential: read file from start to end</span>
+<span class="label">fd = open("log.txt", O_RDONLY);</span>
+<span class="keyword">while</span> (read(fd, buf, 1024) > 0)
+  process(buf);
+
+<span class="comment">// Direct: read block 42</span>
+<span class="label">fd = open("database.db", O_RDONLY);</span>
+lseek(fd, 42 * BLOCK_SIZE, SEEK_SET);  <span class="comment">// jump to block 42</span>
+read(fd, buf, BLOCK_SIZE);
+
+<span class="comment">// Direct: read record at offset 0x1A000</span>
+lseek(fd, 0x1A000, SEEK_SET);
+read(fd, &record, sizeof(record));</div>
+
+<p>Some systems support an <strong>indexed access method</strong>, where an
+<strong>index</strong> is maintained for the file, allowing the process to look up a record
+by key. The index maps keys to block numbers, enabling fast lookup. This is the basis of
+<strong>indexed sequential access method</strong> (ISAM), used in early database systems.
+Modern databases build their own indexes on top of the file system's direct access
+capability, so the OS does not need to provide indexed access directly.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 lseek() and Random Access</div>
+<p>The <code class="code-inline">lseek()</code> system call is the key to random access. It
+sets the file offset to a specified position, and subsequent
+<code class="code-inline">read()</code> or <code class="code-inline">write()</code>
+operations start from that position. <code class="code-inline">lseek(fd, 0, SEEK_SET)</code>
+rewinds to the beginning; <code class="code-inline">lseek(fd, 0, SEEK_END)</code> moves to
+the end. <code class="code-inline">lseek(fd, -100, SEEK_END)</code> moves 100 bytes before
+the end. This enables efficient access to any part of the file.</p>
+</div>
+
+<p>In xv6, both sequential and direct access are supported. The
+<code class="code-inline">sys_lseek</code> system call (if implemented) or the file offset
+in <code class="code-inline">struct file</code> allows random access. The
+<code class="code-inline">fileread()</code> and
+<code class="code-inline">filewrite()</code> functions in
+<code class="code-inline">kernel/file.c</code> use the file offset to determine where to
+read or write, and they advance the offset after each operation. This is the standard Unix
+model.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-13-3">13.3 Directory Structure</h2>
+
+<p>A <strong>directory</strong> (or <em>folder</em>) is a collection of directory entries,
+each describing a file or subdirectory. The directory structure organizes files into a
+hierarchy, making it easier for users to find and manage files. Without directories, all
+files would be in a single flat namespace, which is unmanageable for systems with
+thousands or millions of files.</p>
+
+<p>The simplest directory structure is the <strong>single-level directory</strong>: all
+files are in one directory. This is simple but does not scale: file names must be unique,
+and there is no way to group related files. Early personal computers (CP/M) used this
+model.</p>
+
+<p>A <strong>two-level directory</strong> has a separate directory for each user. The
+<em>master file directory</em> (MFD) lists user directories, and each
+<em>user file directory</em> (UFD) lists that user's files. This solves the naming conflict
+problem (two users can have a file named <code class="code-inline">report.txt</code>) but
+does not allow users to organize files into subdirectories.</p>
+
+<p>The <strong>tree-structured directory</strong> is the most common: directories can
+contain files and subdirectories, forming a tree. The root directory is at the top, and
+each file has a <strong>path name</strong> that describes its location, such as
+<code class="code-inline">/home/alice/docs/report.pdf</code>. This allows users to organize
+files hierarchically and avoids naming conflicts (two files can have the same name if they
+are in different directories).</p>
+
+<div class="code-block"><span class="comment">/* Tree-structured directory */</span>
+
+<span class="comment">// Path: /home/alice/docs/report.pdf</span>
+<span class="comment">//   /</span>
+<span class="comment">//   ├── home/</span>
+<span class="comment">//   │   ├── alice/</span>
+<span class="comment">//   │   │   ├── docs/</span>
+<span class="comment">//   │   │   │   └── report.pdf</span>
+<span class="comment">//   │   │   └── photos/</span>
+<span class="comment">//   │   └── bob/</span>
+<span class="comment">//   │       └── ...</span>
+<span class="comment">//   └── etc/</span>
+<span class="comment">//       └── passwd</span>
+
+<span class="comment">// Absolute path: starts from root (/)</span>
+<span class="comment">// Relative path: relative to current directory</span>
+<span class="comment">//   "docs/report.pdf" (if cwd is /home/alice)</span>
+<span class="comment">//   "../bob" (parent directory)</span>
+<span class="comment">//   "." (current directory)</span></div>
+
+<p>Path names can be <strong>absolute</strong> (starting from the root, e.g.,
+<code class="code-inline">/home/alice/docs</code>) or <strong>relative</strong> (relative to
+the current working directory, e.g., <code class="code-inline">docs/report.pdf</code>).
+The special names <code class="code-inline">.</code> (current directory) and
+<code class="code-inline">..</code> (parent directory) allow navigation. The OS maintains
+the <strong>current working directory</strong> (cwd) for each process, used as the base
+for relative paths.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Acyclic-Graph vs. Tree</div>
+<p>A tree structure does not allow a file or directory to appear in two places. An
+<strong>acyclic-graph</strong> directory structure allows <strong>shared</strong> files
+and directories via <strong>links</strong>. Unix supports two types of links:
+<strong>hard links</strong> (multiple directory entries pointing to the same inode) and
+<strong>symbolic links</strong> (a special file containing the path to another file).
+Hard links cannot cross file systems or link to directories; symbolic links can. Windows
+supports symbolic links and <strong>junctions</strong> (similar to hard links for
+directories).</p>
+</div>
+
+<p>The <strong>directory operations</strong> include:
+<code class="code-inline">create</code> (create a new directory),
+<code class="code-inline">delete</code> (remove an empty directory),
+<code class="code-inline">opendir</code> / <code class="code-inline">readdir</code>
+(enumerate directory entries), <code class="code-inline">rename</code>,
+<code class="code-inline">link</code> (create a hard link),
+<code class="code-inline">unlink</code> (remove a directory entry), and
+<code class="code-inline">symlink</code> (create a symbolic link). The
+<code class="code-inline">readdir()</code> operation is used by commands like
+<code class="code-inline">ls</code> to list directory contents.</p>
+
+<p>In xv6, the directory structure is a tree. Directories are represented as special files
+containing <code class="code-inline">struct dirent</code> entries (defined in
+<code class="code-inline">kernel/fs.h</code>), each with an inode number and a name. The
+<code class="code-inline">namei()</code> function in
+<code class="code-inline">kernel/fs.c</code> resolves a path name to an inode, traversing
+the directory tree. The <code class="code-inline">dirlink()</code> function creates a
+directory entry (hard link). xv6 does not support symbolic links. The root directory is
+inode 1 (the <code class="code-inline">ROOTINO</code> constant).</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-13-4">13.4 Protection</h2>
+
+<p><strong>Protection</strong> in the context of file systems refers to the mechanisms that
+control which users can access which files and what operations they can perform. Protection
+is essential in multi-user systems to ensure that users cannot read or modify each other's
+files without permission, and that system files are protected from unauthorized
+modification.</p>
+
+<p>The most common protection model is <strong>access control</strong> based on
+<strong>permissions</strong>. In Unix-like systems, each file has an <strong>owner</strong>
+(a user), a <strong>group</strong>, and a set of permission bits for three classes:
+<strong>owner</strong> (user), <strong>group</strong>, and <strong>others</strong>
+(world). For each class, there are three permissions: <strong>read</strong> (r),
+<strong>write</strong> (w), and <strong>execute</strong> (x). This is represented as a
+9-bit mode, displayed as <code class="code-inline">rwxr-xr-x</code> (owner: rwx, group:
+r-x, others: r-x).</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Permission</th><th>For Files</th><th>For Directories</th></tr>
+</thead>
+<tbody>
+<tr><td>Read (r)</td><td>Read file contents</td><td>List directory contents</td></tr>
+<tr><td>Write (w)</td><td>Modify file contents</td><td>Create/delete files in directory</td></tr>
+<tr><td>Execute (x)</td><td>Run as program</td><td>Enter directory (cd, access by name)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Directory Permissions</div>
+<p>Directory permissions are subtle. <strong>Read</strong> permission on a directory allows
+listing its contents (e.g., <code class="code-inline">ls</code>). <strong>Execute</strong>
+permission allows accessing files in the directory by name (e.g.,
+<code class="code-inline">cat dir/file</code>) and using it as a working directory
+(<code class="code-inline">cd dir</code>). A directory with <code class="code-inline">--x</code>
+permissions allows accessing known files by name but not listing the directory. This is
+used for "blind drop" directories where users can deposit files but not see what others
+have deposited.</p>
+</div>
+
+<p>Unix also supports <strong>setuid</strong>, <strong>setgid</strong>, and
+<strong>sticky</strong> bits. The <strong>setuid</strong> bit on an executable means it
+runs with the privileges of the file's owner, not the user who runs it. This is how
+<code class="code-inline">passwd</code> works: it runs as root to modify
+<code class="code-inline">/etc/passwd</code>. The <strong>setgid</strong> bit on a directory
+means new files in it inherit the directory's group. The <strong>sticky</strong> bit on a
+directory (e.g., <code class="code-inline">/tmp</code>) means only the file's owner (or
+root) can delete files, even if the directory is world-writable.</p>
+
+<p>An alternative to permission bits is <strong>Access Control Lists</strong> (ACLs). An
+ACL is a list of entries, each specifying a user or group and the permissions granted to
+them. ACLs are more fine-grained than the owner/group/other model: you can grant specific
+permissions to specific users. POSIX ACLs (on Linux) and NTFS ACLs (on Windows) support
+this. For example, an ACL can grant user <code class="code-inline">bob</code> read-write
+access to a file owned by <code class="code-inline">alice</code>, without giving access to
+the entire group.</p>
+
+<div class="code-block"><span class="comment">/* Permission models */</span>
+
+<span class="comment">// Unix permission bits (9 bits)</span>
+<span class="label">rwxr-xr--</span>
+<span class="comment">//  owner: rwx (7), group: r-x (5), other: r-- (4)</span>
+<span class="comment">//  chmod 754 file</span>
+
+<span class="comment">// ACL (POSIX)</span>
+<span class="label">user::rwx</span>
+<span class="label">group::r-x</span>
+<span class="label">other::r--</span>
+<span class="label">user:bob:rwx      </span><span class="comment">// extra: bob gets rwx</span>
+<span class="label">group:devs:rw-     </span><span class="comment">// extra: devs group gets rw</span>
+
+<span class="comment">// Windows NTFS ACL</span>
+<span class="label">ACL:</span>
+  Alice: FullControl
+  Bob: ReadAndExecute
+  Everyone: Read</div>
+
+<p>Another model is <strong>capability-based</strong> protection, where a process holds a
+<strong>capability</strong> (an unforgeable token) that grants specific rights to a file.
+Capabilities are more flexible than ACLs (a process can pass a capability to another
+process) but are more complex to implement. The <strong>file descriptor</strong> in Unix
+is a simple form of capability: it grants the holder the right to perform the operations
+allowed at <code class="code-inline">open()</code> time.</p>
+
+<p>In xv6, protection is minimal. The file system stores permission bits in the inode
+(<code class="code-inline">struct dinode</code> in
+<code class="code-inline">kernel/fs.h</code>), but xv6 does not enforce them—there is no
+concept of users or groups. All processes run with full privileges. The
+<code class="code-inline">chmod</code> system call exists but does not restrict access.
+Adding user-based protection to xv6 would require: (1) a user database, (2) a current-user
+field in the process structure, (3) permission checks in
+<code class="code-inline">open()</code>, <code class="code-inline">read()</code>, and
+<code class="code-inline">write()</code>, and (4) a <code class="code-inline">setuid</code>
+mechanism. This is a common advanced xv6 exercise.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-13-5">13.5 Memory-Mapped Files</h2>
+
+<p><strong>Memory-mapped I/O</strong> (or <strong>memory-mapped files</strong>) is a
+technique that maps a file into a process's virtual address space. Instead of using
+<code class="code-inline">read()</code> and <code class="code-inline">write()</code> system
+calls to access the file, the process accesses the file's data by reading and writing
+memory. The OS handles paging file data in and out of memory transparently, using the
+virtual memory system.</p>
+
+<p>The <code class="code-inline">mmap()</code> system call (POSIX) creates a memory mapping.
+It takes a file descriptor, an offset, a length, and protection flags, and returns a
+pointer to the mapped region. After mapping, the process can read and write the mapped
+memory as if it were an array, and the OS ensures that the memory reflects the file's
+contents. Changes can be written back to the file with
+<code class="code-inline">msync()</code> or when the mapping is removed with
+<code class="code-inline">munmap()</code>.</p>
+
+<div class="code-block"><span class="comment">/* Memory-mapped file (POSIX mmap) */</span>
+
+<span class="label">int fd = open("data.bin", O_RDWR);</span>
+<span class="label">void *map = mmap(NULL, file_size, PROT_READ | PROT_WRITE,</span>
+<span class="label">                     MAP_SHARED, fd, 0);</span>
+
+<span class="comment">// Access file data as memory</span>
+<span class="label">struct record *rec = (struct record *)map;</span>
+<span class="keyword">for</span> (int i = 0; i < n; i++) {
+  printf("%d: %s\n", rec[i].id, rec[i].name);
+  rec[i].modified = 1;  <span class="comment">// writes to file</span>
+}
+
+<span class="comment">// Flush changes to file</span>
+<span class="label">msync(map, file_size, MS_SYNC);</span>
+
+<span class="comment">// Unmap</span>
+<span class="label">munmap(map, file_size);</span>
+<span class="label">close(fd);</span></div>
+
+<p>Memory-mapped files have several advantages over
+<code class="code-inline">read()</code>/<code class="code-inline">write()</code>:</p>
+
+<ul>
+<li><strong>No system call overhead:</strong> After the initial
+<code class="code-inline">mmap()</code>, accessing the file is a simple memory access—no
+system call is needed for each read or write.</li>
+<li><strong>No data copy:</strong> The file data is mapped directly into the process's
+address space. With <code class="code-inline">read()</code>, data is copied from the kernel
+buffer cache to the user buffer; with <code class="code-inline">mmap()</code>, the same
+physical page is used.</li>
+<li><strong>Lazy loading:</strong> The OS loads only the pages that are actually accessed
+(demand paging), not the entire file. This is efficient for large files where only a small
+portion is used.</li>
+<li><strong>Sharing:</strong> Multiple processes can map the same file with
+<code class="code-inline">MAP_SHARED</code>, enabling efficient inter-process communication.
+Writes by one process are visible to others.</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ MAP_SHARED vs. MAP_PRIVATE</div>
+<p><code class="code-inline">MAP_SHARED</code> means changes to the mapped memory are
+written back to the file and are visible to other processes mapping the same file.
+<code class="code-inline">MAP_PRIVATE</code> uses <strong>copy-on-write</strong>: changes
+are not written to the file and are private to the process. <code class="code-inline">MAP_PRIVATE</code>
+is useful for loading executables (the code segment is shared, but data modifications are
+private) and for using a file as a template.</li>
+</div>
+
+<p>Memory-mapped files are used extensively in modern systems. The dynamic linker
+(<code class="code-inline">ld.so</code>) maps shared libraries into a process's address
+space. Database engines (e.g., SQLite, LMDB) use
+<code class="code-inline">mmap()</code> to access database files. The
+<code class="code-inline">exec()</code> system call uses
+<code class="code-inline">mmap()</code> to load the executable and its libraries. The
+<code class="code-inline">sendfile()</code> system call is related: it transfers data
+between file descriptors without copying through user space, using a similar zero-copy
+mechanism.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ mmap Pitfalls</div>
+<p><code class="code-inline">mmap()</code> has some pitfalls: (1) <strong>alignment</strong>—the
+offset must be page-aligned; (2) <strong>file growth</strong>—if the file grows beyond the
+mapped region, accessing the new area causes a fault; (3) <strong>signal</strong>—if the
+file is truncated, accessing the truncated region raises a <code class="code-inline">SIGBUS</code>
+signal; (4) <strong>consistency</strong>—with <code class="code-inline">MAP_SHARED</code>,
+there is no guarantee of when writes are flushed to disk; use
+<code class="code-inline">msync()</code> for durability.</p>
+</div>
+
+<p>In xv6, <code class="code-inline">mmap()</code> is not implemented. All file access is via
+<code class="code-inline">read()</code> and <code class="code-inline">write()</code>, which
+copy data between kernel buffers and user space. Implementing
+<code class="code-inline">mmap()</code> in xv6 would require: (1) a system call that creates
+a VMA (virtual memory area) mapping a file, (2) modifying the page-fault handler to load
+file pages on demand, (3) handling <code class="code-inline">MAP_SHARED</code> write-back,
+and (4) <code class="code-inline">munmap()</code> to remove mappings. This is a significant
+but instructive project that ties together the file system and virtual memory subsystems.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-1">14.1 File-System Structure</h2>
+
+<p>A file system is organized into <strong>layers</strong>, each providing a specific
+abstraction. The layered design allows each layer to be implemented and modified
+independently, as long as it respects the interface of the layer below. The typical
+layers are:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Layer</th><th>Function</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td>Application</td><td>User programs</td><td>cp, ls, text editor</td></tr>
+<tr><td>System calls</td><td>open(), read(), write()</td><td>POSIX API</td></tr>
+<tr><td>VFS</td><td>Uniform interface to multiple FS</td><td>Linux VFS</td></tr>
+<tr><td>File system</td><td>Maps files to blocks</td><td>ext4, NTFS, FAT</td></tr>
+<tr><td>I/O subsystem</td><td>Buffering, caching, scheduling</td><td>buffer cache</td></tr>
+<tr><td>Device driver</td><td>Device-specific commands</td><td>NVMe, SATA driver</td></tr>
+<tr><td>Hardware</td><td>Physical device</td><td>SSD, HDD</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>At the lowest level, the file system sees the storage device as a sequence of
+<strong>blocks</strong> (or sectors). The file system organizes these blocks into a
+structure that supports files and directories. A typical on-disk layout includes:</p>
+
+<ul>
+<li><strong>Boot block:</strong> Contains bootstrap code (at a fixed location, e.g., sector
+0). The BIOS/UEFI loads this and transfers control to it.</li>
+<li><strong>Superblock:</strong> Contains metadata about the file system: type, size, block
+size, number of free blocks, location of the inode table, etc. This is the "master record"
+of the file system.</li>
+<li><strong>Inode table:</strong> An array of <strong>inodes</strong> (index nodes), each
+describing a file. An inode contains file metadata (size, timestamps, permissions) and
+pointers to data blocks.</li>
+<li><strong>Data blocks:</strong> The bulk of the device, holding file data. These are
+allocated to files as needed.</li>
+<li><strong>Free-space management:</strong> A bitmap or list tracking which blocks are free.</li>
+</ul>
+
+<div class="code-block"><span class="comment">/* Typical file system on-disk layout */</span>
+
+<span class="comment">//  +-----------+-----------+---------+----------+---------+</span>
+<span class="comment">//  | Boot blk  | Superblk  | Inodes  | Free map | Data    |</span>
+<span class="comment">//  | (1 blk)   | (1 blk)   | (N blk) | (M blk)  | (rest)  |</span>
+<span class="comment">//  +-----------+-----------+---------+----------+---------+</span>
+
+<span class="comment">// xv6 layout (kernel/fs.h):</span>
+<span class="label">#define BSIZE 512</span>
+<span class="label">#define SBLOCK 1</span>      <span class="comment">// superblock at block 1</span>
+<span class="label">#define ROOTINO 1</span>     <span class="comment">// root directory inode</span>
+
+<span class="label">struct superblock:</span>
+  magic        <span class="comment">// file system magic number</span>
+  size         <span class="comment">// size of file system in blocks</span>
+  nblocks      <span class="comment">// number of data blocks</span>
+  ninodes      <span class="comment">// number of inodes</span>
+  nlog         <span class="comment">// log blocks for crash recovery</span>
+  logstart     <span class="comment">// block number of log</span>
+  inodestart   <span class="comment">// block number of inode table</span>
+  bmapstart    <span class="comment">// block number of free bitmap</span></div>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Inode vs. Directory Entry</div>
+<p>An <strong>inode</strong> describes a file's metadata and data block locations. A
+<strong>directory entry</strong> (dirent) maps a name to an inode number. Multiple
+directory entries (hard links) can point to the same inode. The inode has a
+<strong>link count</strong> that tracks how many directory entries point to it; the file
+is deleted when the link count reaches zero. This separation of name (directory entry)
+from file (inode) is a key design of Unix file systems.</p>
+</div>
+
+<p>The file system must maintain <strong>consistency</strong> despite crashes. If the
+system crashes while the file system is updating metadata (e.g., allocating a block), the
+file system may be left in an inconsistent state. Modern file systems use
+<strong>journaling</strong> (a write-ahead log) to ensure consistency: metadata changes
+are first written to a journal, then applied to the file system. If a crash occurs, the
+journal is replayed to complete or undo the operation. xv6 uses a simple log
+(<code class="code-inline">kernel/log.c</code>) for this purpose.</p>
+
+<p>In xv6, the file system structure is defined in
+<code class="code-inline">kernel/fs.h</code>. The superblock is at block 1, followed by
+the log, the inode table, the free bitmap, and data blocks. The
+<code class="code-inline">readsb()</code> function reads the superblock, and
+<code class="code-inline">iget()</code> reads an inode. The
+<code class="code-inline">balloc()</code> and
+<code class="code-inline">bfree()</code> functions manage the free bitmap. This is a
+classic Unix-like file system layout, simplified for teaching.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-2">14.2 File-System Operations</h2>
+
+<p>The file system provides a set of operations that the OS uses to manage files and
+directories. These operations are implemented by the file system code and are called by
+the VFS layer in response to system calls. Understanding these operations is essential
+for understanding how file systems work.</p>
+
+<p>The core file operations include:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Operation</th><th>Description</th><th>xv6 Function</th></tr>
+</thead>
+<tbody>
+<tr><td>alloc_inode</td><td>Create a new inode (file)</td><td>ialloc()</td></tr>
+<tr><td>free_inode</td><td>Free an inode</td><td>ifree()</td></tr>
+<tr><td>read_inode</td><td>Load inode from disk</td><td>iget() / ilock()</td></tr>
+<tr><td>write_inode</td><td>Write inode to disk</td><td>iupdate()</td></tr>
+<tr><td>alloc_block</td><td>Allocate a data block</td><td>balloc()</td></tr>
+<tr><td>free_block</td><td>Free a data block</td><td>bfree()</td></tr>
+<tr><td>read_block</td><td>Read a data block</td><td>bread()</td></tr>
+<tr><td>write_block</td><td>Write a data block</td><td>bwrite()</td></tr>
+<tr><td>lookup</td><td>Find a directory entry</td><td>dirlookup()</td></tr>
+<tr><td>add_entry</td><td>Add a directory entry</td><td>dirlink()</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="code-block"><span class="comment">/* File system operations (xv6-style) */</span>
+
+<span class="comment">// Create a new file</span>
+<span class="label">create_file(path):</span>
+  <span class="comment">// 1. Allocate an inode</span>
+  ip = ialloc(dev, T_FILE)
+  <span class="comment">// 2. Initialize inode</span>
+  ip->type = T_FILE
+  ip->nlink = 1
+  ip->size = 0
+  iupdate(ip)
+  <span class="comment">// 3. Add to parent directory</span>
+  parent = nameiparent(path)
+  name = basename(path)
+  dirlink(parent, name, ip->inum)
+  <span class="comment">// 4. Return file</span>
+  <span class="keyword">return</span> ip
+
+<span class="comment">// Read from a file</span>
+<span class="label">read_file(ip, buf, offset, size):</span>
+  <span class="comment">// 1. Map offset to block number</span>
+  bn = offset / BSIZE
+  <span class="comment">// 2. Get the physical block (via inode)</span>
+  block = bmap(ip, bn)  <span class="comment">// traverses direct/indirect ptrs</span>
+  <span class="comment">// 3. Read block from disk (via buffer cache)</span>
+  bp = bread(dev, block)
+  <span class="comment">// 4. Copy data to user buffer</span>
+  copy_to_user(buf, bp->data + (offset % BSIZE), size)
+  brelse(bp)
+  <span class="keyword">return</span> size</div>
+
+<p>The <strong>inode</strong> is the central data structure. It contains the file's
+metadata (type, size, permissions, timestamps, link count) and pointers to data blocks.
+The block pointers may be <strong>direct</strong> (pointing directly to data blocks),
+<strong>indirect</strong> (pointing to a block of pointers), or
+<strong>double-indirect</strong> / <strong>triple-indirect</strong> (pointing to blocks of
+pointers to pointers). This allows small files to be accessed quickly (via direct pointers)
+while supporting very large files (via indirect pointers).</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Direct vs. Indirect Pointers</div>
+<p>A typical inode has 12 direct pointers, 1 single-indirect, 1 double-indirect, and 1
+triple-indirect pointer. With 4 KB blocks and 4-byte pointers: direct pointers cover
+48 KB; single-indirect covers 4 MB; double-indirect covers 4 GB; triple-indirect covers
+4 TB. This means small files (most files) are accessed with a single disk read, while
+large files can grow to terabytes. This is the design used by ext2/ext3 and xv6.</p>
+</div>
+
+<p>Directory operations are similar but operate on directory files. A directory is a
+special file containing <strong>directory entries</strong> (dirents), each mapping a name
+to an inode number. The <code class="code-inline">dirlookup()</code> function searches a
+directory for a name and returns the corresponding inode. The
+<code class="code-inline">dirlink()</code> function adds a new entry. Directories are
+typically stored as a linear list of entries (simple but slow for large directories) or as
+a hash table or B-tree (fast lookup but more complex).</p>
+
+<p>In xv6, the file system operations are in
+<code class="code-inline">kernel/fs.c</code>. The
+<code class="code-inline">ialloc()</code> and
+<code class="code-inline">ifree()</code> functions manage inodes;
+<code class="code-inline">balloc()</code> and
+<code class="code-inline">bfree()</code> manage data blocks;
+<code class="code-inline">bmap()</code> translates a logical block number within a file to
+a physical block number on disk, traversing the direct and indirect pointers in the inode.
+The <code class="code-inline">dirlookup()</code> and
+<code class="code-inline">dirlink()</code> functions manage directory entries. These
+functions are the building blocks for the system calls in
+<code class="code-inline">kernel/sysfile.c</code>.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-3">14.3 Directory Implementation</h2>
+
+<p>The <strong>directory implementation</strong> determines how directory entries are stored
+and searched. The choice of data structure affects the performance of file creation,
+deletion, and lookup, especially for directories with many entries.</p>
+
+<p>The simplest implementation is a <strong>linear list</strong> of directory entries.
+Each entry contains a file name and an inode number. To look up a file, the file system
+scans the list linearly. This is simple to implement but O(n) in the number of entries,
+which is slow for large directories. xv6 uses this approach.</p>
+
+<div class="code-block"><span class="comment">/* Linear list directory (xv6) */</span>
+
+<span class="label">struct dirent:</span>
+  ushort inum;           <span class="comment">// inode number (0 = free)</span>
+  char   name[DIRSIZ];   <span class="comment">// file name (14 or 255 bytes)</span>
+
+<span class="comment">// Directory is a file containing an array of dirents</span>
+<span class="label">dirlookup(dp, name, poff):</span>
+  <span class="keyword">for</span> (off = 0; off < dp->size; off += sizeof(dirent)):
+    read_dirent(dp, off, &de)
+    <span class="keyword">if</span> (de.inum != 0 && strcmp(de.name, name) == 0):
+      <span class="keyword">return</span> iget(dp->dev, de.inum)
+  <span class="keyword">return</span> NULL  <span class="comment">// not found</span></div>
+
+<p>A <strong>hash table</strong> implementation uses a hash function to map file names to
+buckets, each containing a list of entries. Lookup is O(1) on average (if the hash
+function is good and the load factor is reasonable). This is much faster for large
+directories. The downside is the overhead of the hash table structure and the need to
+handle collisions. Some file systems (e.g., ReiserFS) use hash-based directories.</p>
+
+<p>A <strong>B-tree</strong> or <strong>B+ tree</strong> implementation stores directory
+entries in a balanced tree, keeping entries sorted by name. Lookup, insertion, and
+deletion are O(log n). B-trees are also efficient for range queries (e.g., listing all
+files starting with "a"). Modern file systems like ext4 (with
+<code class="code-inline">htree</code>), XFS, Btrfs, and NTFS use B-tree-based directories
+for large directories. This avoids the performance cliff that linear lists hit when a
+directory has thousands of entries.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Method</th><th>Lookup</th><th>Insert</th><th>Delete</th><th>Used In</th></tr>
+</thead>
+<tbody>
+<tr><td>Linear list</td><td>O(n)</td><td>O(1) (append)</td><td>O(n)</td><td>xv6, FAT, ext2 (small dirs)</td></tr>
+<tr><td>Hash table</td><td>O(1) avg</td><td>O(1) avg</td><td>O(1) avg</td><td>ReiserFS</td></tr>
+<tr><td>B-tree / B+ tree</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td><td>ext4 (htree), XFS, NTFS, Btrfs</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Large Directories</div>
+<p>With a linear list, a directory with 100,000 files takes O(100,000) comparisons per
+lookup, which can be hundreds of milliseconds. With a B-tree, the same lookup takes
+O(log 100,000) ≈ 17 comparisons, which is microseconds. This is why modern file systems
+use B-trees for directories. The ext4 <code class="code-inline">htree</code> is a
+specialized B-tree for directories that is enabled automatically when a directory grows
+beyond a threshold.</p>
+</div>
+
+<p>Directory entries also need to handle <strong>deletion</strong>. In a linear list, a
+deleted entry can be marked as free (inum = 0) and reused later. In a B-tree, the entry
+is removed and the tree is rebalanced. Some file systems <strong>compact</strong>
+directories periodically to reclaim space from deleted entries. The
+<code class="code-inline">unlink()</code> system call removes a directory entry and
+decrements the inode's link count; if the count reaches zero, the inode and its data
+blocks are freed.</p>
+
+<p>In xv6, directories use a linear list of
+<code class="code-inline">struct dirent</code> entries. The
+<code class="code-inline">dirlookup()</code> function in
+<code class="code-inline">kernel/fs.c</code> scans the directory linearly. Deleted entries
+have <code class="code-inline">inum == 0</code> and are skipped. This is simple but would
+be slow for directories with many files. Implementing a hash table or B-tree for xv6
+directories would be a valuable exercise in data structure design for file systems.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-4">14.4 Allocation Methods</h2>
+
+<p>The <strong>allocation method</strong> determines how the file system allocates disk
+blocks to files. The choice affects performance (sequential access, random access, file
+growth) and fragmentation (wasted space). The three main methods are
+<strong>contiguous</strong>, <strong>linked</strong>, and
+<strong>indexed</strong> allocation.</p>
+
+<h3>Contiguous Allocation</h3>
+
+<p><strong>Contiguous allocation</strong> assigns each file a set of consecutive blocks.
+The directory entry stores the starting block and the length. This is simple and efficient
+for sequential access (the disk head reads consecutive blocks without seeking) and random
+access (block <code class="code-inline">n</code> is at
+<code class="code-inline">start + n</code>). However, it suffers from
+<strong>external fragmentation</strong>: as files are created and deleted, free space
+becomes fragmented into small, non-contiguous holes. Compaction (moving files to
+consolidate free space) is expensive. Contiguous allocation is used in CD-ROMs and some
+embedded systems but is rare in general-purpose file systems.</p>
+
+<div class="code-block"><span class="comment">/* Contiguous allocation */</span>
+
+<span class="comment">// Directory entry:</span>
+<span class="label">struct dirent:</span>
+  name
+  start_block   <span class="comment">// e.g., 100</span>
+  length        <span class="comment">// e.g., 50 blocks</span>
+
+<span class="comment">// Access block n of file:</span>
+physical = start_block + n
+
+<span class="comment">// Problem: external fragmentation</span>
+<span class="comment">//   [File A: 0-49] [free: 50-99] [File B: 100-199]</span>
+<span class="comment">//   If A is deleted: [free: 0-49] [free: 50-99] [B: 100-199]</span>
+<span class="comment">//   A 100-block file cannot fit in 0-99 if not coalesced</span></div>
+
+<h3>Linked Allocation</h3>
+
+<p><strong>Linked allocation</strong> represents each file as a linked list of blocks.
+Each block contains data and a pointer to the next block. The directory entry stores the
+starting block and (optionally) the ending block. This eliminates external fragmentation
+(any free block can be used) and supports efficient file growth (just append a block).
+However, random access is inefficient: to read block <code class="code-inline">n</code>,
+the file system must traverse <code class="code-inline">n</code> pointers, reading each
+block. Linked allocation is used in FAT (File Allocation Table) file systems.</p>
+
+<div class="code-block"><span class="comment">/* Linked allocation (FAT-style) */</span>
+
+<span class="comment">// Each block has data + next pointer</span>
+<span class="label">struct block:</span>
+  data[BSIZE - 4]
+  next_block    <span class="comment">// 0 = end of file</span>
+
+<span class="comment">// FAT: an array mapping block → next block</span>
+<span class="label">FAT[block] = next_block</span>
+
+<span class="comment">// Directory entry:</span>
+<span class="label">struct dirent:</span>
+  name
+  first_block   <span class="comment">// e.g., 5</span>
+
+<span class="comment">// Traverse to block n:</span>
+<span class="label">block = first_block</span>
+<span class="keyword">for</span> (i = 0; i < n; i++)
+  block = FAT[block]  <span class="comment">// follow link</span>
+<span class="comment">// Now 'block' is the physical block</span>
+
+<span class="comment">// FAT caches the entire table in memory, so traversal is fast</span></div>
+
+<p>The <strong>FAT</strong> (File Allocation Table) file system, used in MS-DOS and
+Windows (FAT12, FAT16, FAT32, exFAT), is a variant of linked allocation. Instead of
+storing the next-block pointer in each data block, FAT stores all pointers in a separate
+table (the FAT). This table is small enough to be cached in memory, making traversal fast.
+FAT is simple and widely supported (USB drives, cameras) but lacks journaling, ACLs, and
+large file support.</p>
+
+<h3>Indexed Allocation</h3>
+
+<p><strong>Indexed allocation</strong> stores all block pointers for a file in a single
+<strong>index block</strong> (the inode). The directory entry points to the index block,
+which contains an array of block pointers. This supports both sequential and random access
+efficiently: block <code class="code-inline">n</code> is at
+<code class="code-inline">index_block[n]</code>. The challenge is that the index block has
+a fixed size, limiting the maximum file size. This is solved with
+<strong>multi-level indexes</strong> (direct, indirect, double-indirect, triple-indirect
+pointers), as described in Section 14.2. Indexed allocation is used by Unix file systems
+(ext2, ext3, ext4, UFS) and is the basis of the inode-based design.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Method</th><th>Sequential Access</th><th>Random Access</th><th>Fragmentation</th><th>Used In</th></tr>
+</thead>
+<tbody>
+<tr><td>Contiguous</td><td>Excellent</td><td>Excellent (O(1))</td><td>External</td><td>CD-ROM, embedded</td></tr>
+<tr><td>Linked</td><td>Good</td><td>Poor (O(n))</td><td>None (external)</td><td>FAT, exFAT</td></tr>
+<tr><td>Indexed</td><td>Good</td><td>Good (O(1) with index)</td><td>Internal (last block)</td><td>ext2/3/4, UFS, xv6</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Extents</div>
+<p>Some modern file systems (ext4, XFS, Btrfs) use <strong>extents</strong> instead of
+individual block pointers. An extent is a contiguous range of blocks, represented as
+<code class="code-inline">(start, length)</code>. A file with 1000 contiguous blocks needs
+one extent instead of 1000 pointers. This reduces metadata size, improves sequential
+performance, and supports very large files. Ext4 uses a hybrid: extents for large files,
+falling back to traditional indirect blocks for compatibility.</p>
+</div>
+
+<p>In xv6, the allocation method is <strong>indexed</strong> with multi-level pointers.
+The inode (defined in <code class="code-inline">kernel/fs.h</code>) has 12 direct pointers
+(<code class="code-inline">addrs[0..11]</code>), 1 single-indirect pointer
+(<code class="code-inline">addrs[12]</code>), and 1 double-indirect pointer
+(<code class="code-inline">addrs[13]</code>). With 512-byte blocks and 4-byte pointers,
+this supports files up to about 32 MB. The <code class="code-inline">bmap()</code> function
+in <code class="code-inline">kernel/fs.c</code> traverses these pointers to find the
+physical block for a given logical block number, allocating new blocks as needed.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-5">14.5 Free-Space Management</h2>
+
+<p>The file system must track which disk blocks are free (available for allocation) and
+which are used. The <strong>free-space management</strong> method determines how this
+information is stored and how free blocks are found. The choice affects allocation speed,
+space overhead, and the ability to find contiguous free regions.</p>
+
+<h3>Bit Vector (Bitmap)</h3>
+
+<p>The <strong>bit vector</strong> (or <strong>bitmap</strong>) uses one bit per block:
+1 means the block is free, 0 means it is used (or vice versa). For a 1 TB disk with 4 KB
+blocks, the bitmap is 32 MB—small enough to keep in memory. Finding a free block is a
+matter of scanning the bitmap for a 1 bit. Finding <code class="code-inline">n</code>
+contiguous free blocks requires scanning for <code class="code-inline">n</code> consecutive
+1 bits. The bitmap is simple, compact, and supports contiguous allocation, making it the
+most common method.</p>
+
+<div class="code-block"><span class="comment">/* Bitmap free-space management */</span>
+
+<span class="comment">// 1 bit per block: 1 = free, 0 = used</span>
+<span class="comment">// For 1 TB disk, 4 KB blocks: 2^38 blocks → 2^35 bytes = 32 GB bitmap</span>
+<span class="comment">// Wait, 1 TB / 4 KB = 2^28 blocks → 2^25 bytes = 32 MB bitmap</span>
+
+<span class="label">alloc_block():</span>
+  <span class="keyword">for</span> (i = 0; i < bitmap_size; i++):
+    <span class="keyword">if</span> (bitmap[i] != 0):
+      bit = find_first_set(bitmap[i])
+      block = i * 8 + bit
+      clear_bit(bitmap, block)
+      <span class="keyword">return</span> block
+  <span class="keyword">return</span> -1  <span class="comment">// disk full</span>
+
+<span class="label">free_block(block):</span>
+  set_bit(bitmap, block)</div>
+
+<h3>Linked List</h3>
+
+<p>A <strong>linked list</strong> of free blocks stores each free block's address in the
+previous free block. The superblock points to the first free block, which points to the
+next, and so on. This uses no extra space (the pointers are stored in the free blocks
+themselves) but makes it hard to find contiguous free regions. A variant is the
+<strong>grouped list</strong>: the first free block stores the addresses of the next
+<code class="code-inline">n</code> free blocks, reducing the number of disk reads.</p>
+
+<h3>Other Methods</h3>
+
+<p>Other methods include <strong>counting</strong> (store the starting block and count of
+each contiguous free region) and <strong>grouping</strong> (store addresses of free blocks
+in groups). These are less common. The <strong>space map</strong> used by ZFS is a more
+sophisticated approach: it uses a log-structured structure that records all allocations and
+frees, allowing efficient free-space tracking for very large file systems.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Method</th><th>Space Overhead</th><th>Find Free Block</th><th>Find Contiguous</th><th>Used In</th></tr>
+</thead>
+<tbody>
+<tr><td>Bitmap</td><td>1 bit/block</td><td>O(1) avg (scan)</td><td>Easy (scan bits)</td><td>ext2/3/4, xv6, NTFS</td></tr>
+<tr><td>Linked list</td><td>0 (in free blocks)</td><td>O(1) (head of list)</td><td>Hard</td><td>Older Unix (s5fs)</td></tr>
+<tr><td>Grouped list</td><td>0 (in free blocks)</td><td>O(1)</td><td>Hard</td><td>Some Unix variants</td></tr>
+<tr><td>Counting</td><td>2 values/region</td><td>O(1)</td><td>Easy (check count)</td><td>Some embedded FS</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Bitmap Size</div>
+<p>For a 1 TB disk with 4 KB blocks, the bitmap is 32 MB. For a 100 TB disk, it is 3.2 GB.
+This is too large to keep entirely in memory for very large disks. Modern file systems
+address this by using <strong>block groups</strong> (ext2/3/4): the disk is divided into
+groups, each with its own bitmap. Only the bitmaps for active groups need to be in memory.
+ZFS and Btrfs use more sophisticated structures (space maps, extent trees) that scale
+better to very large file systems.</p>
+</div>
+
+<p>In xv6, free-space management uses a <strong>bitmap</strong>. The
+<code class="code-inline">balloc()</code> function in
+<code class="code-inline">kernel/fs.c</code> scans the bitmap for a free bit, sets it, and
+returns the block number. The <code class="code-inline">bfree()</code> function clears the
+bit. The bitmap starts at block <code class="code-inline">bmapstart</code> (defined in the
+superblock) and covers all data blocks. This is the standard bitmap approach, simplified
+for the small xv6 file system.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-6">14.6 Efficiency and Performance</h2>
+
+<p>File-system <strong>efficiency</strong> refers to how effectively the file system uses
+disk space, and <strong>performance</strong> refers to how fast I/O operations complete.
+Several design choices affect both.</p>
+
+<p><strong>Block size</strong> is a critical parameter. Larger blocks improve throughput
+for large files (fewer I/O operations, better sequential access) but increase
+<strong>internal fragmentation</strong> (the last block of a file is partially unused).
+With 4 KB blocks, a 1-byte file wastes 4095 bytes. With 64 KB blocks, it wastes 65535
+bytes. The optimal block size depends on the workload: large blocks for large files
+(databases, media), small blocks for many small files (source code, email). Most file
+systems use 4 KB as a compromise. Some (XFS, Btrfs) support <strong>variable block
+sizes</strong> or <strong>sub-block allocation</strong> to reduce fragmentation for small
+files.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Block Size</th><th>Throughput</th><td>Internal Frag.</td><th>Metadata Size</th><th>Best For</th></tr>
+</thead>
+<tbody>
+<tr><td>1 KB</td><td>Low</td><td>Low</td><td>Large</td><td>Many tiny files</td></tr>
+<tr><td>4 KB</td><td>Medium</td><td>Medium</td><td>Medium</td><td>General purpose</td></tr>
+<tr><td>64 KB</td><td>High</td><td>High</td><td>Small</td><td>Large files, databases</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Caching</strong> is the most important performance optimization. The OS
+maintains a <strong>buffer cache</strong> (or <strong>page cache</strong>) in memory that
+holds recently accessed disk blocks. Reads check the cache first; if the block is there
+(a <strong>cache hit</strong>), no disk I/O is needed. Writes may be
+<strong>write-through</strong> (written to both cache and disk) or
+<strong>write-back</strong> (written to cache, flushed to disk later). Write-back caching
+dramatically improves write performance but risks data loss on crash. The cache is
+managed with an LRU-like algorithm: when the cache is full, the least recently used blocks
+are evicted.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Read-Ahead (Prefetch)</div>
+<p>When the file system detects sequential access (reading blocks in order), it can
+<strong>read ahead</strong>—pre-fetching the next few blocks into the cache before they
+are requested. This overlaps disk I/O with computation, significantly improving sequential
+read performance. The OS tracks access patterns and enables read-ahead when sequential
+access is detected. Random access disables read-ahead to avoid wasting I/O.</p>
+</div>
+
+<p><strong>Write buffering</strong> and <strong>batching</strong> improve write
+performance. Instead of writing each block immediately, the OS buffers writes in the cache
+and flushes them in batches. This allows the disk scheduler to reorder writes for
+efficiency (Section 11.2) and coalesces multiple writes to the same block. The
+<code class="code-inline">sync()</code> system call forces a flush of all dirty buffers;
+<code class="code-inline">fsync()</code> flushes a specific file. The OS also runs a
+periodic flush (e.g., every 5 seconds on Linux) to limit the window of data loss.</p>
+
+<p><strong>File-system tuning</strong> involves choosing parameters that match the
+workload. For a database, use a larger block size, disable access-time updates
+(<code class="code-inline">noatime</code>), and align partitions to block boundaries. For
+a home directory, use the default settings. For a web server, increase the cache size and
+enable read-ahead. Modern file systems (ext4, XFS) support online resizing, defragmentation,
+and tuning via mount options.</p>
+
+<p>In xv6, performance is not optimized. The buffer cache
+(<code class="code-inline">kernel/bio.c</code>) provides basic caching with a fixed number
+of buffers (defined by <code class="code-inline">NBUF</code>). There is no read-ahead, no
+write batching, and no write-back caching—writes are synchronous (write-through). The
+block size is 512 bytes, which is small. These choices make xv6 simple and reliable but
+slow. Adding read-ahead, write-back caching, and a larger block size would be valuable
+performance exercises.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-7">14.7 Recovery</h2>
+
+<p>File systems must recover from <strong>crashes</strong> and <strong>power failures</strong>.
+If the system crashes while the file system is updating metadata (allocating a block,
+creating a file, deleting a file), the file system may be left in an inconsistent state:
+blocks may be marked as used but not belong to any file (lost), or marked as free but
+still referenced by a file (corruption). Recovery techniques ensure the file system
+returns to a consistent state after a crash.</p>
+
+<h3>Consistency Checking (fsck)</h3>
+
+<p>The traditional recovery method is <strong>consistency checking</strong>, performed by
+a tool like <code class="code-inline">fsck</code> (Unix) or
+<code class="code-inline">chkdsk</code> (Windows). After a crash, the tool scans the entire
+file system, checking for consistency:</p>
+
+<ul>
+<li>Each block should be either allocated to exactly one file or free (not both, not
+neither). Blocks allocated to no file are <strong>lost</strong>; blocks allocated to
+multiple files are <strong>cross-linked</strong>.</li>
+<li>Each inode's link count should match the number of directory entries pointing to it.</li>
+<li>Directory entries should point to valid inodes.</li>
+<li>Free-space counts should match the actual free blocks.</li>
+</ul>
+
+<p>The tool repairs inconsistencies by freeing lost blocks, fixing link counts, and
+removing invalid directory entries. However, <code class="code-inline">fsck</code> is slow
+(it scans the entire disk) and may not recover all data (it ensures consistency, not
+correctness). For large file systems, <code class="code-inline">fsck</code> can take
+hours, which is unacceptable for production systems.</p>
+
+<h3>Journaling (Write-Ahead Logging)</h3>
+
+<p><strong>Journaling</strong> (or <strong>write-ahead logging</strong>) is the modern
+approach to recovery. Before modifying the file system, the OS writes a description of the
+intended changes to a <strong>journal</strong> (a circular log on disk). After the journal
+entry is committed (written to disk), the OS applies the changes to the actual file
+system. If a crash occurs during the apply phase, the journal entry is replayed on the
+next boot, ensuring the changes are completed. If a crash occurs before the journal entry
+is committed, the changes are discarded (the file system remains in its pre-change state).</p>
+
+<div class="code-block"><span class="comment">/* Journaling (write-ahead log) */</span>
+
+<span class="label">journal_write(changes):</span>
+  <span class="comment">// 1. Write changes to journal (log)</span>
+  log_write(begin_txn)
+  <span class="keyword">for</span> change <span class="keyword">in</span> changes:
+    log_write(change)
+  log_write(commit_txn)
+  flush_log()  <span class="comment">// ensure on disk</span>
+
+  <span class="comment">// 2. Apply changes to file system</span>
+  <span class="keyword">for</span> change <span class="keyword">in</span> changes:
+    apply(change)
+
+  <span class="comment">// 3. Mark journal entry as done</span>
+  log_write(done_txn)
+
+<span class="label">recover():</span>
+  <span class="keyword">for</span> entry <span class="keyword">in</span> journal:
+    <span class="keyword">if</span> (entry.committed && !entry.done):
+      replay(entry)  <span class="comment">// re-apply</span>
+    <span class="keyword">else if</span> (!entry.committed):
+      discard(entry)  <span class="comment">// undo</span></div>
+
+<p>Journaling can be <strong>metadata-only</strong> (journaling only metadata changes,
+like block allocation and directory updates) or <strong>full data</strong> (journaling
+both metadata and file data). Metadata-only journaling (used by ext3, ext4 by default) is
+faster but does not protect file data (a crash may leave a file with old or partially
+written data). Full-data journaling (ext4 with
+<code class="code-inline">data=journal</code>) is slower but protects both metadata and
+data. XFS and Btrfs use <strong>copy-on-write</strong> (never overwriting data in place)
+as an alternative to journaling for data consistency.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Journaling Levels</div>
+<p><strong>Journaling modes</strong> in ext4: (1) <code class="code-inline">data=journal</code>
+— all data and metadata are journaled (safest, slowest); (2)
+<code class="code-inline">data=ordered</code> — metadata is journaled, data is written
+before metadata (default, good balance); (3)
+<code class="code-inline">data=writeback</code> — metadata is journaled, data is not
+ordered (fastest, may expose old data after crash). Most systems use
+<code class="code-inline">data=ordered</code>.</p>
+</div>
+
+<h3>Copy-on-Write (CoW) File Systems</h3>
+
+<p><strong>Copy-on-write</strong> file systems (Btrfs, ZFS, ReFS, APFS) never overwrite
+data in place. When a block is modified, a new block is written elsewhere, and the
+metadata is updated to point to it. This means a crash never leaves a file in a partially
+overwritten state—the old version is intact until the new version is fully written and
+the metadata is atomically updated. CoW file systems also support
+<strong>snapshots</strong> (point-in-time copies) and <strong>checksums</strong> (detecting
+silent data corruption) naturally.</p>
+
+<p>In xv6, recovery is handled by a simple <strong>log</strong>
+(<code class="code-inline">kernel/log.c</code>). The
+<code class="code-inline">begin_op()</code> and
+<code class="code-inline">end_op()</code> functions bracket file system operations. Changes
+are written to the log first, then applied to the file system. On boot,
+<code class="code-inline">recover_from_log()</code> replays committed but unapplied log
+entries. This is a simplified version of journaling: it journals both metadata and data,
+and it does not support concurrent transactions. Despite its simplicity, it demonstrates
+the core concept of write-ahead logging for crash recovery.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-14-8">14.8 WAFL File System</h2>
+
+<p><strong>WAFL</strong> (Write Anywhere File Layout) is a file system designed by Network
+Appliance (NetApp) for their storage appliances. It is a <strong>copy-on-write</strong>
+file system that uses <strong>write-anywhere</strong> allocation: new data can be written
+to any free block on disk, not necessarily near the existing data. This maximizes write
+performance by eliminating seek time for writes (the disk head writes to wherever it
+currently is).</p>
+
+<p>WAFL is designed for <strong>NAS</strong> (Network-Attached Storage) appliances, where
+the primary workload is serving files over a network (NFS, CIFS). The key insight is that
+in a NAS environment, writes are often random (many clients writing different files), and
+read performance is less critical (clients cache). WAFL optimizes for this by writing all
+new data sequentially to a <strong>write-aside log</strong>, then periodically
+<strong>consolidating</strong> it into the main file system.</p>
+
+<div class="code-block"><span class="comment">/* WAFL concepts */</span>
+
+<span class="comment">// Write-anywhere: new blocks go to any free location</span>
+<span class="label">write(file, offset, data):</span>
+  <span class="comment">// Don't overwrite existing block</span>
+  new_block = find_any_free_block()  <span class="comment">// anywhere on disk</span>
+  write_to(new_block, data)
+  <span class="comment">// Update metadata to point to new block</span>
+  update_inode(file, offset, new_block)
+
+<span class="comment">// Snapshots: copy-on-write makes this trivial</span>
+<span class="label">snapshot():</span>
+  <span class="comment">// Just save the root of the file system tree</span>
+  <span class="comment">// Old blocks are preserved until snapshot is deleted</span>
+  save_root(snapshot_id)</div>
+
+<p>WAFL's <strong>snapshot</strong> feature is a direct consequence of copy-on-write.
+Because WAFL never overwrites data, taking a snapshot is as simple as saving the root
+pointer of the file system tree. The old blocks remain until the snapshot is deleted.
+WAFL can maintain thousands of snapshots with minimal overhead, allowing users to recover
+deleted files or revert to previous states. This is a major feature of NetApp storage
+appliances.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ WAFL vs. Traditional FS</div>
+<p>Traditional file systems (ext4, NTFS) overwrite data in place, which is efficient for
+in-place updates but makes snapshots expensive (requires copying all modified blocks).
+WAFL (and other CoW file systems like Btrfs, ZFS) never overwrite, making snapshots nearly
+free but requiring more space (old versions of blocks are kept until snapshots are
+deleted). The trade-off is between write amplification (CoW writes more) and snapshot
+efficiency (CoW snapshots are cheap).</p>
+</div>
+
+<p>WAFL also uses <strong>NVRAM</strong> (non-volatile RAM) as a write cache. Incoming
+writes are stored in NVRAM and acknowledged immediately (low latency). The data is later
+flushed to disk in batches. If the system crashes, the NVRAM contents are replayed on
+reboot, ensuring no acknowledged writes are lost. This is similar to journaling but
+faster because NVRAM is much faster than disk.</p>
+
+<p>WAFL's design influenced later file systems. <strong>Btrfs</strong> and
+<strong>ZFS</strong> on Linux, <strong>APFS</strong> on macOS/iOS, and
+<strong>ReFS</strong> on Windows all use copy-on-write and support efficient snapshots.
+The <strong>log-structured file system</strong> (LFS) concept, where all writes are
+sequential (like a log), is a related idea that influenced
+<code class="code-inline">f2fs</code> (Flash-Friendly File System) on Android.</p>
+
+<p>In xv6, there is no WAFL-like functionality. The file system overwrites blocks in place
+(via <code class="code-inline">bwrite()</code>), and there are no snapshots. The log
+(<code class="code-inline">kernel/log.c</code>) provides crash recovery but not
+snapshot capability. Implementing a copy-on-write file system on top of xv6 would be a
+major project, but it would demonstrate the power of the CoW model for snapshots and data
+integrity.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-1">15.1 File Systems</h2>
+
+<p>A computer system typically has <strong>multiple file systems</strong>: the root file
+system, separate file systems for <code class="code-inline">/home</code>,
+<code class="code-inline">/var</code>, <code class="code-inline">/tmp</code>, and
+removable media (USB drives, SD cards). Each file system may use a different format
+(ext4, FAT, NTFS, ISO 9660). The OS must provide a unified view of all these file systems,
+allowing users and applications to access files without knowing which file system they
+are on.</p>
+
+<p>The <strong>Virtual File System</strong> (VFS) is the OS layer that provides this
+unified interface. VFS defines a common API (open, read, write, close, etc.) that all file
+systems implement. When an application calls <code class="code-inline">open()</code>, VFS
+determines which file system contains the file and dispatches the call to that file
+system's implementation. This allows the OS to support multiple file systems
+simultaneously and transparently.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Why Multiple File Systems?</div>
+<p>Different file systems are optimized for different purposes: ext4 for general Linux
+use, NTFS for Windows, FAT for removable media (compatibility), ISO 9660 for optical
+discs, tmpfs for in-memory temporary storage, procfs for process information. The OS
+supports all of them via VFS, allowing applications to use a single API regardless of the
+underlying file system.</p>
+</div>
+
+<p>Each file system has its own <strong>on-disk format</strong> (how data is laid out on
+the storage device) and its own <strong>in-memory structures</strong> (how the OS
+represents open files, directories, etc.). VFS abstracts these differences by defining
+common <strong>objects</strong>: <strong>superblock</strong> (file system metadata),
+<strong>inode</strong> (file metadata), <strong>dentry</strong> (directory entry), and
+<strong>file</strong> (open file). Each file system provides operations on these objects,
+and VFS dispatches calls to the appropriate implementation.</p>
+
+<p>In xv6, there is only one file system (the xv6 file system), so there is no VFS layer.
+The file system code in <code class="code-inline">kernel/fs.c</code> directly implements
+all operations. However, the <code class="code-inline">struct file</code> in
+<code class="code-inline">kernel/file.h</code> is a simple VFS-like abstraction: it can
+represent a file, a device (like the console), or a pipe, with different
+<code class="code-inline">read</code> and <code class="code-inline">write</code> function
+pointers. This is a simplified version of the VFS object model.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-2">15.2 File-System Mounting</h2>
+
+<p>Before a file system can be used, it must be <strong>mounted</strong>. Mounting
+attaches a file system to the directory tree at a specified <strong>mount point</strong>
+(a directory). After mounting, the file system's root appears at the mount point, and
+files on the mounted file system are accessible via paths through the mount point.</p>
+
+<div class="code-block"><span class="comment">/* Mounting a file system */</span>
+
+<span class="comment">// Before mounting /dev/sdb1 at /mnt/usb:</span>
+<span class="comment">//   /mnt/usb/  (empty directory on root FS)</span>
+
+<span class="comment">// Mount command:</span>
+<span class="label">mount("/dev/sdb1", "/mnt/usb", "ext4", 0, NULL);</span>
+
+<span class="comment">// After mounting:</span>
+<span class="comment">//   /mnt/usb/        → root of /dev/sdb1 (ext4 FS)</span>
+<span class="comment">//   /mnt/usb/file.txt → file on /dev/sdb1</span>
+
+<span class="comment">// Unmount:</span>
+<span class="label">umount("/mnt/usb");</span>
+<span class="comment">// /mnt/usb is now an empty directory again</span></div>
+
+<p>The <code class="code-inline">mount()</code> system call takes a device path, a mount
+point, a file system type, and flags. The OS reads the superblock from the device,
+validates the file system, and creates an in-memory <strong>mount structure</strong> that
+records the mapping. Subsequent path resolution checks each directory: if a directory is a
+mount point, the OS crosses into the mounted file system.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Mount Point Crossing</div>
+<p>When resolving a path like <code class="code-inline">/mnt/usb/file.txt</code>, the OS
+starts at the root of the root file system, descends to <code class="code-inline">mnt</code>,
+then to <code class="code-inline">usb</code>. At <code class="code-inline">usb</code>, the
+OS detects that it is a mount point and switches to the root of the mounted file system.
+From there, it resolves <code class="code-inline">file.txt</code>. This "crossing" is
+transparent to applications but is a key part of VFS path resolution.</p>
+</div>
+
+<p>File systems can be mounted with various <strong>options</strong>:
+<code class="code-inline">ro</code> (read-only),
+<code class="code-inline">noexec</code> (no execution),
+<code class="code-inline">nosuid</code> (ignore setuid bits),
+<code class="code-inline">noatime</code> (don't update access times),
+<code class="code-inline">sync</code> (synchronous writes). These options affect security
+and performance. For example, mounting <code class="code-inline">/tmp</code> with
+<code class="code-inline">noexec</code> prevents executing binaries from
+<code class="code-inline">/tmp</code>, a common security hardening measure.</p>
+
+<p>In xv6, there is no <code class="code-inline">mount()</code> system call. The file
+system is mounted at boot (the root file system) and cannot be changed. The
+<code class="code-inline">fsinit()</code> function in
+<code class="code-inline">kernel/fs.c</code> reads the superblock during boot. Adding
+mount support to xv6 would require: (1) a mount table, (2) a
+<code class="code-inline">mount()</code> system call, (3) modifying
+<code class="code-inline">namei()</code> to cross mount points, and (4) an
+<code class="code-inline">umount()</code> system call. This is a common advanced xv6
+exercise.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-3">15.3 Partitions and Mounting</h2>
+
+<p>A storage device is divided into <strong>partitions</strong>, and each partition can
+contain a file system. The OS mounts file systems from partitions at boot time (based on
+<code class="code-inline">/etc/fstab</code> on Linux) or at runtime (via
+<code class="code-inline">mount</code> command). Understanding the relationship between
+partitions, file systems, and mount points is essential for system administration.</p>
+
+<p>The <strong>partition table</strong> (MBR or GPT, see Section 11.5) describes the
+partitions on a device. Each partition entry specifies the starting sector, size, and
+type. The OS reads the partition table at boot or when a device is attached, creates
+device nodes for each partition (e.g., <code class="code-inline">/dev/sda1</code>,
+<code class="code-inline">/dev/sda2</code>), and allows file systems to be mounted from
+them.</p>
+
+<div class="code-block"><span class="comment">/* /etc/fstab example (Linux) */</span>
+
+<span class="comment"># device       mount-point  type   options        dump  pass</span>
+<span class="label">/dev/sda1      /            ext4   defaults       1     1</span>
+<span class="label">/dev/sda2      /home        ext4   defaults       1     2</span>
+<span class="label">/dev/sda3      none         swap   sw             0     0</span>
+<span class="label">/dev/sdb1      /mnt/usb     vfat   noexec,user    0     0</span>
+<span class="label">tmpfs          /tmp         tmpfs  defaults       0     0</span>
+<span class="label">proc           /proc        proc   defaults       0     0</span>
+
+<span class="comment">// "pass" = fsck order (0 = don't check)</span>
+<span class="comment">// "dump" = backup frequency (0 = no dump)</span></div>
+
+<p>Some partitions are special: <strong>swap partitions</strong> are used for virtual
+memory (Section 11.6), not for file systems. <strong>EFI System Partition</strong> (ESP)
+contains boot loaders. <strong>Recovery partitions</strong> contain system recovery
+tools. The OS treats each partition type differently based on its purpose.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Virtual File Systems</div>
+<p>Not all "file systems" are backed by a storage device. <strong>Virtual file systems</strong>
+like <code class="code-inline">procfs</code> (<code class="code-inline">/proc</code> on
+Linux) expose kernel data structures as files. <code class="code-inline">sysfs</code>
+(<code class="code-inline">/sys</code>) exposes device and driver information.
+<code class="code-inline">tmpfs</code> stores files in memory (RAM). These are mounted
+like regular file systems but have no on-disk representation. VFS handles them uniformly,
+demonstrating the power of the VFS abstraction.</p>
+</div>
+
+<p><strong>Automounting</strong> is a feature where file systems are mounted on demand.
+When a process accesses a path under an automount point, the OS automatically mounts the
+appropriate file system. This is used for network file systems (NFS) and removable media
+(USB drives). On Linux, <code class="code-inline">autofs</code> and
+<code class="code-inline">systemd</code> provide automounting. On desktop environments,
+<code class="code-inline">udev</code> detects device insertion and triggers automount.</p>
+
+<p>In xv6, there is a single partition (the entire virtio disk). The
+<code class="code-inline">fsinit()</code> function reads the superblock from block 1 and
+initializes the file system. There is no partition table parsing, no
+<code class="code-inline">/etc/fstab</code>, and no automounting. Adding partition support
+would involve reading the MBR/GPT, creating per-partition device structures, and allowing
+multiple file systems to be mounted.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-4">15.4 File Sharing</h2>
+
+<p><strong>File sharing</strong> allows multiple users or processes to access the same
+file. The OS must ensure that sharing is safe (no data corruption) and efficient (no
+unnecessary copying). There are several models for file sharing.</p>
+
+<p><strong>Multiple users on the same system</strong> can share files via
+<strong>permissions</strong> (Section 13.4). A file's owner can grant read or write
+permission to other users or groups. The OS enforces these permissions on each
+<code class="code-inline">open()</code> call. <strong>Hard links</strong> allow a file to
+appear in multiple directories, and <strong>symbolic links</strong> allow a path to refer
+to another path. These mechanisms enable flexible sharing within a single system.</p>
+
+<p><strong>Concurrent access</strong> by multiple processes requires
+<strong>synchronization</strong>. If two processes write to the same file simultaneously,
+their writes may interleave, corrupting the file. The OS provides
+<strong>advisory locks</strong> (<code class="code-inline">flock()</code>,
+<code class="code-inline">fcntl(F_SETLK)</code>) and <strong>mandatory locks</strong> that
+prevent concurrent access. Advisory locks require processes to cooperate (check the lock
+before accessing); mandatory locks are enforced by the OS. Most Unix systems use advisory
+locks; Windows uses mandatory locking by default.</p>
+
+<div class="code-block"><span class="comment">/* File locking */</span>
+
+<span class="comment">// Advisory lock (POSIX)</span>
+<span class="label">int fd = open("shared.txt", O_RDWR);</span>
+
+<span class="comment">// Exclusive lock (write lock)</span>
+<span class="label">struct flock fl = { .l_type = F_WRLCK, .l_whence = SEEK_SET };</span>
+<span class="label">fcntl(fd, F_SETLKW, &fl);  </span><span class="comment">// blocks until locked</span>
+
+<span class="comment">// ... critical section ...</span>
+write(fd, data, len);
+
+<span class="comment">// Unlock</span>
+<span class="label">fl.l_type = F_UNLCK;</span>
+<span class="label">fcntl(fd, F_SETLK, &fl);</span>
+
+<span class="comment">// flock(): whole-file lock (simpler but less flexible)</span>
+<span class="label">flock(fd, LOCK_EX);  </span><span class="comment">// exclusive</span>
+<span class="label">flock(fd, LOCK_UN);  </span><span class="comment">// unlock</span></div>
+
+<p><strong>Remote file sharing</strong> allows users on different systems to share files.
+This is done via <strong>network file systems</strong> (NFS, SMB/CIFS), where files on a
+remote server are accessed as if they were local. The OS's network file system client
+translates file operations into network requests. See Section 15.6 for details.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Advisory vs. Mandatory Locks</div>
+<p><strong>Advisory locks</strong> are only checked if a process explicitly calls
+<code class="code-inline">fcntl()</code> or <code class="code-inline">flock()</code>. A
+process that ignores locks can still access the file. This is the Unix model: locks are a
+cooperative protocol. <strong>Mandatory locks</strong> are enforced by the OS: any
+<code class="code-inline">read()</code> or <code class="code-inline">write()</code> that
+conflicts with a lock blocks or fails. Mandatory locks are rarely used on Unix because
+they can cause deadlocks and performance problems, but they are the default on Windows.</p>
+</div>
+
+<p><strong>File sharing semantics</strong> define what happens when multiple processes
+read and write the same file concurrently. <strong>Unix semantics</strong> (also called
+<strong>session semantics</strong>) means that each
+<code class="code-inline">write()</code> is immediately visible to all processes that have
+the file open. <strong>Immutable shared-file semantics</strong> means a file cannot be
+modified once shared; changes create a new version. <strong>Transaction semantics</strong>
+groups operations into atomic transactions. Most local file systems use Unix semantics;
+distributed file systems may use weaker semantics (see Section 15.7).</p>
+
+<p>In xv6, file sharing is basic. Multiple processes can open the same file, and writes
+are immediately visible (Unix semantics). There is no file locking—concurrent writes can
+interleave. The <code class="code-inline">struct file</code> in
+<code class="code-inline">kernel/file.h</code> has a reference count: when
+<code class="code-inline">fork()</code> duplicates a file descriptor, both parent and
+child share the same <code class="code-inline">struct file</code>, including the file
+offset. This is how shell pipes work: the parent and child share the pipe's read and write
+ends. Adding file locking to xv6 would be a useful exercise in synchronization applied to
+the file system.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-5">15.5 Virtual File Systems</h2>
+
+<p>The <strong>Virtual File System</strong> (VFS) is the layer that provides a uniform
+interface to multiple file systems. It defines a set of <strong>objects</strong> and
+<strong>operations</strong> that each file system must implement. VFS dispatches calls to
+the appropriate file system based on which file system the operation targets.</p>
+
+<p>The four main VFS objects are:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Object</th><th>Represents</th><th>Key Fields</th></tr>
+</thead>
+<tbody>
+<tr><td>Superblock</td><td>A mounted file system</td><td>Device, block size, operations</td></tr>
+<tr><td>Inode</td><td>A specific file</td><td>Size, permissions, data block pointers</td></tr>
+<tr><td>Dentry</td><td>A directory entry (name → inode link)</td><td>Name, parent inode, child inode</td></tr>
+<tr><td>File</td><td>An open file</td><td>Offset, mode, operations</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Each object has an <strong>operations table</strong> (a struct of function pointers)
+that the specific file system implements. For example, the inode operations table includes
+<code class="code-inline">create</code>, <code class="code-inline">lookup</code>,
+<code class="code-inline">link</code>, <code class="code-inline">unlink</code>, etc. The
+file operations table includes <code class="code-inline">read</code>,
+<code class="code-inline">write</code>, <code class="code-inline">llseek</code>,
+<code class="code-inline">mmap</code>, etc. When VFS needs to read from a file, it calls
+<code class="code-inline">file->f_op->read(file, ...)</code>, which dispatches to the
+file system's <code class="code-inline">read</code> implementation.</p>
+
+<div class="code-block"><span class="comment">/* VFS object model (Linux-style) */</span>
+
+<span class="label">struct super_block:</span>
+  dev_t           s_dev        <span class="comment">// device</span>
+  unsigned long   s_block_size
+  struct super_operations *s_op  <span class="comment">// FS-specific ops</span>
+  struct dentry   *s_root      <span class="comment">// root dentry</span>
+
+<span class="label">struct inode:</span>
+  umode_t         i_mode       <span class="comment">// permissions</span>
+  loff_t          i_size       <span class="comment">// file size</span>
+  struct inode_operations *i_op
+  struct file_operations *i_fop
+
+<span class="label">struct file:</span>
+  struct dentry   *f_dentry
+  loff_t          f_pos        <span class="comment">// file offset</span>
+  struct file_operations *f_op
+
+<span class="comment">// Dispatch example:</span>
+<span class="label">ssize_t vfs_read(file, buf, count):</span>
+  <span class="keyword">return</span> file->f_op->read(file, buf, count, &file->f_pos);</div>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 VFS and Object-Oriented Design</div>
+<p>VFS is a classic example of <strong>object-oriented design</strong> in C. The
+operations tables are like virtual function tables (vtables) in C++. Each file system
+"subclasses" the VFS objects by providing its own operations. This allows the kernel to
+support any file system that implements the VFS interface, without knowing the file
+system's internal details. New file systems can be added as kernel modules without
+recompiling the kernel.</p>
+</div>
+
+<p>VFS <strong>path resolution</strong> is the process of converting a path name to an
+inode. The <code class="code-inline">path_lookup()</code> function (or
+<code class="code-inline">namei()</code> in xv6) traverses the path component by
+component: it starts at the root (or the current directory for relative paths), looks up
+each component in the current directory, follows symbolic links, and crosses mount points.
+The result is the inode of the final component. This traversal involves multiple file
+systems if the path crosses mount points.</p>
+
+<p>VFS also manages the <strong>dentry cache</strong> (directory entry cache), which
+caches recently resolved path components to speed up path lookup. Without the dentry
+cache, every <code class="code-inline">open()</code> would require multiple disk reads to
+traverse the directory tree. The dentry cache keeps recently used directory entries in
+memory, making path lookup fast for frequently accessed files.</p>
+
+<p>In xv6, VFS is minimal. The <code class="code-inline">struct file</code> in
+<code class="code-inline">kernel/file.h</code> has a <code class="code-inline">type</code>
+field (FD_FILE, FD_PIPE, FD_INODE) and function pointers for
+<code class="code-inline">read</code> and <code class="code-inline">write</code>. This is
+a simplified VFS: different "file system types" (regular files, pipes, devices) implement
+different read/write functions. The <code class="code-inline">namei()</code> function in
+<code class="code-inline">kernel/fs.c</code> does path resolution, but it does not support
+mount points or symbolic links. Extending xv6's VFS to support multiple file systems and
+mount points would be a significant but instructive project.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-6">15.6 Remote File Systems</h2>
+
+<p>A <strong>remote file system</strong> allows a client to access files on a remote
+server as if they were local. The client runs a file system client that translates file
+operations (open, read, write) into network requests, sends them to the server, and
+receives the results. The server runs a file system server that handles the requests by
+performing local file I/O. This enables <strong>distributed file sharing</strong> across
+multiple machines.</p>
+
+<p>The most common remote file system protocols are:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Protocol</th><th>Origin</th><th>Typical Use</th><th>Transport</th></tr>
+</thead>
+<tbody>
+<tr><td>NFS</td><td>Sun Microsystems</td><td>Unix/Linux file sharing</td><td>TCP/UDP (RPC)</td></tr>
+<tr><td>SMB/CIFS</td><td>Microsoft</td><td>Windows file sharing</td><td>TCP</td></tr>
+<tr><td>AFS</td><td>Carnegie Mellon</td><td>Large-scale distributed FS</td><td>RPC</td></tr>
+<tr><td>9P</td><td>Bell Labs (Plan 9)</td><td>Plan 9, QEMU virtio-fs</td><td>TCP</td></tr>
+<tr><td>iSCSI</td><td>IETF</td><td>Block-level SAN</td><td>TCP</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>NFS</strong> (Network File System) is the standard remote file system for
+Unix-like systems. It uses <strong>RPC</strong> (Remote Procedure Call) to send file
+operations from the client to the server. The client's VFS layer has an NFS
+implementation that translates VFS operations into RPC calls. The server's NFS daemon
+(<code class="code-inline">nfsd</code>) receives the RPCs and performs local file I/O.
+NFS is <strong>stateless</strong> (in versions 2 and 3): the server does not keep track of
+open files; each request contains all necessary information (file handle, offset, length).
+This makes crash recovery simple (the client just retries) but complicates file locking.
+NFSv4 is stateful and includes built-in security (Kerberos) and locking.</p>
+
+<div class="code-block"><span class="comment">/* NFS client-server interaction */</span>
+
+<span class="comment">// Client: open("/nfs/server/file.txt")</span>
+<span class="label">vfs_open("/nfs/server/file.txt"):</span>
+  <span class="comment">// VFS detects /nfs/server is an NFS mount</span>
+  <span class="comment">// Calls NFS client</span>
+  handle = nfs_lookup(server, "file.txt")
+  <span class="comment">// Returns a file handle (opaque token)</span>
+
+<span class="comment">// Client: read(fd, buf, 4096)</span>
+<span class="label">vfs_read(fd, buf, 4096):</span>
+  <span class="comment">// NFS client sends RPC to server</span>
+  data = nfs_read(handle, offset, 4096)
+  copy_to_user(buf, data, 4096)
+
+<span class="comment">// Server side:</span>
+<span class="label">nfsd_read(handle, offset, len):</span>
+  inode = handle_to_inode(handle)
+  bread(inode, offset / BSIZE)
+  <span class="keyword">return</span> data</div>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ NFS File Handles</div>
+<p>An NFS <strong>file handle</strong> is an opaque token that uniquely identifies a file
+on the server. It typically contains the file system ID and the inode number. The client
+receives the handle when it looks up a file and uses it in subsequent operations. Because
+the handle is opaque, the client does not need to understand the server's file system
+format. The server can even change its file system (e.g., from ext4 to XFS) without
+affecting clients, as long as handles remain valid.</p>
+</div>
+
+<p><strong>Caching</strong> is critical for remote file system performance. Without
+caching, every read and write would require a network round-trip, which is much slower
+than local disk access. The client caches file data and metadata (attributes) locally.
+When the cache is valid, reads are served locally. The challenge is
+<strong>cache consistency</strong>: if two clients modify the same file, or if the server
+file changes, the cache may be stale. NFS uses <strong>close-to-open consistency</strong>
+(Section 15.7): the client validates its cache when opening a file and flushes changes on
+close. AFS uses <strong>callback-based consistency</strong>: the server notifies clients
+when a cached file changes.</p>
+
+<p><strong>Security</strong> in remote file systems involves <strong>authentication</strong>
+(proving the client's identity) and <strong>authorization</strong> (checking permissions).
+NFSv2/v3 rely on the client to send the user's UID/GID, which is insecure (a malicious
+client can forge UIDs). NFSv4 uses <strong>RPCSEC_GSS</strong> with Kerberos for strong
+authentication. SMB uses NTLM or Kerberos. The server must trust the client's
+authentication or perform its own. In high-security environments, all traffic is encrypted
+and authenticated.</p>
+
+<p>In xv6, there is no network file system. All files are on the local virtio disk.
+Implementing a simple network file system in xv6 would require: (1) a network stack
+(Ethernet, IP, TCP/UDP), (2) an RPC layer, (3) a client VFS implementation, and (4) a
+server daemon. This is a large project but would demonstrate the power of the VFS
+abstraction: the same <code class="code-inline">open()</code> /
+<code class="code-inline">read()</code> / <code class="code-inline">write()</code> API can
+access both local and remote files transparently.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-7">15.7 Consistency Semantics</h2>
+
+<p><strong>Consistency semantics</strong> define what guarantees the file system provides
+when multiple processes or clients access the same file concurrently. This is especially
+important for <strong>distributed file systems</strong>, where network delays and caching
+make consistency harder to achieve.</p>
+
+<h3>Unix Semantics (Session Semantics)</h3>
+
+<p><strong>Unix semantics</strong> (also called <strong>session semantics</strong>) means
+that each <code class="code-inline">write()</code> is immediately visible to all processes
+that have the file open. If process A writes to a file and process B reads it, B sees
+A's write immediately (after the write returns). This is the strongest consistency model
+and is what local Unix file systems provide. It is easy to understand but hard to achieve
+in distributed systems because it requires invalidating all caches on every write.</p>
+
+<h3>Close-to-Open Consistency</h3>
+
+<p><strong>Close-to-open consistency</strong> (used by NFSv3) is weaker: changes to a file
+are only guaranteed to be visible to other clients when the file is closed. While the file
+is open, the client may cache it and serve reads from the cache. On close, the client
+flushes changes to the server. On open, the client checks with the server for a newer
+version. This means that if two clients have the same file open simultaneously, they may
+see different versions. This is acceptable for most workloads (files are rarely modified
+concurrently) and is much more efficient than Unix semantics over a network.</p>
+
+<div class="code-block"><span class="comment">/* Consistency models */</span>
+
+<span class="comment">// Unix semantics (local FS):</span>
+<span class="comment">//   A writes "hello" → B reads "hello" immediately</span>
+
+<span class="comment">// Close-to-open (NFSv3):</span>
+<span class="comment">//   A opens file, writes "hello" (cached locally)</span>
+<span class="comment">//   B opens file, reads old content (from server)</span>
+<span class="comment">//   A closes file → "hello" flushed to server</span>
+<span class="comment">//   B reopens file → reads "hello"</span>
+
+<span class="comment">// Immutable file semantics:</span>
+<span class="comment">//   File cannot be modified once created</span>
+<span class="comment">//   "Modifications" create a new version</span>
+<span class="comment">//   Old version remains until explicitly deleted</span></div>
+
+<h3>Immutable Shared-File Semantics</h3>
+
+<p><strong>Immutable shared-file semantics</strong> means that once a file is shared, it
+cannot be modified. Any "write" creates a new version of the file, and the old version
+remains accessible. This eliminates consistency problems (there is no concurrent
+modification) but is restrictive. Some distributed file systems (e.g., AFS with
+immutable volumes) and versioning file systems use this model. It is also the model used
+by <strong>copy-on-write</strong> file systems (Btrfs, ZFS) for snapshots.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Semantics</th><th>Write Visibility</th><th>Concurrent Reads</th><th>Used In</th></tr>
+</thead>
+<tbody>
+<tr><td>Unix (session)</td><td>Immediate</td><td>See latest write</td><td>Local FS (ext4, UFS)</td></tr>
+<tr><td>Close-to-open</td><td>On close</td><td>May see stale data</td><td>NFSv3, SMB</td></tr>
+<tr><td>Immutable</td><td>New version</td><td>See original</td><td>AFS, versioning FS</td></tr>
+<tr><td>Transaction</td><td>Atomic commit</td><td>See committed state</td><td>Database-backed FS</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Distributed Consistency Challenges</div>
+<p>In a distributed file system, achieving Unix semantics is very expensive: every write
+must invalidate caches on all clients, requiring network communication. Close-to-open
+consistency is a practical compromise: it provides good performance for the common case
+(one client modifies a file at a time) while ensuring eventual consistency. Applications
+that need stronger consistency (e.g., databases) should use explicit locking or a
+distributed coordination service.</p>
+</div>
+
+<p><strong>Transaction semantics</strong> is the strongest model: operations are grouped
+into <strong>transactions</strong> that are atomic (all or nothing), consistent, isolated,
+and durable (ACID). If two transactions conflict, one is aborted. This is the model used
+by databases and some specialized file systems. It is too expensive for general-purpose
+file systems but is used in applications that need strict consistency (e.g., financial
+systems, distributed databases).</p>
+
+<p>In xv6, the file system provides <strong>Unix semantics</strong> for local access:
+writes are immediately visible to all processes. There is no caching that would delay
+visibility (writes are synchronous). Since xv6 has no distributed file system,
+consistency is not a concern. If a network file system were added, the designer would need
+to choose a consistency model—likely close-to-open for simplicity and performance.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-15-8">15.8 NFS</h2>
+
+<p><strong>NFS</strong> (Network File System) is the most widely used distributed file
+system in Unix-like environments. Developed by Sun Microsystems in the 1980s, it allows
+clients to mount directories exported by a server and access them as if they were local.
+NFS has gone through several versions, each adding features and improving security and
+performance.</p>
+
+<h3>NFS Architecture</h3>
+
+<p>NFS uses a <strong>client-server</strong> architecture. The server
+<strong>exports</strong> directories (specified in <code class="code-inline">/etc/exports</code>).
+Clients <strong>mount</strong> the exported directories using the
+<code class="code-inline">mount</code> command with the <code class="code-inline">nfs</code>
+file system type. Once mounted, the NFS client in the kernel translates VFS operations
+into <strong>RPC</strong> (Remote Procedure Call) requests, sends them to the server, and
+returns the results. The server's <code class="code-inline">nfsd</code> daemon handles
+the requests by performing local file I/O.</p>
+
+<div class="code-block"><span class="comment">/* NFS setup */</span>
+
+<span class="comment">// Server: export /home in /etc/exports</span>
+<span class="label">/home  192.168.1.0/24(rw,sync,no_subtree_check)</span>
+
+<span class="comment">// Server: start nfsd</span>
+<span class="label">exportfs -a</span>
+<span class="label">systemctl start nfs-server</span>
+
+<span class="comment">// Client: mount</span>
+<span class="label">mount -t nfs server:/home /mnt/nfs</span>
+
+<span class="comment">// Now /mnt/nfs/* are files on the server</span>
+<span class="label">ls /mnt/nfs/alice</span>  <span class="comment">// lists server's /home/alice</span></div>
+
+<h3>NFS Protocol and RPC</h3>
+
+<p>NFS uses <strong>ONC RPC</strong> (Open Network Computing Remote Procedure Call,
+originally Sun RPC) as its transport. RPC allows a client to call a function on the server
+as if it were local. The client stub marshals the arguments into a network message, sends
+it, receives the reply, and unmarshals the result. The server stub receives the message,
+unmarshals the arguments, calls the local function, marshals the result, and sends it back.
+NFS defines procedures like <code class="code-inline">NFSPROC_READ</code>,
+<code class="code-inline">NFSPROC_WRITE</code>,
+<code class="code-inline">NFSPROC_LOOKUP</code>, etc.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ NFS Versions</div>
+<p><strong>NFSv2</strong> (1989): the original, over UDP, stateless, 32-bit file sizes.
+<strong>NFSv3</strong> (1995): supports TCP, larger files, async writes. <strong>NFSv4</strong>
+(2003): stateful, integrated security (Kerberos/RPCSEC_GSS), file delegation, compound
+operations (multiple ops in one RPC). <strong>NFSv4.1</strong> (2010): pNFS (parallel
+NFS) for high-performance storage. NFSv4 is the recommended version for modern
+deployments.</p>
+</div>
+
+<h3>NFS File Handles and Operations</h3>
+
+<p>NFS identifies files by <strong>file handles</strong>—opaque tokens that the server
+generates and the client uses in subsequent operations. A file handle typically encodes
+the file system ID and the inode number. The client obtains a handle via
+<code class="code-inline">LOOKUP</code> (resolve a name in a directory) and uses it in
+<code class="code-inline">READ</code>, <code class="code-inline">WRITE</code>,
+<code class="code-inline">GETATTR</code>, etc. The handle is valid as long as the file
+exists; if the file is deleted, the handle becomes stale, and the client gets a
+<code class="code-inline">ESTALE</code> error.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>NFS Operation</th><th>Description</th><th>Local Equivalent</th></tr>
+</thead>
+<tbody>
+<tr><td>LOOKUP</td><td>Resolve a name in a directory</td><td>dirlookup()</td></tr>
+<tr><td>READ</td><td>Read data from a file</td><td>read()</td></tr>
+<tr><td>WRITE</td><td>Write data to a file</td><td>write()</td></tr>
+<tr><td>CREATE</td><td>Create a file</td><td>create()</td></tr>
+<tr><td>REMOVE</td><td>Delete a file</td><td>unlink()</td></tr>
+<tr><td>READDIR</td><td>List directory contents</td><td>readdir()</td></tr>
+<tr><td>GETATTR</td><td>Get file attributes</td><td>stat()</td></tr>
+<tr><td>SETATTR</td><td>Set file attributes</td><td>chmod(), truncate()</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>NFS Caching and Consistency</h3>
+
+<p>NFS clients cache file data and attributes to reduce network traffic. The
+<strong>dentry cache</strong> caches directory lookups; the <strong>page cache</strong>
+caches file data; the <strong>attribute cache</strong> caches file metadata. Caching
+dramatically improves performance but introduces <strong>consistency</strong> challenges.
+NFSv3 uses <strong>close-to-open consistency</strong>: when a client opens a file, it
+checks with the server for a newer version; when it closes the file, it flushes changes.
+While the file is open, the client may serve reads from its cache, which may be stale if
+another client modified the file.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ NFS Stale File Handles</div>
+<p>If a file is deleted on the server while a client has it open, the client's file handle
+becomes <strong>stale</strong>. Subsequent operations return
+<code class="code-inline">ESTALE</code>. The client must re-resolve the path to get a new
+handle. This can happen if another client deletes the file, or if the server reboots and
+loses the file (if the handle was in memory only). NFSv4 uses
+<strong>volatile</strong> file handles for some files to avoid this, but it remains a
+common issue.</p>
+</div>
+
+<h3>NFSv4 Features</h3>
+
+<p>NFSv4 introduced several improvements over NFSv3: (1) <strong>Stateful
+operation</strong>—the server tracks open files and locks, enabling proper file locking
+and lease-based delegation; (2) <strong>Integrated security</strong>—RPCSEC_GSS with
+Kerberos provides authentication, integrity, and privacy; (3) <strong>Compound
+operations</strong>—multiple operations can be sent in a single RPC, reducing round-trips;
+(4) <strong>File delegation</strong>—the server can delegate a file to a client for
+exclusive caching, reducing server load; (5) <strong>pNFS</strong> (NFSv4.1)—separates
+metadata and data paths, allowing direct client-to-storage access for high performance.</p>
+
+<p>In xv6, there is no NFS support. Adding NFS would require a network stack, an RPC
+implementation, and a VFS NFS client. This is a large project but would demonstrate how
+VFS enables transparent remote file access. A simpler exercise would be to implement a
+<code class="code-inline">9P</code> client (used by QEMU's
+<code class="code-inline">virtio-9p</code>), which is simpler than NFS and is used in
+virtualization to share host directories with guests.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return;
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

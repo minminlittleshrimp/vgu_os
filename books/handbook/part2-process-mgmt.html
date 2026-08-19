@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silberschatz Handbook - Part 2: Process Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../new_labs/theme.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Silberschatz Handbook</h1>
+    <a class="subtitle" href="../../new_labs/main.html">VGU Operating Systems</a>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search" placeholder="Search handbook..." oninput="filterNav()">
+  </div>
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Parts</div>
+      <a class="nav-item" href="part1-overview.html">Part 1: Overview</a>
+      <a class="nav-item active" href="part2-process-mgmt.html">Part 2: Process Management</a>
+      <a class="nav-item" href="part3-synchronization.html">Part 3: Synchronization</a>
+      <a class="nav-item" href="part4-memory.html">Part 4: Memory Management</a>
+      <a class="nav-item" href="part5-storage.html">Part 5: Storage Management</a>
+      <a class="nav-item" href="part6-filesystem.html">Part 6: File System</a>
+      <a class="nav-item" href="part7-security.html">Part 7: Security &amp; Protection</a>
+      <a class="nav-item" href="part8-advanced.html">Part 8: Advanced Topics</a>
+      <a class="nav-item" href="part9-casestudies.html">Part 9: Case Studies</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 3: Processes</div>
+      <a class="nav-item" data-target="sec-3-1"><span class="nav-num">3.1</span>Process Concept</a>
+      <a class="nav-item" data-target="sec-3-2"><span class="nav-num">3.2</span>Process Scheduling</a>
+      <a class="nav-item" data-target="sec-3-3"><span class="nav-num">3.3</span>Operations on Processes</a>
+      <a class="nav-item" data-target="sec-3-4"><span class="nav-num">3.4</span>Interprocess Communication</a>
+      <a class="nav-item" data-target="sec-3-5"><span class="nav-num">3.5</span>IPC in Shared-Memory Systems</a>
+      <a class="nav-item" data-target="sec-3-6"><span class="nav-num">3.6</span>IPC in Message-Passing Systems</a>
+      <a class="nav-item" data-target="sec-3-7"><span class="nav-num">3.7</span>Examples of IPC</a>
+      <a class="nav-item" data-target="sec-3-8"><span class="nav-num">3.8</span>Client-Server Communication</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 4: Threads &amp; Concurrency</div>
+      <a class="nav-item" data-target="sec-4-1"><span class="nav-num">4.1</span>Overview</a>
+      <a class="nav-item" data-target="sec-4-2"><span class="nav-num">4.2</span>Multicore Programming</a>
+      <a class="nav-item" data-target="sec-4-3"><span class="nav-num">4.3</span>Multithreading Models</a>
+      <a class="nav-item" data-target="sec-4-4"><span class="nav-num">4.4</span>Thread Libraries</a>
+      <a class="nav-item" data-target="sec-4-5"><span class="nav-num">4.5</span>Implicit Threading</a>
+      <a class="nav-item" data-target="sec-4-6"><span class="nav-num">4.6</span>Threading Issues</a>
+      <a class="nav-item" data-target="sec-4-7"><span class="nav-num">4.7</span>OS Examples</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Chapter 5: CPU Scheduling</div>
+      <a class="nav-item" data-target="sec-5-1"><span class="nav-num">5.1</span>Basic Concepts</a>
+      <a class="nav-item" data-target="sec-5-2"><span class="nav-num">5.2</span>Scheduling Criteria</a>
+      <a class="nav-item" data-target="sec-5-3"><span class="nav-num">5.3</span>Scheduling Algorithms</a>
+      <a class="nav-item" data-target="sec-5-4"><span class="nav-num">5.4</span>Thread Scheduling</a>
+      <a class="nav-item" data-target="sec-5-5"><span class="nav-num">5.5</span>Multi-Processor Scheduling</a>
+      <a class="nav-item" data-target="sec-5-6"><span class="nav-num">5.6</span>Real-Time Scheduling</a>
+      <a class="nav-item" data-target="sec-5-7"><span class="nav-num">5.7</span>OS Examples</a>
+      <a class="nav-item" data-target="sec-5-8"><span class="nav-num">5.8</span>Algorithm Evaluation</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Related Handbooks</div>
+      <a class="nav-item" href="xv6-riscv.html">xv6 RISC-V Handbook</a>
+      <a class="nav-item" href="../../new_labs/handbook/main.html">Assembly Handbook I</a>
+      <a class="nav-item" href="../../new_labs/handbook/advanced.html">Assembly Handbook II</a>
+      <a class="nav-item" href="../../new_slides/handbook/main.html">OS Concepts Handbook</a>
+      <a class="nav-item" href="../../new_slides/handbook/lecture-handbook.html">Lecture Companion</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+<div class="content">
+
+<h1>Part 2: Process Management</h1>
+<p style="color:var(--text-dim);font-size:14px">Chapters 3–5 of Silberschatz, Galvin, Gagne:
+"Operating System Concepts," 10th Edition (2018). Covers processes, threads, concurrency,
+and CPU scheduling—the core of what an operating system does.</p>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+<li><a href="#sec-3-1">3.1 Process Concept</a></li>
+<li><a href="#sec-3-2">3.2 Process Scheduling</a></li>
+<li><a href="#sec-3-3">3.3 Operations on Processes</a></li>
+<li><a href="#sec-3-4">3.4 Interprocess Communication</a></li>
+<li><a href="#sec-3-5">3.5 IPC in Shared-Memory Systems</a></li>
+<li><a href="#sec-3-6">3.6 IPC in Message-Passing Systems</a></li>
+<li><a href="#sec-3-7">3.7 Examples of IPC</a></li>
+<li><a href="#sec-3-8">3.8 Client-Server Communication</a></li>
+<li><a href="#sec-4-1">4.1 Overview</a></li>
+<li><a href="#sec-4-2">4.2 Multicore Programming</a></li>
+<li><a href="#sec-4-3">4.3 Multithreading Models</a></li>
+<li><a href="#sec-4-4">4.4 Thread Libraries</a></li>
+<li><a href="#sec-4-5">4.5 Implicit Threading</a></li>
+<li><a href="#sec-4-6">4.6 Threading Issues</a></li>
+<li><a href="#sec-4-7">4.7 OS Examples</a></li>
+<li><a href="#sec-5-1">5.1 Basic Concepts</a></li>
+<li><a href="#sec-5-2">5.2 Scheduling Criteria</a></li>
+<li><a href="#sec-5-3">5.3 Scheduling Algorithms</a></li>
+<li><a href="#sec-5-4">5.4 Thread Scheduling</a></li>
+<li><a href="#sec-5-5">5.5 Multi-Processor Scheduling</a></li>
+<li><a href="#sec-5-6">5.6 Real-Time Scheduling</a></li>
+<li><a href="#sec-5-7">5.7 OS Examples</a></li>
+<li><a href="#sec-5-8">5.8 Algorithm Evaluation</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-1">3.1 Process Concept</h2>
+
+<p>A <strong>process</strong> is a program in execution. While a <em>program</em> is a
+passive entity (a file on disk containing a list of instructions), a <em>process</em> is
+an active entity—it has a <strong>program counter</strong> (tracking the next instruction),
+a set of <strong>registers</strong>, a <strong>stack</strong> (for function calls and
+local variables), a <strong>heap</strong> (for dynamically allocated memory), and a
+<strong>data section</strong> (for global variables). The same program can be running as
+multiple processes simultaneously, each with its own memory and state.</p>
+
+<p>A process can be in one of several <strong>states</strong> as it executes. The basic
+states are: <strong>New</strong> (being created), <strong>Ready</strong> (waiting to be
+assigned to a CPU), <strong>Running</strong> (executing on a CPU), <strong>Waiting</strong>
+(or Blocked, waiting for an event like I/O), and <strong>Terminated</strong> (finished
+execution). The OS moves processes between these states: a new process becomes Ready, the
+scheduler picks a Ready process to Run, a Running process may be preempted (back to Ready)
+or may block on I/O (to Waiting), and when I/O completes, a Waiting process becomes Ready.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Process States</div>
+<p>The five states and their transitions:<br>
+<strong>New → Ready</strong> (admission) · <strong>Ready → Running</strong> (dispatch) ·
+<strong>Running → Ready</strong> (preemption / timeout) · <strong>Running → Waiting</strong>
+(I/O or event wait) · <strong>Waiting → Ready</strong> (I/O or event completion) ·
+<strong>Running → Terminated</strong> (exit)</p>
+</div>
+
+<p>The OS represents each process with a <strong>process control block</strong> (PCB), also
+called a <strong>task control block</strong>. The PCB is the data structure that stores
+all information the OS needs about a process: its state, program counter, CPU registers,
+CPU scheduling information (priority, queue pointers), memory management information (page
+tables, base/limit registers), accounting information (CPU time used, time limits), and
+I/O status (open files, allocated devices). When the OS switches from one process to
+another (a <strong>context switch</strong>), it saves the current process's state into its
+PCB and loads the next process's state from its PCB.</p>
+
+<div class="code-block"><span class="comment">/* xv6 process control block (simplified from proc.h) */</span>
+
+<span class="keyword">enum</span> procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+
+<span class="keyword">struct</span> proc {
+    <span class="keyword">enum</span> procstate state;        <span class="comment">// process state</span>
+    <span class="keyword">int</span> pid;                     <span class="comment">// process ID</span>
+    <span class="keyword">struct</span> proc *parent;          <span class="comment">// parent process</span>
+    <span class="keyword">void</span> *chan;                  <span class="comment">// sleep channel</span>
+    <span class="keyword">int</span> killed;                   <span class="comment">// killed flag</span>
+    <span class="keyword">struct</span> trapframe *trapframe;  <span class="comment">// saved user registers</span>
+    <span class="keyword">struct</span> context context;        <span class="comment">// saved kernel registers (for swtch)</span>
+    pagetable_t pagetable;           <span class="comment">// user page table</span>
+    <span class="keyword">struct</span> file *ofile[NOFILE];    <span class="comment">// open files</span>
+    <span class="keyword">char</span> name[16];                 <span class="comment">// process name (for debugging)</span>
+};</div>
+
+<p>Each process has a unique <strong>process identifier</strong> (PID), a positive integer.
+The first process created by the OS (PID 1 on UNIX, called <code class="code-inline">init</code>)
+is the ancestor of all other processes. In xv6, the first process is created by
+<code class="code-inline">userinit()</code> in <code class="code-inline">proc.c</code> and
+runs the <code class="code-inline">init</code> program, which forks a shell. Every
+subsequent process is created by <code class="code-inline">fork()</code>, which makes a
+copy of the calling process. The parent-child relationship forms a <strong>process tree</strong>.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-2">3.2 Process Scheduling</h2>
+
+<p>The OS maintains queues of processes. The most important is the <strong>ready queue</strong>,
+which holds processes that are ready to run but waiting for a CPU. There are also
+<strong>device queues</strong> for processes waiting on specific I/O devices. A process
+moves between these queues as it changes state: when it blocks on I/O, it leaves the ready
+queue and joins the device queue; when I/O completes, it returns to the ready queue.</p>
+
+<p>The component of the OS that selects the next process to run is the <strong>short-term
+scheduler</strong> (or CPU scheduler). It runs frequently—every few milliseconds—and must
+be fast. The <strong>long-term scheduler</strong> (or job scheduler) selects which
+processes are admitted to the system (from a pool of new jobs) and runs infrequently. Its
+goal is to maintain a good <strong>process mix</strong> of CPU-bound processes (long CPU
+bursts) and I/O-bound processes (short CPU bursts, frequent I/O), keeping both the CPU and
+I/O devices busy.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 CPU-Bound vs. I/O-Bound</div>
+<p>A <strong>CPU-bound</strong> process spends most of its time computing (e.g., a
+scientific simulation). An <strong>I/O-bound</strong> process spends most of its time
+waiting for I/O (e.g., a word processor). A good scheduler keeps a mix: while an I/O-bound
+process waits, a CPU-bound process can use the CPU. If all processes are CPU-bound, I/O
+devices sit idle; if all are I/O-bound, the CPU sits idle.</p>
+</div>
+
+<p>Processes alternate between <strong>CPU bursts</strong> (periods of computation) and
+<strong>I/O bursts</strong> (periods of waiting for I/O). The <strong>CPU-I/O burst cycle</strong>
+characterizes a process's behavior. CPU-bound processes have a few long CPU bursts; I/O-bound
+processes have many short CPU bursts. The histogram of CPU burst durations is typically
+exponential—most bursts are short, with a long tail of longer bursts. This distribution
+informs scheduling algorithm design.</p>
+
+<p>The <strong>context switch</strong> is the mechanism by which the CPU switches from
+one process to another. The OS saves the state of the currently running process (registers,
+program counter) into its PCB and loads the state of the next process from its PCB. This
+is pure overhead—no useful work is done during a context switch—so minimizing context
+switch time is important. In xv6, the <code class="code-inline">swtch()</code> function
+in <code class="code-inline">swtch.S</code> saves and restores callee-saved registers to
+perform the switch. The time for a context switch is typically a few microseconds, but it
+can be significant if it happens frequently.</p>
+
+<div class="code-block"><span class="comment">/* xv6 context switch (swtch.S, simplified) */</span>
+
+<span class="comment">// Save current context, load new context</span>
+<span class="comment">// 'old' = pointer to current context struct</span>
+<span class="comment">// 'new' = pointer to new context struct</span>
+
+<span class="label">swtch:</span>
+    sd      <span class="reg">ra</span>, <span class="number">0</span>(<span class="reg">a0</span>)      <span class="comment">// save return address</span>
+    sd      <span class="reg">sp</span>, <span class="number">8</span>(<span class="reg">a0</span>)      <span class="comment">// save stack pointer</span>
+    sd      <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">a0</span>)     <span class="comment">// save s0-s11 (callee-saved)</span>
+    <span class="comment">// ... save s1-s11 ...</span>
+
+    ld      <span class="reg">ra</span>, <span class="number">0</span>(<span class="reg">a1</span>)      <span class="comment">// restore return address</span>
+    ld      <span class="reg">sp</span>, <span class="number">8</span>(<span class="reg">a1</span>)      <span class="comment">// restore stack pointer</span>
+    ld      <span class="reg">s0</span>, <span class="number">16</span>(<span class="reg">a1</span>)     <span class="comment">// restore s0-s11</span>
+    <span class="comment">// ... restore s1-s11 ...</span>
+
+    ret                     <span class="comment">// jump to restored ra</span></div>
+
+<p>Some systems also have a <strong>medium-term scheduler</strong> that performs
+<strong>swapping</strong>: removing processes from memory (and writing them to disk) when
+memory is full, and bringing them back later. This reduces the degree of multiprogramming
+(the number of processes in memory) and can improve response time. Swapping is the
+precursor to modern <strong>virtual memory paging</strong>, which moves individual pages
+rather than entire processes.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-3">3.3 Operations on Processes</h2>
+
+<p>Processes can be created, terminated, and made to wait for each other. The most
+fundamental operations are <strong>process creation</strong> and
+<strong>process termination</strong>.</p>
+
+<p>Most operating systems create processes using a <strong>fork</strong> operation. The
+<code class="code-inline">fork()</code> system call creates a new process that is a
+<strong>copy</strong> of the calling process (the parent). The new process (the child) gets
+its own memory space (a copy of the parent's), its own PID, and its own open file
+descriptors (copies of the parent's). The only difference is the return value of
+<code class="code-inline">fork()</code>: it returns the child's PID to the parent and 0 to
+the child. This allows the parent and child to execute different code after the fork.</p>
+
+<div class="code-block"><span class="comment">/* fork() example (xv6 / UNIX) */</span>
+
+<span class="keyword">int</span> pid = fork();
+<span class="keyword">if</span> (pid &lt; <span class="number">0</span>) {
+    <span class="comment">// fork failed</span>
+    exit(<span class="number">1</span>);
+} <span class="keyword">else if</span> (pid == <span class="number">0</span>) {
+    <span class="comment">// child process</span>
+    exec(<span class="string">"/bin/ls"</span>, argv);  <span class="comment">// replace with new program</span>
+    exit(<span class="number">1</span>);  <span class="comment">// only reached if exec fails</span>
+} <span class="keyword">else</span> {
+    <span class="comment">// parent process</span>
+    wait(<span class="number">0</span>);  <span class="comment">// wait for child to finish</span>
+}</div>
+
+<p>The <code class="code-inline">exec()</code> system call replaces the current process
+image with a new program. It loads a new program from a file, initializes its memory
+(text, data, stack), and starts it running. The PID does not change—exec replaces the
+program, not the process. The typical pattern is <code class="code-inline">fork()</code>
+followed by <code class="code-inline">exec()</code> in the child: the parent continues
+running, while the child runs a different program. This is how shells run commands.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ fork() + exec() Pattern</div>
+<p>The <code class="code-inline">fork()</code> + <code class="code-inline">exec()</code>
+pattern is the UNIX way to start a new program. <code class="code-inline">fork()</code>
+duplicates the process; <code class="code-inline">exec()</code> replaces the program.
+Separating these allows the parent to modify the child's environment (redirect file
+descriptors, change directory) between fork and exec. This is more flexible than a single
+"create process" call.</p>
+</div>
+
+<p>A process terminates when it calls <code class="code-inline">exit()</code>, when it
+returns from <code class="code-inline">main()</code>, or when it receives a fatal signal.
+The <code class="code-inline">exit()</code> system call closes all file descriptors,
+releases memory, and sets the process's state to <strong>zombie</strong>. A zombie process
+has terminated but still has an entry in the process table, waiting for its parent to
+call <code class="code-inline">wait()</code> to retrieve its exit status. If the parent
+never calls <code class="code-inline">wait()</code>, the zombie remains, wasting a process
+table entry. This is a <strong>zombie process</strong>—a resource leak.</p>
+
+<p>If a parent terminates before its children, the children become <strong>orphan
+processes</strong>. On UNIX systems, orphans are <strong>reparented</strong> to the
+<code class="code-inline">init</code> process (PID 1), which periodically calls
+<code class="code-inline">wait()</code> to reap them. This ensures that no process remains
+a zombie forever. In xv6, the <code class="code-inline">wait()</code> function in
+<code class="code-inline">sysproc.c</code> scans the process table for children of the
+calling process, and if any are zombies, reaps one and returns its PID and exit status.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Zombie and Orphan Processes</div>
+<p><strong>Zombie:</strong> A process that has exited but whose parent hasn't called
+<code class="code-inline">wait()</code>. It retains its PID and exit status. Too many
+zombies can exhaust the process table.<br>
+<strong>Orphan:</strong> A process whose parent has exited. It is reparented to
+<code class="code-inline">init</code> (PID 1), which reaps it when it exits.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-4">3.4 Interprocess Communication</h2>
+
+<p><strong>Interprocess communication</strong> (IPC) is the set of mechanisms by which
+processes communicate with each other and synchronize their actions. Processes may be
+<strong>independent</strong> (not affecting or being affected by other processes) or
+<strong>cooperating</strong> (sharing data or coordinating execution). Cooperating
+processes need IPC for several reasons: <strong>information sharing</strong> (multiple
+programs accessing the same data), <strong>computation speedup</strong> (splitting work
+across processes/cores), <strong>modularity</strong> (dividing a system into cooperating
+modules), and <strong>convenience</strong> (a user running multiple programs
+simultaneously).</p>
+
+<p>There are two fundamental models of IPC: <strong>shared memory</strong> and
+<strong>message passing</strong>. In the shared-memory model, processes establish a region
+of shared memory that they both can read and write. Communication is fast (no kernel
+involvement after setup) but requires explicit synchronization to avoid races. In the
+message-passing model, processes communicate by sending and receiving messages through
+the kernel. This is slower (each message involves a system call) but works across
+machines and avoids synchronization issues.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Feature</th><th>Shared Memory</th><th>Message Passing</th></tr>
+</thead>
+<tbody>
+<tr><td>Speed</td><td>Fast (no kernel after setup)</td><td>Slower (system call per message)</td></tr>
+<tr><td>Sync needed?</td><td>Yes (manual)</td><td>No (kernel handles ordering)</td></tr>
+<tr><td>Across machines?</td><td>No</td><td>Yes</td></tr>
+<tr><td>Setup</td><td>Complex (shmget, mmap)</td><td>Simple (pipe, socket)</td></tr>
+<tr><td>Use case</td><td>High-perf local IPC</td><td>Distributed, simple IPC</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The choice between shared memory and message passing depends on the application. For
+high-performance local communication (e.g., a database and its clients on the same
+machine), shared memory is preferred. For distributed systems or when simplicity matters,
+message passing is preferred. Many systems use both: shared memory for local
+communication, message passing for remote. The <strong>producer-consumer problem</strong>
+(also called the bounded-buffer problem) is the classic example used to illustrate IPC:
+a producer produces data items and a consumer consumes them, with a shared buffer in
+between.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-5">3.5 IPC in Shared-Memory Systems</h2>
+
+<p>In a shared-memory IPC system, cooperating processes establish a region of
+<strong>shared memory</strong> that both can access. On UNIX systems, this is done with
+<code class="code-inline">shmget()</code> (allocate a shared memory segment) and
+<code class="code-inline">shmat()</code> (attach it to the process's address space), or
+with <code class="code-inline">mmap()</code> with the <code class="code-inline">MAP_SHARED</code>
+flag. Once attached, the shared region behaves like regular memory—both processes can read
+and write it without kernel involvement.</p>
+
+<div class="code-block"><span class="comment">/* Shared memory IPC (POSIX shmget/shmat) */</span>
+
+<span class="comment">// Process 1 (Producer): create and write</span>
+<span class="keyword">int</span> shmid = shmget(IPC_PRIVATE, <span class="keyword">sizeof</span>(buffer), IPC_CREAT | <span class="number">0666</span>);
+<span class="keyword">char</span> *shared = (<span class="keyword">char</span>*)shmat(shmid, NULL, <span class="number">0</span>);
+strcpy(shared, <span class="string">"Hello from producer!"</span>);
+
+<span class="comment">// Process 2 (Consumer): attach and read</span>
+<span class="keyword">int</span> shmid = shmget(IPC_PRIVATE, <span class="keyword">sizeof</span>(buffer), <span class="number">0666</span>);
+<span class="keyword">char</span> *shared = (<span class="keyword">char</span>*)shmat(shmid, NULL, <span class="number">0</span>);
+printf(<span class="string">"Got: %s\n"</span>, shared);  <span class="comment">// prints "Hello from producer!"</span></div>
+
+<p>The classic shared-memory problem is the <strong>bounded-buffer</strong> (producer-consumer)
+problem. A producer puts items into a buffer; a consumer takes them out. The buffer has
+a fixed size, so the producer must wait when the buffer is full, and the consumer must
+wait when it is empty. The shared buffer is typically implemented as a circular array with
+<code class="code-inline">in</code> and <code class="code-inline">out</code> indices. The
+producer writes at <code class="code-inline">in</code> and advances it; the consumer reads
+at <code class="code-inline">out</code> and advances it. When <code class="code-inline">in</code>
+catches up to <code class="code-inline">out</code>, the buffer is full; when
+<code class="code-inline">out</code> catches up to <code class="code-inline">in</code>, it
+is empty.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Race Conditions in Shared Memory</div>
+<p>Shared memory requires <strong>synchronization</strong>. Without it, the producer and
+consumer can race: if both access <code class="code-inline">in</code> or
+<code class="code-inline">out</code> simultaneously, updates can be lost. Solutions use
+<strong>semaphores</strong> or <strong>mutexes</strong> (covered in Part 3). The buffer
+also needs a <strong>count</strong> or <strong>empty/full</strong> semaphores to track
+available slots and items.</p>
+</div>
+
+<p>A subtle issue is <strong>cache coherence</strong> on multiprocessor systems. Even if
+two processes share memory, each CPU core may have its own cache, and writes by one core
+may not be immediately visible to another. Hardware cache coherence protocols (like MESI)
+handle this at the hardware level, but software must use <strong>memory barriers</strong>
+(or <strong>fences</strong>) to ensure that memory operations are visible in the correct
+order. This is especially important for lock-free data structures.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-6">3.6 IPC in Message-Passing Systems</h2>
+
+<p>In a message-passing IPC system, processes communicate by sending and receiving
+messages. The <code class="code-inline">send()</code> operation sends a message to a
+process or mailbox; the <code class="code-inline">receive()</code> operation waits for and
+receives a message. The kernel handles the actual data transfer, copying data from the
+sender's address space to the kernel and then to the receiver's address space (or using
+zero-copy techniques for large messages).</p>
+
+<p>Message passing can be <strong>direct</strong> or <strong>indirect</strong>. In
+<strong>direct communication</strong>, each process explicitly names the recipient or
+sender: <code class="code-inline">send(P, message)</code> sends to process P,
+<code class="code-inline">receive(Q, message)</code> receives from process Q. This creates
+a direct link between two processes. In <strong>indirect communication</strong>, messages
+are sent to and received from <strong>mailboxes</strong> (or ports): a mailbox can be
+shared by multiple processes, allowing one-to-many and many-to-one communication. A
+process can own a mailbox (only it can receive) or share it.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Direct</th><th>Indirect (Mailbox)</th></tr>
+</thead>
+<tbody>
+<tr><td>Addressing</td><td>By PID</td><td>By mailbox ID</td></tr>
+<tr><td>Link</td><td>Exactly 2 processes</td><td>Many processes</td></tr>
+<tr><td>Example</td><td>Direct send/recv</td><td>Pipes, sockets, message queues</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Communication can be <strong>synchronous</strong> or <strong>asynchronous</strong>. In
+<strong>synchronous</strong> (or <em>blocking</em>) communication, <code class="code-inline">send()</code>
+blocks until the message is received, and <code class="code-inline">receive()</code> blocks
+until a message is available. This is also called a <strong>rendezvous</strong>. In
+<strong>asynchronous</strong> (or <em>non-blocking</em>) communication,
+<code class="code-inline">send()</code> returns immediately (the message is buffered by the
+OS), and <code class="code-inline">receive()</code> can return immediately with a status
+indicating whether a message was available. Most systems provide both options, or a
+combination (blocking receive, non-blocking send).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Blocking vs. Non-Blocking</div>
+<p><strong>Blocking send:</strong> Sender waits until message is received (rendezvous).<br>
+<strong>Non-blocking send:</strong> Sender continues; message is buffered.<br>
+<strong>Blocking receive:</strong> Receiver waits until a message arrives.<br>
+<strong>Non-blocking receive:</strong> Receiver gets a message or a "no message" status.</p>
+</div>
+
+<p>Buffering is another consideration. A communication link can have <strong>zero
+capacity</strong> (no buffering—send blocks until receive), <strong>bounded capacity</strong>
+(finite queue—send blocks only if full), or <strong>unbounded capacity</strong> (infinite
+queue—send never blocks). Zero capacity is the most restrictive but simplest; unbounded is
+most flexible but can consume unbounded memory. Most practical systems use bounded
+capacity with a reasonable buffer size.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-7">3.7 Examples of IPC</h2>
+
+<p>UNIX-like systems provide several IPC mechanisms. The simplest is the <strong>pipe</strong>,
+a unidirectional byte stream between two processes. A pipe is created with
+<code class="code-inline">pipe(fd)</code>, which returns two file descriptors:
+<code class="code-inline">fd[0]</code> for reading and <code class="code-inline">fd[1]</code>
+for writing. After <code class="code-inline">fork()</code>, the parent and child share the
+pipe: one writes, the other reads. Pipes are limited to processes with a common ancestor
+(they inherit the file descriptors via fork).</p>
+
+<div class="code-block"><span class="comment">/* xv6 pipe example */</span>
+
+<span class="keyword">int</span> p[<span class="number">2</span>];
+pipe(p);              <span class="comment">// p[0] = read end, p[1] = write end</span>
+
+<span class="keyword">if</span> (fork() == <span class="number">0</span>) {
+    <span class="comment">// child: read from pipe</span>
+    close(p[<span class="number">1</span>]);   <span class="comment">// close write end</span>
+    <span class="keyword">char</span> buf[<span class="number">64</span>];
+    read(p[<span class="number">0</span>], buf, <span class="number">64</span>);
+    printf(<span class="string">"child got: %s\n"</span>, buf);
+} <span class="keyword">else</span> {
+    <span class="comment">// parent: write to pipe</span>
+    close(p[<span class="number">0</span>]);   <span class="comment">// close read end</span>
+    write(p[<span class="number">1</span>], <span class="string">"hello"</span>, <span class="number">6</span>);
+}</div>
+
+<p>A <strong>named pipe</strong> (or FIFO) is a pipe that exists as a file in the file
+system, created with <code class="code-inline">mkfifo()</code>. Unlike anonymous pipes,
+FIFOs can be used between unrelated processes—any process with permission can open the
+FIFO file for reading or writing. <strong>Message queues</strong> (System V
+<code class="code-inline">msgget</code>/<code class="code-inline">msgsnd</code>/<code class="code-inline">msgrcv</code>
+or POSIX <code class="code-inline">mq_open</code>) provide structured messages with types,
+allowing selective receiving. <strong>Shared memory</strong> (<code class="code-inline">shmget</code>/<code class="code-inline">shmat</code>
+or <code class="code-inline">mmap</code>) provides the fastest IPC for large data.</p>
+
+<p><strong>Sockets</strong> are a general-purpose IPC mechanism that works both locally
+and over a network. A socket is an endpoint for communication, identified by an IP address
+and port number. The <strong>BSD socket API</strong> (<code class="code-inline">socket</code>,
+<code class="code-inline">bind</code>, <code class="code-inline">listen</code>,
+<code class="code-inline">accept</code>, <code class="code-inline">connect</code>,
+<code class="code-inline">send</code>, <code class="code-inline">recv</code>) is the
+standard network programming interface on UNIX and Windows. <strong>UNIX domain sockets</strong>
+are a variant that uses the file system for naming, providing socket semantics for local
+IPC with lower overhead than network sockets.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 xv6 IPC</div>
+<p>xv6 provides <strong>pipes</strong> (in <code class="code-inline">pipe.c</code>) as its
+primary IPC mechanism. The shell uses pipes to implement command pipelines (e.g.,
+<code class="code-inline">ls | grep | wc</code>). xv6 does not implement sockets, shared
+memory, or message queues—these are left as exercises. Studying xv6's pipe implementation
+is a great way to understand how IPC works at the kernel level.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-3-8">3.8 Client-Server Communication</h2>
+
+<p>In a client-server model, a <strong>server</strong> process provides services, and
+<strong>client</strong> processes request them. Communication typically uses
+<strong>sockets</strong>, <strong>remote procedure calls</strong> (RPC), or
+<strong>remote method invocation</strong> (RMI). This model is the basis of network
+services, web applications, and distributed systems.</p>
+
+<p>A <strong>socket</strong> is an endpoint for communication. A server creates a socket,
+binds it to a known address (IP + port), listens for connections, and accepts them. A
+client creates a socket, connects to the server's address, and then sends and receives
+data. Sockets support both <strong>stream</strong> (TCP, reliable, connection-oriented)
+and <strong>datagram</strong> (UDP, unreliable, connectionless) communication. The
+socket API was introduced in BSD UNIX (4.2BSD, 1983) and is now universal.</p>
+
+<div class="code-block"><span class="comment">/* Socket communication (simplified server) */</span>
+
+<span class="comment">// Server</span>
+<span class="keyword">int</span> server_fd = socket(AF_INET, SOCK_STREAM, <span class="number">0</span>);
+bind(server_fd, &amp;server_addr, <span class="keyword">sizeof</span>(server_addr));
+listen(server_fd, <span class="number">5</span>);  <span class="comment">// backlog of 5</span>
+<span class="keyword">int</span> client_fd = accept(server_fd, &amp;client_addr, &amp;len);
+read(client_fd, buffer, <span class="number">1024</span>);
+write(client_fd, response, strlen(response));
+close(client_fd);
+
+<span class="comment">// Client</span>
+<span class="keyword">int</span> sock = socket(AF_INET, SOCK_STREAM, <span class="number">0</span>);
+connect(sock, &amp;server_addr, <span class="keyword">sizeof</span>(server_addr));
+write(sock, request, strlen(request));
+read(sock, response, <span class="number">1024</span>);
+close(sock);</div>
+
+<p><strong>Remote Procedure Call</strong> (RPC) abstracts network communication as a
+function call. A client calls a local <strong>stub</strong> function that marshals the
+arguments into a message, sends it to the server, waits for the reply, and unmarshals the
+result. On the server side, a <strong>skeleton</strong> receives the message, unmarshals
+the arguments, calls the actual function, marshals the result, and sends it back. This
+makes distributed programming look like local programming. Systems like Sun RPC, DCE RPC,
+and gRPC implement this pattern. <strong>Remote Method Invocation</strong> (RMI) is the
+Java equivalent for remote objects.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Marshalling</div>
+<p><strong>Marshalling</strong> (or <em>serialization</em>) is the process of converting
+function arguments into a byte stream for transmission. It must handle different data
+types, byte ordering (big-endian vs. little-endian), and pointer structures. Formats like
+Protocol Buffers, JSON, and MessagePack are commonly used for marshalling in modern RPC
+systems.</p>
+</div>
+
+<p>Modern client-server communication often uses higher-level protocols built on top of
+sockets: <strong>HTTP</strong> (for web services), <strong>gRPC</strong> (Google's RPC
+framework using Protocol Buffers), <strong>REST APIs</strong> (using HTTP verbs like GET,
+POST, PUT, DELETE), and <strong>GraphQL</strong>. These provide richer semantics than raw
+sockets but add overhead. The choice depends on the application's needs for performance,
+interoperability, and developer convenience.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-1">4.1 Overview</h2>
+
+<p>A <strong>thread</strong> is a basic unit of CPU utilization; it is smaller than a
+process. A process can contain multiple threads, all sharing the same code, data, and
+resources (open files, signals), but each having its own <strong>program counter</strong>,
+<strong>registers</strong>, and <strong>stack</strong>. Threads are sometimes called
+<strong>lightweight processes</strong> because creating a thread and switching between
+threads is much cheaper than creating a process and context switching, since threads
+share memory and do not require a full context switch.</p>
+
+<p>The motivation for multithreading is <strong>responsiveness</strong> (a UI thread
+stays responsive while a worker thread does computation), <strong>resource sharing</strong>
+(threads share memory, avoiding IPC), <strong>economy</strong> (thread creation is cheaper
+than process creation), and <strong>scalability</strong> (threads can run in parallel on
+multiple cores). A single-threaded process can only use one core; a multithreaded process
+can use all available cores, potentially achieving near-linear speedup on multicore
+systems.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Property</th><th>Process</th><th>Thread</th></tr>
+</thead>
+<tbody>
+<tr><td>Address space</td><td>Separate</td><td>Shared</td></tr>
+<tr><td>Code/Data/Heap</td><td>Separate</td><td>Shared</td></tr>
+<tr><td>Stack</td><td>Separate</td><td>Separate (per thread)</td></tr>
+<tr><td>Registers/PC</td><td>Separate</td><td>Separate (per thread)</td></tr>
+<tr><td>Open files</td><td>Separate</td><td>Shared</td></tr>
+<tr><td>Creation cost</td><td>High</td><td>Low</td></tr>
+<tr><td>Context switch</td><td>Expensive</td><td>Cheaper</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A <strong>single-threaded process</strong> has one thread of control: it executes one
+instruction at a time. A <strong>multithreaded process</strong> has multiple threads,
+each executing independently but sharing memory. For example, a web browser might have
+one thread for the UI, one for rendering, one for network I/O, and one for each open tab.
+If one thread blocks (e.g., waiting for a network response), the others continue running,
+keeping the application responsive.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Concurrency vs. Parallelism</div>
+<p><strong>Concurrency</strong> means multiple threads making progress (possibly
+interleaved on a single core via time-slicing). <strong>Parallelism</strong> means
+multiple threads running simultaneously on multiple cores. Concurrency is about
+<em>dealing with</em> multiple things; parallelism is about <em>doing</em> multiple
+things at once. A system can be concurrent without being parallel (single core,
+time-sliced) or parallel without being concurrent (one thread per core, no sharing).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-2">4.2 Multicore Programming</h2>
+
+<p>A <strong>multiprocessor</strong> or <strong>multicore</strong> system has multiple
+processing units. Multicore programming introduces challenges that single-threaded
+programming does not face. The main challenges are: <strong>task identification</strong>
+(dividing work into independent tasks), <strong>load balancing</strong> (distributing
+work evenly across cores), <strong>data splitting</strong> (dividing data so each core
+works on its portion), <strong>data dependency</strong> (handling dependencies between
+tasks), and <strong>testing and debugging</strong> (concurrency bugs are non-deterministic
+and hard to reproduce).</p>
+
+<p>On a single-core system, concurrency is <strong>simulated</strong> by time-slicing:
+the OS rapidly switches between threads, giving the illusion of simultaneous execution.
+On a multicore system, threads can run <strong>truly in parallel</strong>, with multiple
+threads executing on different cores at the same time. This exposes
+<strong>race conditions</strong> that might not manifest on a single core (where
+time-slicing serializes access). A program that works on a single core may fail
+intermittently on multiple cores due to races.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Amdahl's Law</div>
+<p><strong>Amdahl's Law</strong> states that the speedup from parallelization is limited
+by the sequential portion of the program. If 90% of a program can be parallelized and 10%
+is sequential, the maximum speedup (with infinite cores) is <span>10&divide;(1&minus;0.9)&nbsp;=&nbsp;10&times;</span>.
+This means that even a small sequential portion severely limits parallel speedup. This
+is why optimizing the sequential parts (Amdahl's "critical section") is crucial.</p>
+</div>
+
+<p>Parallelism can be <strong>data parallel</strong> (each thread works on a different
+portion of the data) or <strong>task parallel</strong> (each thread performs a different
+task). Data parallelism is common in scientific computing and image processing; task
+parallelism is common in interactive applications. Many real applications use both: a
+web server might use task parallelism (one thread per request type) and data parallelism
+(within a request, processing data in parallel).</p>
+
+<p>Modern programming models for multicore include <strong>thread pools</strong> (a pool
+of worker threads that process tasks from a queue), <strong>fork-join</strong> (split
+work, process in parallel, merge results), <strong>map-reduce</strong> (a framework for
+large-scale data processing), and <strong>dataflow</strong> (expressing computation as a
+graph of dependencies). These models abstract away low-level thread management, making
+parallel programming more manageable.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-3">4.3 Multithreading Models</h2>
+
+<p>There are two types of threads: <strong>user threads</strong> (managed by a user-level
+library, invisible to the OS) and <strong>kernel threads</strong> (managed by the OS).
+The relationship between user threads and kernel threads determines the
+<strong>multithreading model</strong>. There are three common models: many-to-one,
+one-to-one, and many-to-many.</p>
+
+<p>In the <strong>many-to-one</strong> model, many user threads are mapped to one kernel
+thread. Thread management is done in user space by a library, so thread creation and
+switching are fast. However, if one thread blocks (e.g., on a system call), <em>all</em>
+threads block, because the kernel only sees one thread. Also, only one thread can run at a
+time (on one core), so there is no parallelism. This model is rarely used today; early
+Java green threads and some POSIX thread implementations used it.</p>
+
+<p>In the <strong>one-to-one</strong> model, each user thread is mapped to one kernel
+thread. This allows true parallelism (multiple threads on multiple cores) and does not
+block all threads when one blocks. The downside is that creating a kernel thread is more
+expensive than creating a user thread, and the number of threads is limited by kernel
+resources. <strong>Linux</strong> (using <code class="code-inline">clone()</code>) and
+<strong>Windows</strong> use this model. Most modern systems prefer one-to-one for its
+simplicity and parallelism.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Threads</div>
+<p>On Linux, threads are implemented as <strong>processes that share memory</strong>. The
+<code class="code-inline">clone()</code> system call creates a new process that can share
+memory, file descriptors, and signal handlers with its parent. The
+<code class="code-inline">pthread_create()</code> library function uses
+<code class="code-inline">clone()</code> internally. From the kernel's perspective, each
+thread is a separate "task" with its own PID (though the <code class="code-inline">top</code>
+and <code class="code-inline">ps</code> commands group them by thread group ID, or TGID).</p>
+</div>
+
+<p>In the <strong>many-to-many</strong> model, many user threads are mapped to a smaller
+or equal number of kernel threads. This allows parallelism (multiple kernel threads on
+multiple cores) while allowing many user threads (limited only by user-space resources).
+If one user thread blocks, the kernel thread can run another user thread. This model is
+flexible but complex to implement. Some systems (like Solaris before version 9) used it;
+modern systems generally prefer one-to-one because kernel threads are now lightweight
+enough. A variant, <strong>two-level</strong>, allows a user thread to be bound to a
+kernel thread (for critical tasks) while others share.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Model</th><th>Parallelism?</th><th>Block issue?</th><th>Used by</th></tr>
+</thead>
+<tbody>
+<tr><td>Many-to-one</td><td>No</td><td>All block</td><td>Old green threads</td></tr>
+<tr><td>One-to-one</td><td>Yes</td><td>Only one blocks</td><td>Linux, Windows</td></tr>
+<tr><td>Many-to-many</td><td>Yes</td><td>Others can run</td><td>Solaris (old), Go (goroutines)</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-4">4.4 Thread Libraries</h2>
+
+<p>A <strong>thread library</strong> provides the API for creating and managing threads.
+There are two approaches: a <strong>user-level library</strong> (thread management in user
+space, no kernel involvement) and a <strong>kernel-level library</strong> (thread
+management via system calls). Most modern systems provide a kernel-level library (like
+POSIX <code class="code-inline">pthreads</code> on UNIX or the Windows thread API).</p>
+
+<p>The <strong>POSIX Pthreads</strong> library (<code class="code-inline">pthread</code>)
+is the standard threading API on UNIX-like systems. It provides functions for thread
+creation (<code class="code-inline">pthread_create</code>), termination
+(<code class="code-inline">pthread_exit</code>), joining
+(<code class="code-inline">pthread_join</code>), and synchronization (mutexes, condition
+variables, read-write locks, barriers). Pthreads can be implemented as user-level or
+kernel-level threads; on Linux, it uses the one-to-one model via
+<code class="code-inline">clone()</code>.</p>
+
+<div class="code-block"><span class="comment">/* Pthreads example */</span>
+
+<span class="preprocessor">#include</span> <span class="string">&lt;pthread.h&gt;</span>
+
+<span class="keyword">void</span> *worker(<span class="keyword">void</span> *arg) {
+    <span class="keyword">int</span> id = *(<span class="keyword">int</span>*)arg;
+    printf(<span class="string">"Thread %d running\n"</span>, id);
+    <span class="keyword">return</span> NULL;
+}
+
+<span class="keyword">int</span> main() {
+    pthread_t tid[<span class="number">4</span>];
+    <span class="keyword">int</span> ids[<span class="number">4</span>] = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>};
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++)
+        pthread_create(&amp;tid[i], NULL, worker, &amp;ids[i]);
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++)
+        pthread_join(tid[i], NULL);
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</div>
+
+<p>The <strong>Windows thread API</strong> (<code class="code-inline">CreateThread</code>,
+<code class="code-inline">WaitForSingleObject</code>, etc.) is similar in concept but uses
+different function names and conventions. <strong>Java threads</strong> are managed by
+the JVM: the <code class="code-inline">Thread</code> class and
+<code class="code-inline">Runnable</code> interface provide the API, and the JVM maps Java
+threads to OS threads (historically many-to-one with green threads, now one-to-one).
+Modern languages often provide higher-level abstractions: Go's <strong>goroutines</strong>
+(lightweight user threads with many-to-many mapping), Rust's <strong>async/await</strong>,
+and Python's <strong>asyncio</strong>.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Thread Attributes</div>
+<p>When creating a thread, you can specify attributes: <strong>stack size</strong> (how
+much stack space to allocate), <strong>scheduling policy</strong> (e.g., SCHED_FIFO,
+SCHED_RR), <strong>scheduling priority</strong>, and <strong>detached state</strong>
+(whether the thread can be joined). The default attributes work for most cases, but
+tuning them can improve performance or correctness for specific applications.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-5">4.5 Implicit Threading</h2>
+
+<p>As applications grow more complex, explicitly managing threads (creating, joining,
+synchronizing) becomes error-prone. <strong>Implicit threading</strong> shifts the
+responsibility of thread management from the developer to the compiler or runtime. The
+developer expresses <em>what</em> to parallelize; the system decides <em>how</em>.</p>
+
+<p><strong>Thread pools</strong> are a common form of implicit threading. Instead of
+creating a new thread per task, a pool of worker threads is created upfront, and tasks are
+submitted to a queue. A worker thread picks a task from the queue, executes it, and
+returns to the pool. This avoids the overhead of thread creation and destruction, limits
+the number of threads (preventing resource exhaustion), and allows the system to balance
+load. Most modern languages provide thread pools (Java's
+<code class="code-inline">ExecutorService</code>, Python's
+<code class="code-inline">concurrent.futures.ThreadPoolExecutor</code>, C++'s
+<code class="code-inline">std::async</code>).</p>
+
+<div class="code-block"><span class="comment">/* Thread pool pattern (pseudocode) */</span>
+
+<span class="comment">// Create a pool of 8 worker threads</span>
+ThreadPool pool(<span class="number">8</span>);
+
+<span class="comment">// Submit tasks — workers pick them up automatically</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) {
+    pool.submit([=] {
+        process_item(i);  <span class="comment">// runs on some worker thread</span>
+    });
+}
+
+pool.wait_all();  <span class="comment">// wait for all tasks to complete</span></div>
+
+<p><strong>OpenMP</strong> is a set of compiler directives for parallel programming in
+C/C++/Fortran. A <code class="code-inline">#pragma omp parallel for</code> directive tells
+the compiler to parallelize a loop: it divides the loop iterations among threads
+automatically. This is much simpler than manually creating threads and dividing work.
+OpenMP is widely used in scientific computing.</p>
+
+<div class="code-block"><span class="comment">/* OpenMP example */</span>
+
+<span class="preprocessor">#pragma omp parallel for</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; N; i++) {
+    c[i] = a[i] + b[i];  <span class="comment">// iterations run in parallel</span>
+}</div>
+
+<p>Other implicit threading approaches include <strong>Grand Central Dispatch</strong>
+(Apple's dispatch queues), <strong>Intel TBB</strong> (Threading Building Blocks), and
+language-level <strong>async/await</strong> (C#, JavaScript, Python, Rust). The
+<strong>fork-join</strong> framework in Java (<code class="code-inline">ForkJoinPool</code>)
+splits work recursively, processes subtasks in parallel, and merges results. These
+abstractions make parallel programming accessible to more developers, but understanding
+the underlying threading model is still important for debugging and performance tuning.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-6">4.6 Threading Issues</h2>
+
+<p>Multithreading introduces several issues that single-threaded programs do not face.
+Understanding these is essential for writing correct concurrent programs.</p>
+
+<p>The <strong>fork()</strong> and <strong>exec()</strong> system calls have subtle
+semantics with threads. When a multithreaded process calls <code class="code-inline">fork()</code>,
+should the child have one thread (the calling thread) or all threads? POSIX allows both:
+<code class="code-inline">fork()</code> duplicates only the calling thread, while
+<code class="code-inline">pthread_atfork()</code> can register handlers to manage state.
+If the child immediately calls <code class="code-inline">exec()</code> (replacing the
+program), the issue is moot. But if the child continues without exec, it may have
+inconsistent state (e.g., locks held by other threads that no longer exist).</p>
+
+<p><strong>Signal handling</strong> is complex with threads. A signal (like
+<code class="code-inline">SIGINT</code> from Ctrl-C) can be delivered to any thread in the
+process. Which thread should handle it? Options include: deliver to the thread that caused
+it (synchronous signals like <code class="code-inline">SIGSEGV</code>), deliver to any
+thread (asynchronous signals), or deliver to a designated thread. POSIX provides
+<code class="code-inline">pthread_kill()</code> to send a signal to a specific thread and
+<code class="code-inline">sigwait()</code> to wait for signals synchronously.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Thread Cancellation</div>
+<p>Cancelling a thread (terminating it before it finishes) is dangerous. If the thread
+holds locks or is in the middle of updating shared data, cancellation can leave the data
+in an inconsistent state. <strong>Asynchronous cancellation</strong> (immediate) is
+rarely safe. <strong>Deferred cancellation</strong> (the thread checks at cancellation
+points) is safer but requires cooperation. POSIX uses
+<code class="code-inline">pthread_cancel()</code> with cancellation points.</p>
+</div>
+
+<p><strong>Thread-local storage</strong> (TLS) is data that is <em>per-thread</em>: each
+thread has its own copy. This is useful for variables that should not be shared, like
+<code class="code-inline">errno</code> (so one thread's error doesn't overwrite another's).
+TLS can be implemented by the compiler (using a segment register or special allocation)
+or by the thread library. <strong>Reentrant functions</strong> (functions that can be
+safely called by multiple threads, or called recursively) must not use static or global
+variables without protection, or must use TLS.</p>
+
+<p><strong>Scheduler activations</strong> are a mechanism for the kernel to notify a
+user-level thread library about scheduling events (like a thread blocking or a core
+becoming available), allowing the library to make informed decisions. This is used in
+some many-to-many implementations. <strong>Activation-based scheduling</strong> aims to
+combine the flexibility of user-level threads with the kernel's knowledge of system
+events.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-4-7">4.7 OS Examples</h2>
+
+<p>Different operating systems implement threads differently. <strong>Windows</strong>
+uses a one-to-one model: each thread is a kernel object, created with
+<code class="code-inline">CreateThread()</code>. The Windows scheduler is priority-based
+with preemptive multitasking. Windows supports <strong>fibers</strong>, which are
+user-mode, cooperative "lightweight threads" that the application schedules manually—useful
+for porting cooperative multitasking code.</p>
+
+<p><strong>Linux</strong> does not distinguish between processes and threads at the kernel
+level. Both are created with <code class="code-inline">clone()</code>, which can share or
+not share memory, file descriptors, and signal handlers. A "process" is a
+<code class="code-inline">clone()</code> with no sharing; a "thread" is a
+<code class="code-inline">clone()</code> with sharing. The <code class="code-inline">task_struct</code>
+structure represents both. The <code class="code-inline">pthread</code> library provides
+the POSIX API on top of <code class="code-inline">clone()</code>.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux clone() Flags</div>
+<p><code class="code-inline">clone()</code> takes flags that control sharing:<br>
+<code class="code-inline">CLONE_VM</code> — share memory<br>
+<code class="code-inline">CLONE_FILES</code> — share file descriptors<br>
+<code class="code-inline">CLONE_SIGHAND</code> — share signal handlers<br>
+<code class="code-inline">CLONE_THREAD</code> — put in same thread group (for pthreads)</p>
+</div>
+
+<p><strong>xv6</strong> does not implement threads—each process has a single thread.
+However, the process mechanism (fork, exec, context switch) is the same that a
+thread-based system would use. Adding threads to xv6 is a common advanced exercise: it
+involves sharing the address space (page table) between processes, adding a thread ID,
+and modifying the scheduler to treat threads as schedulable entities. Studying xv6's
+<code class="code-inline">fork()</code> in <code class="code-inline">sysproc.c</code> and
+<code class="code-inline">copyproc()</code> in <code class="code-inline">proc.c</code>
+reveals how process creation works, which is the foundation for thread creation.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-1">5.1 Basic Concepts</h2>
+
+<p><strong>CPU scheduling</strong> is the basis of multiprogrammed operating systems. By
+switching the CPU among processes, the OS can keep the CPU busy while some processes wait
+for I/O, increasing overall throughput. The idea is simple: when a process must wait (for
+I/O or a child), the OS takes the CPU away and gives it to another process. This
+<strong>multiprogramming</strong> maximizes CPU utilization.</p>
+
+<p>Whenever the CPU becomes idle, the OS must select a process from the ready queue to
+run next. The <strong>CPU scheduler</strong> makes this selection. Scheduling decisions
+occur when a process: (1) switches from running to waiting (I/O request), (2) switches
+from running to ready (interrupt/preemption), (3) switches from waiting to ready (I/O
+completion), or (4) terminates. Scheduling under (1) and (4) is <strong>non-preemptive</strong>
+(the process voluntarily yields); scheduling under (2) and (3) is <strong>preemptive</strong>
+(the OS forcibly takes the CPU).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Preemptive vs. Non-Preemptive</div>
+<p><strong>Non-preemptive:</strong> A running process keeps the CPU until it terminates or
+blocks. Simple, but a CPU-bound process can starve others.<br>
+<strong>Preemptive:</strong> The OS can interrupt a running process (via timer) and give
+the CPU to another. More complex (requires saving/restoring state, handling races), but
+ensures fairness and responsiveness. Modern desktop and server OSes are preemptive.</p>
+</div>
+
+<p>A key concept is the <strong>dispatch latency</strong>: the time it takes for the
+scheduler to stop one process and start another. This includes saving the current process's
+state, running the scheduler, and loading the next process's state. Minimizing dispatch
+latency is important for responsiveness, especially in real-time systems. The component
+of the OS that gives control of the CPU to the selected process is the
+<strong>dispatcher</strong>.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-2">5.2 Scheduling Criteria</h2>
+
+<p>Different scheduling algorithms optimize for different criteria. The main criteria
+are:</p>
+
+<ul>
+<li><strong>CPU utilization</strong>: the percentage of time the CPU is busy (should be
+as high as possible, ideally near 100%).</li>
+<li><strong>Throughput</strong>: the number of processes completed per unit time (higher
+is better).</li>
+<li><strong>Turnaround time</strong>: the total time from submission to completion
+(includes waiting, execution, and I/O time). Lower is better.</li>
+<li><strong>Waiting time</strong>: the total time a process spends waiting in the ready
+queue. Lower is better.</li>
+<li><strong>Response time</strong>: the time from submission to the <em>first</em>
+response (not completion). Important for interactive systems. Lower is better.</li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Criterion</th><th>Definition</th><th>Optimize</th><th>Important for</th></tr>
+</thead>
+<tbody>
+<tr><td>CPU utilization</td><td>% CPU busy</td><td>Maximize</td><td>Batch, server</td></tr>
+<tr><td>Throughput</td><td>Processes/time</td><td>Maximize</td><td>Batch</td></tr>
+<tr><td>Turnaround time</td><td>Submit → complete</td><td>Minimize</td><td>Batch</td></tr>
+<tr><td>Waiting time</td><td>Time in ready queue</td><td>Minimize</td><td>All</td></tr>
+<tr><td>Response time</td><td>Submit → first response</td><td>Minimize</td><td>Interactive</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>These criteria often conflict. For example, <strong>SJF</strong> (Shortest Job First)
+minimizes average waiting time but can cause <strong>starvation</strong> for long jobs.
+<strong>Round Robin</strong> provides good response time but may have higher average
+turnaround time. The choice of algorithm depends on which criteria matter most for the
+workload. Interactive systems prioritize response time; batch systems prioritize throughput
+and CPU utilization; real-time systems prioritize meeting deadlines.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Starvation</div>
+<p><strong>Starvation</strong> occurs when a process is indefinitely denied the resources
+it needs (like CPU time). Priority scheduling can cause starvation if high-priority
+processes keep arriving, preventing a low-priority process from ever running. The
+solution is <strong>aging</strong>: gradually increasing a process's priority the longer
+it waits, so eventually it gets to run.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-3">5.3 Scheduling Algorithms</h2>
+
+<p>Several classic scheduling algorithms illustrate the trade-offs in CPU scheduling.
+Each makes different assumptions and optimizes for different criteria.</p>
+
+<p><strong>First-Come, First-Served (FCFS)</strong> is the simplest: processes run in the
+order they arrive, non-preemptively. It is easy to implement (a FIFO queue) and fair in
+the sense that no process is starved. However, it suffers from the <strong>convoy effect</strong>:
+if a long process is at the head of the queue, all shorter processes behind it wait,
+increasing average waiting time. FCFS is poor for time-sharing systems (no preemption
+means poor response time) but acceptable for batch systems.</p>
+
+<div class="code-block"><span class="comment">/* FCFS example: processes arrive in order P1, P2, P3 */</span>
+
+<span class="comment">//  Burst times: P1=24, P2=3, P3=3</span>
+<span class="comment">//  FCFS order: P1 → P2 → P3</span>
+
+<span class="comment">//  P1: wait=0,  turnaround=24</span>
+<span class="comment">//  P2: wait=24, turnaround=27</span>
+<span class="comment">//  P3: wait=27, turnaround=30</span>
+
+<span class="comment">//  Average wait = (0+24+27)/3 = 17.0</span>
+<span class="comment">//  Average turnaround = (24+27+30)/3 = 27.0</span>
+
+<span class="comment">//  Convoy effect: P2 and P3 wait 24+ ms for P1</span></div>
+
+<p><strong>Shortest-Job-First (SJF)</strong> runs the process with the shortest expected
+CPU burst next. It provably minimizes average waiting time (for a given set of processes).
+The challenge is <strong>predicting</strong> the burst length, which is not known in
+advance. Systems use <strong>exponential averaging</strong>: the predicted burst is a
+weighted average of the actual last burst and the previous prediction:
+$\text{predict}_{n+1} = \alpha \cdot \text{actual}_n + (1-\alpha) \cdot \text{predict}_n$,
+where $\alpha$ is typically 0.5. SJF can be preemptive (<strong>Shortest Remaining Time
+First</strong>, SRTF) or non-preemptive. The risk is <strong>starvation</strong> of long
+jobs.</p>
+
+<p><strong>Round Robin (RR)</strong> gives each process a fixed <strong>time quantum</strong>
+(typically 10–100 ms) and then preempts it, moving to the next process in the queue. If
+the quantum is too large, RR degenerates to FCFS; if too small, context switch overhead
+dominates. A quantum of 10–100 ms is a good balance. RR provides good response time (every
+process gets a turn quickly) and is fair (no starvation). It is the standard for
+interactive and time-sharing systems.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Choosing the Time Quantum</div>
+<p>The time quantum should be: (1) <strong>large</strong> relative to the context switch
+time (so overhead is small), (2) <strong>small</strong> relative to the typical CPU burst
+(so most processes finish within a few quanta), and (3) <strong>large</strong> relative to
+the time for a meaningful computation (so a process does useful work each turn). A common
+rule: 80% of CPU bursts should be shorter than the quantum.</p>
+</div>
+
+<p><strong>Priority scheduling</strong> assigns each process a priority and runs the
+highest-priority process. Priorities can be <strong>static</strong> (fixed at creation) or
+<strong>dynamic</strong> (changing over time). The risk is starvation of low-priority
+processes; <strong>aging</strong> (increasing priority over time) mitigates this.
+Priorities can be assigned based on process type (system &gt; interactive &gt; batch),
+user-specified, or computed from past behavior.</p>
+
+<p><strong>Multilevel queue</strong> scheduling divides the ready queue into separate
+queues by priority or type (e.g., system, interactive, batch). Each queue has its own
+scheduling algorithm (e.g., RR for interactive, FCFS for batch). Scheduling between queues
+can be <strong>fixed priority</strong> (all of queue 1 before any of queue 2) or
+<strong>time-sliced</strong> (each queue gets a fraction of CPU time). A
+<strong>multilevel feedback queue</strong> allows processes to move between queues based
+on behavior: a process that uses too much CPU is demoted; one that waits a lot is promoted.
+This adapts to process behavior and is used in many modern systems.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Algorithm</th><th>Preemptive?</th><th>Pros</th><th>Cons</th></tr>
+</thead>
+<tbody>
+<tr><td>FCFS</td><td>No</td><td>Simple, fair</td><td>Convoy effect, poor response</td></tr>
+<tr><td>SJF / SRTF</td><td>Yes/No</td><td>Min avg wait</td><td>Starvation, needs prediction</td></tr>
+<tr><td>Round Robin</td><td>Yes</td><td>Good response, fair</td><td>Overhead if quantum small</td></tr>
+<tr><td>Priority</td><td>Yes/No</td><td>Important jobs first</td><td>Starvation (use aging)</td></tr>
+<tr><td>Multilevel</td><td>Yes</td><td>Flexible, adaptive</td><td>Complex to tune</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-4">5.4 Thread Scheduling</h2>
+
+<p>On systems that distinguish user and kernel threads, the scheduler schedules
+<strong>kernel threads</strong> (since they are the schedulable entities). User threads
+are managed by the thread library, which maps them to kernel threads. In a one-to-one
+model (Linux, Windows), each user thread is a kernel thread, so the kernel scheduler
+handles them directly. In a many-to-many model, the library decides which user thread to
+run on each kernel thread.</p>
+
+<p>Some systems distinguish between <strong>process contention scope</strong> (PCS) and
+<strong>system contention scope</strong> (SCS). With PCS, threads compete for CPU time
+within their process (user-level scheduling). With SCS, threads compete with all threads
+system-wide (kernel-level scheduling). Pthreads allows specifying the scope with
+<code class="code-inline">pthread_attr_setscope()</code>: <code class="code-inline">PTHREAD_SCOPE_PROCESS</code>
+(PCS) or <code class="code-inline">PTHREAD_SCOPE_SYSTEM</code> (SCS).</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ Linux Scheduling</div>
+<p>Linux uses the <strong>Completely Fair Scheduler</strong> (CFS) since kernel 2.6.23.
+CFS aims to give each process a fair share of CPU time, using a red-black tree ordered by
+"virtual runtime" (how much CPU time the process has used). The process with the least
+virtual runtime runs next. This approximates ideal fair scheduling and avoids starvation.
+CFS also supports priority (nice values) and real-time scheduling policies.</p>
+</div>
+
+<p>Thread scheduling on multicore systems adds complexity. The scheduler must decide not
+only <em>which</em> thread to run but <em>where</em> (which core). Considerations include
+<strong>cache affinity</strong> (keeping a thread on the same core to reuse cached data),
+<strong>load balancing</strong> (distributing threads evenly), and
+<strong>power management</strong> (consolidating threads on fewer cores to allow others to
+sleep). Modern schedulers use per-core run queues with periodic load balancing.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-5">5.5 Multi-Processor Scheduling</h2>
+
+<p>On a multiprocessor (or multicore) system, the scheduler must decide which core runs
+which process. This is more complex than single-processor scheduling because of
+<strong>cache affinity</strong> (a process runs faster on a core where its data is
+cached), <strong>load balancing</strong> (uneven distribution wastes some cores), and
+<strong>cache coherence overhead</strong> (moving a process to another core invalidates
+caches).</p>
+
+<p>Two common approaches are <strong>asymmetric multiprocessing</strong> (ASMP) and
+<strong>symmetric multiprocessing</strong> (SMP). In ASMP, one core is the
+<strong>master</strong> that runs the OS and schedules all other cores; the other cores
+are <strong>slaves</strong> that run user code. This is simple (no locking needed for
+scheduler data structures) but creates a bottleneck (all scheduling goes through the
+master). In SMP, all cores are equal: each runs the OS and schedules its own processes.
+This requires <strong>locking</strong> to protect shared scheduler data structures but
+scales better. Modern systems use SMP.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Per-Core Run Queues</div>
+<p>Modern SMP schedulers use <strong>per-core run queues</strong>: each core has its own
+queue of runnable threads. This avoids contention on a single global queue. Periodically
+(usually every few milliseconds), cores check if their queues are unbalanced and
+<strong>migrate</strong> threads from busy cores to idle ones. This balances load while
+preserving cache affinity most of the time.</p>
+</div>
+
+<p><strong>Processor affinity</strong> refers to a thread's tendency to stay on the same
+core. <strong>Soft affinity</strong> means the scheduler <em>tries</em> to keep a thread
+on the same core but may move it. <strong>Hard affinity</strong> means the scheduler
+<em>must</em> keep a thread on specified cores (set via
+<code class="code-inline">sched_setaffinity()</code> on Linux). Hard affinity is useful
+for real-time tasks or to isolate cores for specific purposes.</p>
+
+<p>Modern CPUs with <strong>simultaneous multithreading</strong> (SMT, e.g., Intel
+Hyper-Threading) present multiple <strong>logical processors</strong> per physical core.
+The scheduler treats each logical processor as a separate CPU, but two threads on the
+same physical core share execution resources, so they don't get full parallel speedup.
+Some schedulers are SMT-aware and try to spread threads across physical cores before
+using the second logical processor on each core.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-6">5.6 Real-Time Scheduling</h2>
+
+<p><strong>Real-time systems</strong> require that tasks complete within
+<strong>deadlines</strong>. <strong>Hard real-time</strong> systems guarantee that
+deadlines are always met (missing a deadline is a system failure—e.g., a pacemaker,
+airbag controller). <strong>Soft real-time</strong> systems try to meet deadlines but
+tolerate occasional misses (e.g., video streaming, where a missed frame is annoying but
+not catastrophic).</p>
+
+<p>Real-time scheduling uses <strong>priority</strong> to ensure critical tasks run
+first. Two common algorithms are <strong>Rate Monotonic</strong> and
+<strong>Earliest Deadline First</strong>. In <strong>Rate Monotonic Scheduling</strong>
+(RMS), tasks are assigned static priorities based on their period: shorter period =
+higher priority. This is optimal among static-priority schemes for preemptive periodic
+tasks. In <strong>Earliest Deadline First</strong> (EDF), the task with the nearest
+deadline gets the highest priority. EDF is optimal among dynamic-priority schemes and can
+achieve 100% CPU utilization (vs. ~69% for RMS), but it is more complex and requires
+knowing deadlines.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Algorithm</th><th>Priority</th><th>Max Utilization</th><th>Complexity</th></tr>
+</thead>
+<tbody>
+<tr><td>Rate Monotonic</td><td>Static (by period)</td><td>~69% (n→∞)</td><td>Low</td></tr>
+<tr><td>Earliest Deadline First</td><td>Dynamic (by deadline)</td><td>100%</td><td>Higher</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Real-time systems must also handle <strong>priority inversion</strong>: a low-priority
+task holds a lock that a high-priority task needs, and a medium-priority task preempts the
+low-priority task, indirectly blocking the high-priority task. The
+<strong>priority inheritance protocol</strong> solves this: the low-priority task
+temporarily inherits the high-priority task's priority while holding the lock, so it
+cannot be preempted by medium-priority tasks. This was famously the cause of the Mars
+Pathfinder rover resetting on Mars in 1997 due to priority inversion in its VxWorks
+real-time OS.</p>
+
+<div class="callout callout-warn">
+<div class="callout-title">⚠️ Priority Inversion</div>
+<p>Scenario: High-priority H needs a lock held by low-priority L. Medium-priority M
+preempts L. Now H waits for L, which waits for M. Effectively, M (medium) blocks H (high).
+<strong>Priority inheritance</strong> temporarily raises L's priority to H's, so M cannot
+preempt it, and L releases the lock sooner.</p>
+</div>
+
+<p>POSIX real-time scheduling (<code class="code-inline">SCHED_FIFO</code>,
+<code class="code-inline">SCHED_RR</code>) provides fixed-priority preemptive scheduling.
+<code class="code-inline">SCHED_FIFO</code> runs the highest-priority ready thread until
+it blocks or a higher-priority thread becomes ready.
+<code class="code-inline">SCHED_RR</code> is like <code class="code-inline">SCHED_FIFO</code>
+but with time-slicing among same-priority threads. Linux also provides
+<code class="code-inline">SCHED_DEADLINE</code> for EDF-based scheduling.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-7">5.7 OS Examples</h2>
+
+<p><strong>Linux</strong> uses the <strong>Completely Fair Scheduler</strong> (CFS) for
+normal processes. CFS maintains a red-black tree of runnable tasks, ordered by
+<code class="code-inline">vruntime</code> (virtual runtime—a measure of CPU time received,
+normalized by priority). The leftmost node (smallest vruntime) runs next. Each task gets
+a time slice proportional to its priority (nice value). CFS aims for fair scheduling:
+each task gets an equal share, adjusted by priority. For real-time tasks, Linux uses
+<code class="code-inline">SCHED_FIFO</code> and <code class="code-inline">SCHED_RR</code>,
+which have higher priority than CFS tasks.</p>
+
+<p><strong>Windows</strong> uses a <strong>priority-based preemptive</strong> scheduler
+with 32 priority levels. Levels 0–15 are for normal (variable) priority threads; levels
+16–31 are for real-time threads. Within the variable range, the base priority can be
+boosted temporarily (e.g., for I/O completion or GUI input) to improve responsiveness.
+Windows uses per-processor queues and distributes threads across processors, with
+periodic load balancing.</p>
+
+<div class="callout callout-info">
+<div class="callout-title">ℹ️ xv6 Scheduler</div>
+<p>xv6 uses a simple <strong>round-robin</strong> scheduler. The
+<code class="code-inline">scheduler()</code> function in
+<code class="code-inline">proc.c</code> loops through the process table
+(<code class="code-inline">proc[NPROC]</code>), and for each
+<code class="code-inline">RUNNABLE</code> process, it sets it to
+<code class="code-inline">RUNNING</code>, switches to its page table, and calls
+<code class="code-inline">swtch()</code> to run it. When the process yields (blocks or
+time-slice expires), control returns to <code class="code-inline">scheduler()</code>, which
+continues the loop. This is simple but not fair (a process that blocks often may get more
+CPU) and not multiprocessor-safe without locks (xv6 uses a single
+<code class="code-inline">ptable.lock</code>).</p>
+</div>
+
+<p><strong>Solaris</strong> uses a multilevel feedback queue with several scheduling
+classes (TS for time-sharing, IA for interactive, RT for real-time, FSS for fair-share,
+FX for fixed-priority). Each class has its own scheduling logic, and the dispatcher
+selects the highest-priority thread across all classes. This is one of the most
+sophisticated scheduling designs, combining fairness, responsiveness, and real-time
+support.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec-5-8">5.8 Algorithm Evaluation</h2>
+
+<p>How do we choose a scheduling algorithm? Several methods help evaluate and compare
+algorithms: <strong>analytic evaluation</strong>, <strong>simulation</strong>, and
+<strong>implementation</strong>.</p>
+
+<p><strong>Deterministic modeling</strong> takes a specific workload (a set of processes
+with known arrival times and burst lengths) and computes the result of each algorithm.
+This is useful for understanding how algorithms differ but is not representative of real
+workloads. For example, given processes P1(6), P2(8), P3(7), P4(3) arriving at time 0, FCFS
+gives average wait (0+6+14+21)/4 = 10.25, while SJF (order P4, P1, P3, P2) gives
+(0+3+9+16)/4 = 7.0.</p>
+
+<p><strong>Queueing models</strong> treat the system as a queue: processes arrive
+according to some distribution (often Poisson), and service times follow another
+distribution (often exponential). Using <strong>Little's formula</strong>
+($n = \lambda \times W$, where $n$ is average queue length, $\lambda$ is arrival rate, $W$
+is average waiting time), we can compute performance metrics. This is more general than
+deterministic modeling but relies on assumptions about distributions that may not hold.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">💡 Little's Formula</div>
+<p><strong>Little's formula</strong>: $L = \lambda W$, where $L$ is the average number of
+items in the system, $\lambda$ is the average arrival rate, and $W$ is the average time an
+item spends in the system. This holds for any stable queueing system, regardless of
+distribution. It's a powerful tool for quick estimates.</p>
+</div>
+
+<p><strong>Simulation</strong> involves programming a model of the scheduler and running
+it with generated workloads. Workloads can be <strong>real</strong> (traces from actual
+systems) or <strong>synthetic</strong> (generated to match observed distributions).
+Simulation allows testing many algorithms and parameters without implementing them in a
+real OS. The challenge is generating realistic workloads; real traces are best but may not
+represent future workloads.</p>
+
+<p><strong>Implementation</strong> is the ultimate test: implement the algorithm in a
+real OS and measure performance on real workloads. This is the most accurate but also the
+most expensive—coding, debugging, and benchmarking take time. Most research uses simulation
+first, then implements the most promising algorithms. Open-source OSes like Linux and
+FreeBSD allow researchers to experiment with scheduling algorithms in a real system.</p>
+
+<div class="divider"></div>
+<p style="text-align:center;color:var(--text-dim);font-size:13px">
+VGU Operating Systems - Silberschatz Handbook - August 2026<br>
+Based on Silberschatz, Galvin, Gagne: "Operating System Concepts," 10th Edition<br>
+<a href="../../new_labs/main.html">Back to Labs Home</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== Sidebar Navigation =====
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    var target = this.dataset.target;
+    if (!target) return;
+    e.preventDefault();
+    var el = document.getElementById(target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
+  });
+});
+
+// ===== Search Filter =====
+function filterNav() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    var section = item.closest('.nav-section');
+    if (!q || text.indexOf(q) >= 0) {
+      item.style.display = '';
+      if (section) section.style.display = '';
+    } else {
+      item.style.display = 'none';
+      if (section) {
+        var visible = section.querySelectorAll('.nav-item:not([style*="none"])').length;
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
+}
+
+// ===== Scroll Spy =====
+var sections = document.querySelectorAll('h2[id]');
+var navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', function() {
+  var scrollPos = window.scrollY + 100;
+  var currentId = null;
+  sections.forEach(function(s) {
+    if (scrollPos >= s.offsetTop) {
+      currentId = s.id;
+    }
+  });
+  if (currentId) {
+    navItems.forEach(function(n) {
+      n.classList.toggle('active', n.dataset.target === currentId);
+    });
+  }
+});
+</script>
+<script src="../../new_labs/sidebar.js"></script>
+</body>
+</html>

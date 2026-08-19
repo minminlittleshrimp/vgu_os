@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RISC-V ISA Basics - VGU Operating Systems</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#0F1E3C;--blue:#2D2DB4;--green:#007A42;--red:#B42323;--orange:#C87800;--mid:#666;--rule:#E0E0E0;--bg-slide:#FFFFFF;--bg-body:#E8EAF0;--bar-h:48px;--md-primary:#1e293b;--md-accent:#3b82f6;--md-success:#10b981;--md-warn:#f59e0b;--md-border:#e2e8f0;--md-muted:#64748b;--md-aad:#8b5cf6;--md-blue:#2563eb;--md-red:#ef4444}
+body{background:var(--bg-body);font-family:'Inter',sans-serif;color:#1a1a1a;height:100vh;width:100vw;overflow:hidden;display:flex;justify-content:center;align-items:center}
+#deck{width:98vw;height:98vh;max-width:1600px;max-height:900px;position:relative;background:var(--bg-slide);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.slide{position:absolute;top:0;left:0;width:100%;height:calc(100% - var(--bar-h));padding:2.5% 5%;background:var(--bg-slide);display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.footer{position:absolute;bottom:0;left:0;right:0;height:var(--bar-h);padding:0 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);background:#FAFAFA;z-index:200}
+h1{font-size:clamp(30px,4vw,58px);line-height:1.1;font-family:'Playfair Display',serif}
+h2.st{font-size:clamp(20px,2.3vw,36px);font-weight:700;margin-bottom:1.2vh;border-bottom:3px solid var(--dark);padding-bottom:6px}
+h3{font-size:clamp(14px,1.2vw,20px);margin-bottom:6px;font-weight:600}
+p,li{font-size:clamp(12px,1.15vw,17px);line-height:1.55;color:#333;margin-bottom:5px}
+ul,ol{margin-left:18px}
+strong{color:#111}
+code{font-family:'Roboto Mono',monospace;background:#f0f0f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+.cols{display:grid;gap:24px;margin-top:1.2vh;align-items:start}
+.cols-2{grid-template-columns:1.08fr .92fr}
+.cols-2e{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.block{background:#F5F6FB;border-left:5px solid var(--blue);padding:10px 14px;margin:7px 0;border-radius:0 6px 6px 0}
+.block.warn{border-color:var(--red);background:#FFF5F5}
+.block.ok{border-color:var(--green);background:#F0FFF8}
+.block.note{border-color:var(--orange);background:#FFFBF0}
+.block h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.block p,.block li{font-size:clamp(11px,.95vw,14px);margin-bottom:2px}
+.tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:clamp(10px,.95vw,14px)}
+.tbl th{text-align:left;background:var(--dark);color:#fff;padding:9px 11px;font-weight:600}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+.ok-cell{color:var(--green);font-weight:700}
+.bad-cell{color:var(--red);font-weight:700}
+.warn-cell{color:var(--orange);font-weight:700}
+.tiles{display:grid;gap:12px;margin-top:10px}
+.tiles-3{grid-template-columns:repeat(3,1fr)}
+.tiles-2{grid-template-columns:repeat(2,1fr)}
+.tile{background:#FAFAFA;border:1px solid var(--rule);border-top:4px solid var(--dark);padding:12px 14px;border-radius:0 0 6px 6px}
+.tile.b{border-top-color:var(--blue)}
+.tile.g{border-top-color:var(--green)}
+.tile.r{border-top-color:var(--red)}
+.tile.o{border-top-color:var(--orange)}
+.tile.p{border-top-color:#7C3AED}
+.tile h4{font-size:clamp(11px,.95vw,14px);font-weight:700;margin-bottom:4px}
+.tile p{font-size:clamp(10px,.9vw,13px);line-height:1.5;color:#444}
+pre{margin:8px 0;border-radius:6px;overflow:auto;max-height:43vh;background:#282c34}
+pre code{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.86vw,13px);line-height:1.55;padding:12px 16px;display:block;white-space:pre;color:#abb2bf}
+.code-label{font-family:'Roboto Mono',monospace;font-size:11px;color:#888;margin-bottom:2px}
+.eq-box{background:#F5F6FB;border:1px solid #dde;border-radius:8px;padding:12px 18px;margin:7px 0;text-align:center;font-family:'Roboto Mono',monospace;font-size:clamp(12px,1.1vw,16px);color:var(--dark)}
+.slide.sec-break{background:var(--dark);color:#fff;justify-content:center;align-items:center;text-align:center}
+.slide.sec-break .sec-num{font-family:'Roboto Mono',monospace;font-size:clamp(10px,.9vw,13px);color:#8899CC;letter-spacing:3px;margin-bottom:10px}
+.slide.sec-break h2{font-size:clamp(24px,3.2vw,48px);font-family:'Playfair Display',serif;color:#fff;border:none;margin:0}
+.slide.sec-break p{color:#99AABB;font-size:clamp(11px,1vw,15px);margin-top:8px}
+.diag-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 0}
+.diag-wrap svg{width:100%;height:100%;max-height:100%}
+[data-step]{opacity:0;transition:opacity .38s ease}[data-step].av{opacity:1}
+.footer-left{display:flex;flex-direction:column;gap:1px}
+.slide-num{font-size:13px;color:#777;font-weight:600}
+.step-badge{font-size:11px;font-family:'Roboto Mono',monospace;color:var(--blue);font-weight:700;display:none}
+.footer-center{font-size:11px;color:#AAA;letter-spacing:1px}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{background:var(--dark);color:#fff;border:none;padding:7px 18px;cursor:pointer;font-size:13px;font-weight:600;border-radius:4px;font-family:'Inter',sans-serif;transition:background .15s}
+.nav-btn:hover{background:#1a3060}
+.prog-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease}
+.ref-item{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;margin-bottom:8px;background:#F5F6FB;border-radius:6px;border-left:5px solid var(--blue)}
+.ref-badge{flex-shrink:0;background:var(--dark);color:#fff;font-family:'Roboto Mono',monospace;font-size:clamp(9px,.8vw,11px);padding:3px 9px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.ref-item h4{font-size:clamp(11px,1vw,15px);font-weight:700;margin-bottom:3px;color:var(--dark)}
+.ref-item p{font-size:clamp(10px,.9vw,13px);margin:0;color:#444}
+.clean-svg text{font-family:'Inter',sans-serif;dominant-baseline:middle}
+.cl-title{font-size:13px;font-weight:700;fill:var(--md-primary);text-anchor:middle}
+.cl-small{font-size:10px;fill:var(--md-muted);text-anchor:middle}
+.cl-label{font-size:10px;font-weight:700;fill:var(--md-muted);text-anchor:start}
+.cl-box{fill:#fff;stroke:#475569;stroke-width:1.7}
+.cl-data{fill:#dbeafe;stroke:var(--md-accent);stroke-width:1.7}
+.cl-aad{fill:#ede9fe;stroke:var(--md-aad);stroke-width:1.7}
+.cl-key{fill:#fef3c7;stroke:var(--md-warn);stroke-width:1.7}
+.cl-tag{fill:#d1fae5;stroke:var(--md-success);stroke-width:1.7}
+.cl-bad{fill:#fee2e2;stroke:var(--md-red);stroke-width:1.7}
+.cl-lane{fill:#f8fafc;stroke:var(--md-border);stroke-width:1.2;stroke-dasharray:5 4}
+.cl-arr{fill:none;stroke:#64748b;stroke-width:2}
+.cl-mask{fill:#eef2f7;stroke:#64748b;stroke-width:1.7}
+.cl-final{fill:#0f1e3c;stroke:#0f1e3c;stroke-width:1.7}
+.cl-legend-text{font-size:9px;fill:#475569;text-anchor:start;font-weight:600}
+.mono-box{background:#0F1E3C;color:#dbeafe;font-family:'Roboto Mono',monospace;font-size:clamp(10px,.95vw,13px);padding:10px 14px;border-radius:6px;line-height:1.6;margin:6px 0}
+.mono-box .hl{color:#fbbf24;font-weight:700}
+.mono-box .g{color:#34d399}
+.mono-box .r{color:#f87171}
+.jump-box{display:flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#64748b;font-weight:700;font-family:'Inter',sans-serif}
+.jump-box input{width:56px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:3px 6px;font-size:12px;font-weight:700;color:var(--dark);outline:none;font-family:'Roboto Mono',monospace;background:#fff}
+.jump-box input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(45,45,180,.12)}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" style="justify-content:center;align-items:center;text-align:center">
+<div style="max-width:1280px">
+<p style="font-family:'Roboto Mono',monospace;font-size:clamp(10px,.85vw,12px);color:#AAA;letter-spacing:3px;margin-bottom:8px">VGU . OPERATING SYSTEMS</p>
+<h1 style="white-space:nowrap;font-size:clamp(30px,4vw,56px)">Instruction Set Architectures</h1>
+<p style="margin-top:1.4vh;color:#555;font-size:clamp(13px,1.3vw,19px);font-style:italic">CISC vs RISC . x86 vs ARM vs RISC-V . Privilege . Registers . Formats</p>
+<div style="height:2px;width:100px;background:var(--dark);margin:18px auto"></div>
+<div class="block" style="display:inline-block;text-align:left;max-width:780px;margin-top:8px">
+<h4>Learning Objective</h4>
+<p>Engineers can answer: <strong>"What is the hardware-software contract called an ISA, how do CISC and RISC differ, and what registers, privilege levels, and instruction formats does RISC-V provide for running an OS like xv6?"</strong></p>
+</div>
+<p style="margin-top:14px;color:#888;font-size:clamp(10px,.85vw,12px);font-family:'Roboto Mono',monospace">Luu Quang Minh . Vietnamese-German University . August 2026</p>
+</div>
+</div>
+
+<!-- SLIDE 2: SECTION 1 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 1</p>
+<h2>What Is an ISA?</h2>
+<p>The contract between software and hardware</p>
+</div>
+
+<!-- SLIDE 3: THE HARDWARE-SOFTWARE CONTRACT -->
+<div class="slide">
+<h2 class="st">The Hardware-Software Contract</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"An ISA is like a restaurant menu. The menu (ISA) tells you what dishes (instructions) you can order. The kitchen (CPU) figures out how to cook them."</p>
+</div>
+<div class="block ok">
+<h4>Definition</h4>
+<p>An <strong>ISA</strong> (Instruction Set Architecture) is the contract between software and hardware. It defines:</p>
+<ul>
+<li><strong>Instructions</strong> - what operations the CPU understands</li>
+<li><strong>Registers</strong> - named storage locations inside the CPU</li>
+<li><strong>Memory addressing modes</strong> - how instructions reference memory</li>
+<li><strong>Data types</strong> - word size, integer/float representation</li>
+<li><strong>Privilege levels</strong> - who can execute which instructions</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="eq-box">ISA = the interface<br/>Microarchitecture = how the CPU actually implements it</div>
+<div class="block">
+<h4>Why this matters for OS</h4>
+<p>The OS kernel runs at a <strong>higher privilege level</strong> than user programs. The ISA defines exactly how that privilege transition works - system calls, traps, interrupts. Without understanding the ISA, you cannot understand how the OS controls hardware.</p>
+</div>
+<div class="block warn">
+<h4>Same ISA, different CPUs</h4>
+<p>An Intel Core i7 and an AMD Ryzen implement the <strong>same ISA (x86-64)</strong> but with completely different microarchitectures. Software compiled for x86-64 runs on both - that is the power of the ISA abstraction.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4: WHY THE ISA MATTERS -->
+<div class="slide">
+<h2 class="st">Why the ISA Matters</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="7" markerHeight="7" refX="8" refY="5" viewBox="0 0 10 10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/></marker></defs>
+<!-- C code -->
+<rect class="cl-tag" x="30" y="120" width="160" height="70" rx="8"/>
+<text class="cl-title" x="110" y="145">C source</text>
+<text class="cl-small" x="110" y="165">int c = a + b;</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M190 155 H250" marker-end="url(#a1)"/>
+<text class="cl-small" style="text-anchor:middle" x="220" y="145">compile</text>
+<!-- Compiler -->
+<rect class="cl-data" x="250" y="120" width="160" height="70" rx="8"/>
+<text class="cl-title" x="330" y="145">Compiler</text>
+<text class="cl-small" x="330" y="165">gcc / clang</text>
+<!-- Arrow -->
+<path class="cl-arr" d="M410 155 H470" marker-end="url(#a1)"/>
+<!-- Assembly (3 ISAs) -->
+<rect class="cl-box" x="470" y="40" width="200" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px" x="570" y="60">x86-64 assembly</text>
+<text class="cl-small" x="570" y="78">mov eax,[a]; add eax,[b]</text>
+<rect class="cl-box" x="470" y="130" width="200" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px" x="570" y="150">ARM64 assembly</text>
+<text class="cl-small" x="570" y="168">ldr w0,[a]; ldr w1,[b]; add</text>
+<rect class="cl-box" x="470" y="220" width="200" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px" x="570" y="240">RISC-V assembly</text>
+<text class="cl-small" x="570" y="258">lw t0,0(a5); lw t1,0(a6); add</text>
+<!-- Arrows to machine code -->
+<path class="cl-arr" d="M670 65 H730" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M670 155 H730" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M670 245 H730" marker-end="url(#a1)"/>
+<text class="cl-small" style="text-anchor:middle" x="700" y="120">assemble</text>
+<!-- Machine code -->
+<rect class="cl-bad" x="730" y="40" width="180" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px;fill:#7f1d1d" x="820" y="60">x86 machine code</text>
+<text class="cl-small" style="fill:#7f1d1d" x="820" y="78">variable-length bytes</text>
+<rect class="cl-bad" x="730" y="130" width="180" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px;fill:#7f1d1d" x="820" y="150">ARM machine code</text>
+<text class="cl-small" style="fill:#7f1d1d" x="820" y="168">fixed 4-byte words</text>
+<rect class="cl-bad" x="730" y="220" width="180" height="50" rx="8"/>
+<text class="cl-title" style="font-size:11px;fill:#7f1d1d" x="820" y="240">RISC-V machine code</text>
+<text class="cl-small" style="fill:#7f1d1d" x="820" y="258">fixed 4-byte words</text>
+<!-- CPU executes -->
+<path class="cl-arr" d="M910 65 H950 V245" marker-end="url(#a1)"/>
+<path class="cl-arr" d="M910 155 H950" marker-end="url(#a1)"/>
+<rect class="cl-final" x="950" y="120" width="110" height="70" rx="8"/>
+<text class="cl-title" style="fill:#fff" x="1005" y="148">CPU</text>
+<text class="cl-small" style="fill:#cbd5e1" x="1005" y="168">executes</text>
+</svg>
+</div>
+<div class="block ok" style="margin-top:4px">
+<h4>Key insight</h4>
+<p>Same C code, three different ISAs, three different assembly listings, three different machine-code byte streams. The ISA is the boundary where <strong>portability ends and hardware specificity begins</strong>.</p>
+</div>
+</div>
+
+<!-- SLIDE 5: MAJOR ISA FAMILIES -->
+<div class="slide">
+<h2 class="st">Major ISA Families</h2>
+<table class="tbl">
+<thead><tr><th>ISA</th><th>Type</th><th>Where</th><th>Instruction length</th><th>GP registers</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>x86 / x86-64</strong></td><td>CISC</td><td>PCs, servers</td><td>Variable (1-15 bytes)</td><td>16</td><td>Complex, backward-compatible to 1978</td></tr>
+<tr><td><strong>ARM / ARM64</strong></td><td>RISC</td><td>Phones, Macs, embedded</td><td>Fixed (4 bytes)</td><td>31</td><td>Low power, dominates mobile</td></tr>
+<tr><td><strong>RISC-V</strong></td><td>RISC</td><td>Research, IoT, education</td><td>Fixed (4 bytes)</td><td>32</td><td>Open, modular, clean design</td></tr>
+<tr><td><strong>MIPS</strong></td><td>RISC</td><td>Routers, consoles (legacy)</td><td>Fixed (4 bytes)</td><td>32</td><td>Classic RISC teaching ISA</td></tr>
+</tbody>
+</table>
+<div class="cols cols-2" style="margin-top:12px">
+<div class="block ok">
+<h4>xv6 runs on RISC-V</h4>
+<p>The version of xv6 we study targets <strong>RV64GC</strong> - the 64-bit RISC-V ISA with standard extensions. This is why we focus on RISC-V in this course.</p>
+</div>
+<div class="block note">
+<h4>Why RISC-V for teaching</h4>
+<p>Open specification (no licensing), clean 2010 design (no 40 years of legacy), modular extensions, and real silicon shipping. You can read the entire spec in an afternoon.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 6: SECTION 2 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 2</p>
+<h2>CISC vs RISC</h2>
+<p>Two philosophies of CPU design</p>
+</div>
+
+<!-- SLIDE 7: TWO PHILOSOPHIES -->
+<div class="slide">
+<h2 class="st">Two Philosophies</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>CISC - Complex Instruction Set Computer</h4>
+<ul>
+<li><strong>Many instructions</strong> (1000+)</li>
+<li><strong>Variable-length</strong> encoding (1-15 bytes)</li>
+<li><strong>Memory-to-memory</strong> operations (e.g. <code>add [a], [b]</code>)</li>
+<li><strong>Fewer registers</strong> (16 GP)</li>
+<li><strong>Complex decoding</strong> - must parse variable-length fields</li>
+<li>Example: <code>rep movsb</code> - one instruction copies a string</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>RISC - Reduced Instruction Set Computer</h4>
+<ul>
+<li><strong>Few instructions</strong> (~50 base)</li>
+<li><strong>Fixed-length</strong> encoding (4 bytes)</li>
+<li><strong>Load/store only</strong> - arithmetic uses registers, not memory</li>
+<li><strong>Many registers</strong> (31-32 GP)</li>
+<li><strong>Simple decoding</strong> - every instruction is exactly 4 bytes</li>
+<li>Example: <code>ld</code> -> <code>add</code> -> <code>sd</code> - three instructions</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="eq-box">CISC: fewer instructions, more work per instruction<br/>RISC: more instructions, less work per instruction, but faster each</div>
+</div>
+
+<!-- SLIDE 8: WHY RISC WON -->
+<div class="slide">
+<h2 class="st">Why RISC Won (Mostly)</h2>
+<div class="cols cols-2">
+<div>
+<div class="block note">
+<p>"CISC is like a Swiss Army knife - lots of tools, but heavy and complex. RISC is like a set of simple, specialized tools - each one does one thing fast."</p>
+</div>
+<div class="block ok">
+<h4>Why RISC is simpler to build fast</h4>
+<ul>
+<li><strong>Pipelining is easier</strong> - all instructions same size, predictable decode</li>
+<li><strong>Simpler decoding</strong> - no variable-length parsing</li>
+<li><strong>Less silicon</strong> - smaller decode unit, more room for cache</li>
+<li><strong>Compilers prefer simple instructions</strong> - easier to optimize and schedule</li>
+<li><strong>Power efficiency</strong> - simpler decode = less energy per instruction</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>Engineering reality: modern x86 is RISC inside</h4>
+<p>Modern Intel/AMD CPUs <strong>internally translate</strong> CISC instructions into RISC-like <strong>micro-ops (uops)</strong>. The front-end decodes x86 into uops, then the execution engine is essentially a RISC processor. So even CISC CPUs are RISC at the execution level.</p>
+</div>
+<div class="block">
+<h4>The irony</h4>
+<p>x86 survived because of its software ecosystem, not because CISC is better. The ISA is CISC, but the silicon is RISC. ARM and RISC-V skipped the CISC layer entirely.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 9: SAME CODE THREE ISAS -->
+<div class="slide">
+<h2 class="st">Same Code, Three ISAs</h2>
+<div class="cols cols-3">
+<div>
+<div class="block warn">
+<h4>C source</h4>
+<p style="text-align:center;font-family:'Roboto Mono',monospace;font-size:14px;margin:8px 0">int c = a + b;</p>
+</div>
+<h3 style="text-align:center;color:var(--red)">x86-64 (CISC)</h3>
+<div class="mono-box">
+<span class="hl">; memory-to-register</span><br/>
+mov eax, [a]<br/>
+add eax, [b]<br/>
+mov [c], eax<br/><br/>
+<span class="r">3 instructions</span><br/>
+<span class="r">memory operands OK</span>
+</div>
+</div>
+<div>
+<div class="block" style="visibility:hidden"><h4>spacer</h4><p>-</p></div>
+<h3 style="text-align:center;color:var(--blue)">ARM64 (RISC)</h3>
+<div class="mono-box">
+<span class="hl">; load/store only</span><br/>
+ldr w0, [a]<br/>
+ldr w1, [b]<br/>
+add w0, w0, w1<br/>
+str w0, [c]<br/><br/>
+<span class="g">4 instructions</span><br/>
+<span class="g">explicit load/store</span>
+</div>
+</div>
+<div>
+<div class="block" style="visibility:hidden"><h4>spacer</h4><p>-</p></div>
+<h3 style="text-align:center;color:var(--green)">RISC-V (RISC)</h3>
+<div class="mono-box">
+<span class="hl">; load/store only</span><br/>
+lw t0, 0(a5)<br/>
+lw t1, 0(a6)<br/>
+add t0, t0, t1<br/>
+sw t0, 0(a7)<br/><br/>
+<span class="g">4 instructions</span><br/>
+<span class="g">explicit load/store</span>
+</div>
+</div>
+</div>
+<div class="block ok" style="margin-top:8px">
+<h4>Observation</h4>
+<p>x86 can add directly from memory in one instruction. RISC ISAs (ARM64, RISC-V) <strong>require explicit load -> compute -> store</strong>. More instructions, but each is simpler and faster to decode and pipeline.</p>
+</div>
+</div>
+
+<!-- SLIDE 10: SECTION 3 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 3</p>
+<h2>ISA Overviews</h2>
+<p>x86 . ARM . RISC-V - history, registers, privilege</p>
+</div>
+
+<!-- SLIDE 11: x86 THE CISC GIANT -->
+<div class="slide">
+<h2 class="st">x86 - The CISC Giant</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>History</h4>
+<ul>
+<li><strong>1978</strong> - Intel 8086, 16-bit, start of x86</li>
+<li><strong>1985</strong> - 80386, 32-bit (IA-32)</li>
+<li><strong>2003</strong> - AMD64 / x86-64, 64-bit extension</li>
+<li>Backward compatible to the 8086 - 45+ years of legacy</li>
+</ul>
+</div>
+<div class="block warn">
+<h4>Characteristics</h4>
+<ul>
+<li><strong>Variable-length</strong> instructions: 1-15 bytes</li>
+<li><strong>16 GP registers</strong> (rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8-r15)</li>
+<li>Memory operands in most arithmetic instructions</li>
+<li>Complex addressing modes (base + index x scale + displacement)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="20" y="20">x86 instruction format (variable length)</text>
+<rect class="cl-box" x="20" y="40" width="80" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="60" y="65">opcode</text>
+<text class="cl-small" x="60" y="82">1-3 bytes</text>
+<rect class="cl-data" x="100" y="40" width="70" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="135" y="65">ModR/M</text>
+<text class="cl-small" x="135" y="82">1 byte</text>
+<rect class="cl-aad" x="170" y="40" width="60" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="200" y="65">SIB</text>
+<text class="cl-small" x="200" y="82">0-1 byte</text>
+<rect class="cl-key" x="230" y="40" width="100" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="280" y="65">displacement</text>
+<text class="cl-small" x="280" y="82">0-4 bytes</text>
+<rect class="cl-tag" x="330" y="40" width="90" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="375" y="65">immediate</text>
+<text class="cl-small" x="375" y="82">0-4 bytes</text>
+<rect fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" x="20" y="130" width="400" height="40" rx="6"/>
+<text class="cl-title" style="font-size:11px;fill:#92400e" x="220" y="155">Total: 1 to 15 bytes - decoder must parse sequentially</text>
+<rect class="cl-bad" x="20" y="200" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px;fill:#7f1d1d" x="80" y="220">shortest</text>
+<text class="cl-small" style="fill:#7f1d1d" x="80" y="238">1 byte</text>
+<rect class="cl-bad" x="160" y="200" width="260" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px;fill:#7f1d1d" x="290" y="220">longest</text>
+<text class="cl-small" style="fill:#7f1d1d" x="290" y="238">15 bytes (prefixes + opcode + operands)</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 12: x86 PRIVILEGE -->
+<div class="slide">
+<h2 class="st">x86 Privilege: Ring 0 and Ring 3</h2>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+<!-- Ring 3 (outermost) -->
+<circle cx="200" cy="200" r="180" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+<text x="200" y="50" class="cl-title" style="fill:#7f1d1d">Ring 3 - User</text>
+<text x="200" y="68" class="cl-small" style="fill:#7f1d1d">lowest privilege</text>
+<!-- Ring 1 -->
+<circle cx="200" cy="200" r="130" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="200" y="100" class="cl-title" style="fill:#92400e">Ring 1</text>
+<text x="200" y="118" class="cl-small" style="fill:#92400e">(rarely used)</text>
+<!-- Ring 2 -->
+<circle cx="200" cy="200" r="85" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+<text x="200" y="145" class="cl-title" style="fill:#1e3a8a">Ring 2</text>
+<text x="200" y="163" class="cl-small" style="fill:#1e3a8a">(rarely used)</text>
+<!-- Ring 0 (innermost) -->
+<circle cx="200" cy="200" r="45" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+<text x="200" y="195" class="cl-title" style="fill:#065f46">Ring 0</text>
+<text x="200" y="213" class="cl-small" style="fill:#065f46">Kernel</text>
+</svg>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>Ring 0 - Kernel mode</h4>
+<p>The OS kernel runs here. Full access to all hardware, memory, and privileged instructions. Highest privilege.</p>
+</div>
+<div class="block warn">
+<h4>Ring 3 - User mode</h4>
+<p>User applications run here. Restricted memory access, cannot execute privileged instructions. Must use syscalls to request kernel services.</p>
+</div>
+<div class="block note">
+<h4>Syscall mechanism</h4>
+<p>Enter kernel: <code>syscall</code> instruction (Ring 3 -> Ring 0).<br/>Return to user: <code>sysret</code> instruction (Ring 0 -> Ring 3).</p>
+</div>
+<div class="block">
+<h4>Rings 1 and 2</h4>
+<p>Defined by x86 but almost never used by modern OSes. Designed for device drivers and OS services, but Linux/Windows only use Ring 0 and Ring 3.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 13: ARM THE RISC MOBILE KING -->
+<div class="slide">
+<h2 class="st">ARM - The RISC Mobile King</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>History</h4>
+<ul>
+<li><strong>1985</strong> - ARM2, first commercial RISC CPU (Acorn)</li>
+<li><strong>2011</strong> - ARMv8 / AArch64 (ARM64), 64-bit</li>
+<li>Dominates mobile phones, tablets, Apple Silicon (M1-M4)</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>Characteristics</h4>
+<ul>
+<li><strong>Fixed 4-byte</strong> instructions</li>
+<li><strong>31 GP registers</strong> (x0-x30, plus SP)</li>
+<li>Load/store architecture</li>
+<li>Conditional execution (ARMv8: conditional select)</li>
+</ul>
+</div>
+<div class="block note">
+<p>"ARM is like a fuel-efficient car - it doesn't have every feature, but it gets you there using less power. That's why it conquered mobile."</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="20" y="20">ARM64 instruction format (fixed 4 bytes = 32 bits)</text>
+<rect class="cl-box" x="20" y="50" width="460" height="60" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="250" y="75">32-bit fixed-width instruction</text>
+<text class="cl-small" x="250" y="95">always exactly 4 bytes</text>
+<rect class="cl-data" x="20" y="140" width="100" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="70" y="160">opcode</text>
+<text class="cl-small" x="70" y="178">varies</text>
+<rect class="cl-aad" x="120" y="140" width="100" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="170" y="160">Rm / imm</text>
+<text class="cl-small" x="170" y="178">operand</text>
+<rect class="cl-key" x="220" y="140" width="100" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="270" y="160">Rn</text>
+<text class="cl-small" x="270" y="178">operand</text>
+<rect class="cl-tag" x="320" y="140" width="100" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="370" y="160">Rd</text>
+<text class="cl-small" x="370" y="178">destination</text>
+<rect fill="#d1fae5" stroke="#10b981" stroke-width="1.5" x="20" y="210" width="460" height="35" rx="6"/>
+<text class="cl-title" style="font-size:11px;fill:#065f46" x="250" y="232">Decoder always reads exactly 4 bytes - simple and fast</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 14: ARM64 PRIVILEGE -->
+<div class="slide">
+<h2 class="st">ARM64 Privilege: Exception Levels</h2>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 420 400" xmlns="http://www.w3.org/2000/svg">
+<!-- EL0 (outermost) -->
+<rect x="20" y="20" width="380" height="360" rx="12" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+<text x="210" y="45" class="cl-title" style="fill:#7f1d1d">EL0 - User applications</text>
+<text x="210" y="63" class="cl-small" style="fill:#7f1d1d">lowest privilege</text>
+<!-- EL1 -->
+<rect x="60" y="90" width="300" height="260" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="210" y="115" class="cl-title" style="fill:#92400e">EL1 - OS Kernel</text>
+<text x="210" y="133" class="cl-small" style="fill:#92400e">Linux / macOS kernel</text>
+<!-- EL2 -->
+<rect x="100" y="160" width="220" height="160" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+<text x="210" y="185" class="cl-title" style="fill:#1e3a8a">EL2 - Hypervisor</text>
+<text x="210" y="203" class="cl-small" style="fill:#1e3a8a">KVM, virtualization</text>
+<!-- EL3 (innermost) -->
+<rect x="140" y="230" width="140" height="70" rx="6" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+<text x="210" y="255" class="cl-title" style="fill:#5b21b6">EL3</text>
+<text x="210" y="273" class="cl-small" style="fill:#5b21b6">Secure Monitor</text>
+<text x="210" y="288" class="cl-small" style="fill:#5b21b6">(TrustZone)</text>
+</svg>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>EL0 - User</h4>
+<p>Applications run here. Restricted memory, no privileged instructions.</p>
+</div>
+<div class="block ok">
+<h4>EL1 - OS Kernel</h4>
+<p>The OS kernel (Linux, macOS XNU) runs here. Manages processes, memory, drivers.</p>
+</div>
+<div class="block">
+<h4>EL2 - Hypervisor</h4>
+<p>Hardware virtualization layer. KVM, type-1 hypervisors. Can trap EL1 operations.</p>
+</div>
+<div class="block note">
+<h4>EL3 - Secure Monitor</h4>
+<p>TrustZone secure world transition. Highest privilege - can switch between secure and non-secure states.</p>
+</div>
+<div class="block" style="margin-top:6px">
+<h4>Syscall mechanism</h4>
+<p>Enter kernel: <code>svc</code> (Supervisor Call) instruction (EL0 -> EL1).</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 15: RISC-V THE OPEN RISC -->
+<div class="slide">
+<h2 class="st">RISC-V - The Open RISC</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>History</h4>
+<ul>
+<li><strong>2010</strong> - Designed at UC Berkeley</li>
+<li><strong>Open ISA</strong> - free to implement, no licensing fees</li>
+<li>Modular: base ISA + optional extensions</li>
+<li>Clean design - no 40 years of legacy</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>RV64GC - what xv6 uses</h4>
+<p><strong>RV64GC</strong> = RV64I + M + A + F + D + C</p>
+<ul>
+<li><strong>RV64I</strong> - base 64-bit integer ISA (47 instructions)</li>
+<li><strong>M</strong> - multiply/divide</li>
+<li><strong>A</strong> - atomic operations</li>
+<li><strong>F</strong> - single-precision float</li>
+<li><strong>D</strong> - double-precision float</li>
+<li><strong>C</strong> - compressed 16-bit instructions</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<p>"RISC-V is like open-source software, but for hardware. Anyone can read the spec, build a chip, and contribute. No vendor lock-in."</p>
+</div>
+<div class="block">
+<h4>Why RISC-V matters</h4>
+<ul>
+<li><strong>Education</strong> - clean, small, readable spec (~150 pages)</li>
+<li><strong>Research</strong> - easy to extend with custom instructions</li>
+<li><strong>Industry</strong> - SiFive, Western Digital, Google (Android RISC-V)</li>
+<li><strong>xv6-riscv</strong> - MIT 6.1810's teaching OS targets RV64GC</li>
+</ul>
+</div>
+<div class="block warn">
+<h4>Not just one ISA</h4>
+<p>RISC-V is a <strong>family</strong> of ISAs. You pick a base (32/64/128-bit) and add only the extensions you need. An IoT chip might use RV32IMC; a server chip might use RV64GC + vector extensions.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 16: RISC-V BASE ISAS AND EXTENSIONS -->
+<div class="slide">
+<h2 class="st">RISC-V Base ISAs and Extensions</h2>
+<div class="cols cols-2">
+<div>
+<h3>Base ISAs</h3>
+<table class="tbl">
+<thead><tr><th>Base</th><th>Word size</th><th>Use case</th></tr></thead>
+<tbody>
+<tr><td><strong>RV32I</strong></td><td>32-bit</td><td>Microcontrollers, IoT</td></tr>
+<tr><td><strong>RV64I</strong></td><td>64-bit</td><td>Linux, servers, xv6</td></tr>
+<tr><td><strong>RV128I</strong></td><td>128-bit</td><td>Future (spec defined)</td></tr>
+</tbody>
+</table>
+<h3 style="margin-top:14px">Standard Extensions</h3>
+<table class="tbl">
+<thead><tr><th>Ext</th><th>Name</th><th>What it adds</th></tr></thead>
+<tbody>
+<tr><td><strong>M</strong></td><td>Multiply</td><td>mul, div, rem</td></tr>
+<tr><td><strong>A</strong></td><td>Atomic</td><td>lr/sc, amoadd, amoswap</td></tr>
+<tr><td><strong>F</strong></td><td>Float</td><td>single-precision FP regs + ops</td></tr>
+<tr><td><strong>D</strong></td><td>Double</td><td>double-precision FP</td></tr>
+<tr><td><strong>C</strong></td><td>Compressed</td><td>16-bit instruction encodings</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="eq-box">RV64GC = RV64I + M + A + F + D + C<br/><span style="font-size:.8em;color:var(--mid)">G = IMAFD (the "general-purpose" bundle)</span></div>
+<div class="block ok">
+<h4>How to read an ISA name</h4>
+<p><code>RV64IMAFDC</code> means: 64-bit base integer ISA, with multiply, atomic, float, double, and compressed extensions. The <code>G</code> shorthand means <code>IMAFD</code> together.</p>
+</div>
+<div class="block note">
+<h4>Modularity = the key innovation</h4>
+<p>Unlike x86 (one monolithic ISA) or ARM (profile-based), RISC-V lets chip designers pick <strong>exactly</strong> the extensions they need. A smartwatch chip doesn't pay for floating-point hardware it won't use.</p>
+</div>
+<div class="block warn">
+<h4>xv6-riscv requires</h4>
+<p>RV64I + M (for mul/div in kernel) + A (for spinlocks). The <code>C</code> extension is optional but commonly enabled. <code>F</code>/<code>D</code> are not used by the kernel itself.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 17: RISC-V PRIVILEGE LEVELS -->
+<div class="slide">
+<h2 class="st">RISC-V Privilege Levels</h2>
+<div class="cols cols-2">
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 420 400" xmlns="http://www.w3.org/2000/svg">
+<!-- U-mode (outermost) -->
+<rect x="20" y="20" width="380" height="360" rx="12" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+<text x="210" y="45" class="cl-title" style="fill:#7f1d1d">U-mode - User applications</text>
+<text x="210" y="63" class="cl-small" style="fill:#7f1d1d">lowest privilege (privilege level 0)</text>
+<!-- S-mode -->
+<rect x="60" y="90" width="300" height="260" rx="10" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+<text x="210" y="115" class="cl-title" style="fill:#065f46">S-mode - OS Kernel</text>
+<text x="210" y="133" class="cl-small" style="fill:#065f46">supervisor (privilege level 1)</text>
+<!-- M-mode (innermost) -->
+<rect x="100" y="160" width="220" height="160" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="210" y="200" class="cl-title" style="fill:#92400e">M-mode - Machine</text>
+<text x="210" y="218" class="cl-small" style="fill:#92400e">firmware / bootloader</text>
+<text x="210" y="236" class="cl-small" style="fill:#92400e">highest privilege (level 3)</text>
+<text x="210" y="260" class="cl-small" style="fill:#92400e">SBI, OpenSBI</text>
+<text x="210" y="278" class="cl-small" style="fill:#92400e">hardware init, PMP</text>
+</svg>
+</div>
+</div>
+<div>
+<div class="block warn">
+<h4>U-mode - User</h4>
+<p>Applications run here. Cannot execute privileged instructions, cannot access kernel memory. Privilege level 0.</p>
+</div>
+<div class="block ok">
+<h4>S-mode - Supervisor (OS Kernel)</h4>
+<p>The OS kernel (xv6, Linux) runs here. Can manage page tables, handle traps, configure interrupts. Privilege level 1.</p>
+</div>
+<div class="block note">
+<h4>M-mode - Machine</h4>
+<p>Firmware and bootloader (OpenSBI on RISC-V). Full hardware access, including security features (PMP). Privilege level 3 - highest.</p>
+</div>
+<div class="block">
+<h4>Syscall mechanism</h4>
+<p>Enter kernel: <code>ecall</code> (Environment Call) - U -> S transition.<br/>Return to user: <code>sret</code> (Supervisor Return) - S -> U transition.</p>
+</div>
+<div class="block" style="margin-top:6px">
+<h4>No hypervisor level in base spec</h4>
+<p>RISC-V has an optional <code>H</code> extension for hypervisor support (HS-mode), but the base privilege model is just U/S/M - simpler than ARM's four levels.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 18: SECTION 4 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 4</p>
+<h2>Cross-ISA Comparison</h2>
+<p>Privilege, registers, and encoding side by side</p>
+</div>
+
+<!-- SLIDE 19: PRIVILEGE LEVELS ACROSS ARCHITECTURES -->
+<div class="slide">
+<h2 class="st">Privilege Levels Across Architectures</h2>
+<table class="tbl">
+<thead><tr><th>Concept</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th></tr></thead>
+<tbody>
+<tr><td><strong>User mode</strong></td><td>U-mode</td><td>EL0</td><td>Ring 3</td></tr>
+<tr><td><strong>Kernel</strong></td><td>S-mode</td><td>EL1</td><td>Ring 0</td></tr>
+<tr><td><strong>Hypervisor</strong></td><td>H-ext (HS-mode)</td><td>EL2</td><td>VMX</td></tr>
+<tr><td><strong>Firmware / Secure</strong></td><td>M-mode</td><td>EL3 (Secure Monitor)</td><td>SMM</td></tr>
+<tr><td><strong>Syscall instruction</strong></td><td><code>ecall</code></td><td><code>svc</code></td><td><code>syscall</code></td></tr>
+<tr><td><strong>Return instruction</strong></td><td><code>sret</code></td><td><code>eret</code></td><td><code>sysret</code></td></tr>
+<tr><td><strong>Page table register</strong></td><td><code>satp</code></td><td><code>TTBR0/TTBR1</code></td><td><code>CR3</code></td></tr>
+<tr><td><strong>Trap vector</strong></td><td><code>stvec</code></td><td><code>VBAR_EL1</code></td><td><code>IDT</code></td></tr>
+</tbody>
+</table>
+<div class="cols cols-2" style="margin-top:12px">
+<div class="block ok">
+<h4>Same concept, different names</h4>
+<p>Every ISA needs: user/kernel separation, a way to enter the kernel (syscall), a way to return, a page table pointer, and a trap vector base. The <strong>concepts are identical</strong> - only the names and mechanisms differ.</p>
+</div>
+<div class="block note">
+<h4>For xv6 on RISC-V</h4>
+<p>xv6 uses <code>ecall</code> for syscalls, <code>stvec</code> to set the trap handler, <code>satp</code> to point to the page table, and <code>sret</code> to return to user mode. These are the RISC-V names you'll see in the xv6 source.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 20: REGISTER COMPARISON -->
+<div class="slide">
+<h2 class="st">Register Comparison</h2>
+<table class="tbl">
+<thead><tr><th>Role</th><th>RISC-V</th><th>ARM64</th><th>x86-64</th></tr></thead>
+<tbody>
+<tr><td><strong># GP registers</strong></td><td>32 (x0-x31)</td><td>31 (x0-x30)</td><td>16 (rax-r15)</td></tr>
+<tr><td><strong>Zero register</strong></td><td>x0 (hardwired zero)</td><td>xzr (zero reg)</td><td class="bad-cell">none</td></tr>
+<tr><td><strong>Return address</strong></td><td>ra (x1)</td><td>x30 (lr)</td><td>stack (push/pop)</td></tr>
+<tr><td><strong>Stack pointer</strong></td><td>sp (x2)</td><td>sp</td><td>rsp</td></tr>
+<tr><td><strong>Frame pointer</strong></td><td>s0/fp (x8)</td><td>x29 (fp)</td><td>rbp</td></tr>
+<tr><td><strong>Arguments</strong></td><td>a0-a7 (x10-x17)</td><td>x0-x7</td><td>rdi, rsi, rdx, rcx, r8, r9</td></tr>
+<tr><td><strong>Return value</strong></td><td>a0 (x10)</td><td>x0</td><td>rax</td></tr>
+</tbody>
+</table>
+<div class="cols cols-2" style="margin-top:12px">
+<div class="block ok">
+<h4>RISC-V's zero register (x0)</h4>
+<p>RISC-V hardwires <code>x0</code> to always read as zero and discard writes. This means <code>add x0, x0, 0</code> is a NOP, and <code>mv</code> to <code>x0</code> discards a value - no special instruction needed.</p>
+</div>
+<div class="block warn">
+<h4>x86's register scarcity</h4>
+<p>With only 16 GP registers, x86 spills to the stack more often. RISC-V's 32 registers give compilers more room to keep values in registers, reducing memory traffic.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 21: INSTRUCTION ENCODING COMPARISON -->
+<div class="slide">
+<h2 class="st">Instruction Encoding Comparison</h2>
+<div class="diag-wrap">
+<svg class="clean-svg" viewBox="0 0 1080 380" xmlns="http://www.w3.org/2000/svg">
+<!-- x86 -->
+<text class="cl-label" x="40" y="30">x86-64 (CISC) - variable length: 1 to 15 bytes</text>
+<rect class="cl-bad" x="40" y="45" width="60" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#7f1d1d" x="70" y="65">1B</text>
+<text class="cl-small" style="fill:#7f1d1d" x="70" y="82">short</text>
+<rect class="cl-bad" x="100" y="45" width="120" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#7f1d1d" x="160" y="65">3B</text>
+<text class="cl-small" style="fill:#7f1d1d" x="160" y="82">medium</text>
+<rect class="cl-bad" x="220" y="45" width="200" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#7f1d1d" x="320" y="65">7B</text>
+<text class="cl-small" style="fill:#7f1d1d" x="320" y="82">long</text>
+<rect class="cl-bad" x="420" y="45" width="280" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#7f1d1d" x="560" y="65">15B</text>
+<text class="cl-small" style="fill:#7f1d1d" x="560" y="82">longest</text>
+<text class="cl-small" style="fill:#7f1d1d;text-anchor:start" x="720" y="70">Decoder must parse byte-by-byte</text>
+
+<!-- ARM64 -->
+<text class="cl-label" x="40" y="140">ARM64 (RISC) - fixed length: always 4 bytes</text>
+<rect class="cl-data" x="40" y="155" width="400" height="50" rx="6"/>
+<text class="cl-title" style="font-size:11px" x="240" y="175">32 bits = 4 bytes (always)</text>
+<text class="cl-small" x="240" y="193">opcode | operands</text>
+<text class="cl-small" style="text-anchor:start" x="460" y="180">Decoder reads exactly 4 bytes - trivial</text>
+
+<!-- RISC-V -->
+<text class="cl-label" x="40" y="250">RISC-V (RISC) - fixed length: 4 bytes (or 2 with C extension)</text>
+<rect class="cl-key" x="40" y="265" width="60" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="70" y="285">funct7</text>
+<text class="cl-small" style="fill:#92400e" x="70" y="302">7 bits</text>
+<rect class="cl-aad" x="100" y="265" width="50" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="125" y="285">rs2</text>
+<text class="cl-small" style="fill:#5b21b6" x="125" y="302">5 bits</text>
+<rect class="cl-aad" x="150" y="265" width="50" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="175" y="285">rs1</text>
+<text class="cl-small" style="fill:#5b21b6" x="175" y="302">5 bits</text>
+<rect class="cl-key" x="200" y="265" width="40" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="220" y="285">f3</text>
+<text class="cl-small" style="fill:#92400e" x="220" y="302">3 bits</text>
+<rect class="cl-aad" x="240" y="265" width="50" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="265" y="285">rd</text>
+<text class="cl-small" style="fill:#5b21b6" x="265" y="302">5 bits</text>
+<rect class="cl-tag" x="290" y="265" width="70" height="50" rx="6"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="325" y="285">opcode</text>
+<text class="cl-small" style="fill:#065f46" x="325" y="302">7 bits</text>
+<text class="cl-small" style="text-anchor:start" x="380" y="290">funct7|rs2|rs1|funct3|rd|opcode - always 32 bits</text>
+</svg>
+</div>
+<div class="block ok" style="margin-top:4px">
+<h4>Why fixed-length matters</h4>
+<p>Fixed-length encoding means the CPU can <strong>decode any instruction in a single step</strong> - it always knows where the next instruction starts. Variable-length (x86) requires sequential parsing, which complicates pipelining and superscalar execution.</p>
+</div>
+</div>
+
+<!-- SLIDE 22: SECTION 5 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 5</p>
+<h2>RISC-V Registers</h2>
+<p>The 32 integer registers and their calling conventions</p>
+</div>
+
+<!-- SLIDE 23: RISC-V INTEGER REGISTERS -->
+<div class="slide">
+<h2 class="st">RISC-V Integer Registers</h2>
+<table class="tbl">
+<thead><tr><th>Register</th><th>ABI Name</th><th>Role</th><th>Convention</th></tr></thead>
+<tbody>
+<tr><td>x0</td><td>zero</td><td>Hardwired zero</td><td>-</td></tr>
+<tr><td>x1</td><td>ra</td><td>Return address</td><td class="ok-cell">Callee-saved</td></tr>
+<tr><td>x2</td><td>sp</td><td>Stack pointer</td><td class="ok-cell">Callee-saved</td></tr>
+<tr><td>x3</td><td>gp</td><td>Global pointer</td><td>-</td></tr>
+<tr><td>x4</td><td>tp</td><td>Thread pointer</td><td>-</td></tr>
+<tr><td>x5-x7</td><td>t0-t2</td><td>Temporaries</td><td class="warn-cell">Caller-saved</td></tr>
+<tr><td>x8</td><td>s0 / fp</td><td>Frame pointer</td><td class="ok-cell">Callee-saved</td></tr>
+<tr><td>x9</td><td>s1</td><td>Saved register</td><td class="ok-cell">Callee-saved</td></tr>
+<tr><td>x10-x11</td><td>a0-a1</td><td>Arguments / return value</td><td class="warn-cell">Caller-saved</td></tr>
+<tr><td>x12-x17</td><td>a2-a7</td><td>Arguments</td><td class="warn-cell">Caller-saved</td></tr>
+<tr><td>x18-x27</td><td>s2-s11</td><td>Saved registers</td><td class="ok-cell">Callee-saved</td></tr>
+<tr><td>x28-x31</td><td>t3-t6</td><td>Temporaries</td><td class="warn-cell">Caller-saved</td></tr>
+</tbody>
+</table>
+<div class="cols cols-2" style="margin-top:10px">
+<div class="block note">
+<h4>x0 is special</h4>
+<p>Register <code>x0</code> always reads as <strong>0</strong> and writes are discarded. This eliminates the need for a dedicated zero-immediate instruction - just use <code>x0</code> as a source operand.</p>
+</div>
+<div class="block">
+<h4>Register groups</h4>
+<p><strong>a0-a7</strong> = function arguments (8 args in registers). <strong>t0-t6</strong> = temporary scratch. <strong>s0-s11</strong> = preserved across calls. <strong>ra</strong> = return address for <code>jal</code>/<code>jalr</code>.</p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 24: REGISTER CONVENTIONS -->
+<div class="slide">
+<h2 class="st">Register Conventions</h2>
+<div class="cols cols-2">
+<div>
+<div class="block warn">
+<h4>Caller-saved (t0-t6, a0-a7)</h4>
+<p>The <strong>caller</strong> must save these registers if it needs their values across a function call. The callee is free to overwrite them.</p>
+<ul>
+<li><code>t0-t6</code> - temporary scratch registers</li>
+<li><code>a0-a7</code> - argument registers (also hold return value in <code>a0</code>)</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>Callee-saved (s0-s11, sp, ra)</h4>
+<p>The <strong>callee</strong> must preserve these registers. If the callee uses them, it must save the original values on the stack and restore them before returning.</p>
+<ul>
+<li><code>s0-s11</code> - saved registers (s0 = frame pointer)</li>
+<li><code>sp</code> - stack pointer (must be restored)</li>
+<li><code>ra</code> - return address (must be preserved if callee calls another function)</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="block note">
+<p>"Caller-saved registers are like <strong>scratch paper</strong> - you can write on it, but don't expect it to survive if you hand it to someone else. Callee-saved registers are like a <strong>shared notebook</strong> - if you borrow it, you must put it back exactly as you found it."</p>
+</div>
+<div class="block">
+<h4>x0 is always zero</h4>
+<p><code>x0</code> is neither caller-saved nor callee-saved - it is <strong>hardwired to zero</strong>. Reading it always gives 0; writing to it does nothing. This is a RISC-V design choice that simplifies the ISA.</p>
+</div>
+<div class="block warn">
+<h4>Stack alignment</h4>
+<p>The stack pointer <code>sp</code> must always be <strong>16-byte aligned</strong> at function entry. This is a hard requirement of the RISC-V calling convention - violating it causes misalignment faults on some operations.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 25: SECTION 6 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 6</p>
+<h2>RISC-V Instruction Formats</h2>
+<p>How 32 bits are carved into fields</p>
+</div>
+
+<!-- SLIDE 26: INSTRUCTION FORMATS OVERVIEW -->
+<div class="slide">
+<h2 class="st">Instruction Formats Overview</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>All instructions are 32 bits</h4>
+<p>(Except <code>C</code> extension: 16-bit compressed instructions.) The 32 bits are carved into <strong>fields</strong> - opcode, register selectors, and immediates - in different layouts depending on the instruction type.</p>
+</div>
+<div class="block ok">
+<h4>Four main formats</h4>
+<ul>
+<li><strong>R-type</strong> - Register: <code>add rd, rs1, rs2</code></li>
+<li><strong>I-type</strong> - Immediate: <code>addi rd, rs1, imm</code></li>
+<li><strong>S-type</strong> - Store: <code>sw rs2, offset(rs1)</code></li>
+<li><strong>U-type</strong> - Upper immediate: <code>lui rd, imm</code></li>
+</ul>
+<p style="margin-top:6px">Plus <strong>B-type</strong> (branches) and <strong>J-type</strong> (jumps) - variants of S and U.</p>
+</div>
+<div class="block note">
+<h4>Consistent field positions</h4>
+<p>Opcode is <strong>always bits [6:0]</strong>. <code>rs1</code> is <strong>always bits [19:15]</strong>. This consistency simplifies decoding - the decoder can extract opcode and rs1 without knowing the format yet.</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 560 360" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="10" y="15">R-type: add rd, rs1, rs2</text>
+<rect class="cl-key" x="10" y="25" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="70" y="45">funct7</text>
+<rect class="cl-aad" x="130" y="25" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="170" y="45">rs2</text>
+<rect class="cl-aad" x="210" y="25" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="250" y="45">rs1</text>
+<rect class="cl-key" x="290" y="25" width="60" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="320" y="45">f3</text>
+<rect class="cl-aad" x="350" y="25" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="390" y="45">rd</text>
+<rect class="cl-tag" x="430" y="25" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="45">opcode</text>
+
+<text class="cl-label" x="10" y="100">I-type: addi rd, rs1, imm</text>
+<rect class="cl-data" x="10" y="110" width="200" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#1e3a8a" x="110" y="130">imm[11:0]</text>
+<rect class="cl-aad" x="210" y="110" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="250" y="130">rs1</text>
+<rect class="cl-key" x="290" y="110" width="60" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="320" y="130">f3</text>
+<rect class="cl-aad" x="350" y="110" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="390" y="130">rd</text>
+<rect class="cl-tag" x="430" y="110" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="130">opcode</text>
+
+<text class="cl-label" x="10" y="185">S-type: sw rs2, offset(rs1)</text>
+<rect class="cl-data" x="10" y="195" width="100" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#1e3a8a" x="60" y="215">imm[11:5]</text>
+<rect class="cl-aad" x="110" y="195" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="150" y="215">rs2</text>
+<rect class="cl-aad" x="190" y="195" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="230" y="215">rs1</text>
+<rect class="cl-key" x="270" y="195" width="60" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="300" y="215">f3</text>
+<rect class="cl-data" x="330" y="195" width="100" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#1e3a8a" x="380" y="215">imm[4:0]</text>
+<rect class="cl-tag" x="430" y="195" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="215">opcode</text>
+
+<text class="cl-small" style="text-anchor:start" x="10" y="270">opcode = bits [6:0] in ALL formats</text>
+<text class="cl-small" style="text-anchor:start" x="10" y="290">rs1 = bits [19:15] in ALL formats</text>
+<text class="cl-small" style="text-anchor:start" x="10" y="310">rd = bits [11:7] in R, I, U, J formats</text>
+</svg>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 27: U-TYPE AND J-TYPE -->
+<div class="slide">
+<h2 class="st">U-type, J-type, and B-type</h2>
+<div class="cols cols-2">
+<div>
+<div class="block">
+<h4>U-type - Upper Immediate</h4>
+<p><strong>20-bit immediate</strong> + rd + opcode. Used for:</p>
+<ul>
+<li><code>lui rd, imm</code> - Load Upper Immediate (places imm in top 20 bits)</li>
+<li><code>auipc rd, imm</code> - Add Upper Immediate to PC (for PC-relative addressing)</li>
+</ul>
+</div>
+<div class="block ok">
+<h4>J-type - Jump</h4>
+<p><strong>20-bit immediate</strong> + rd + opcode. Used for:</p>
+<ul>
+<li><code>jal rd, offset</code> - Jump and Link (rd = return address, PC += offset)</li>
+</ul>
+<p>The 20-bit immediate is <strong>sign-extended</strong> and represents a +/-1 MB range.</p>
+</div>
+<div class="block note">
+<h4>B-type - Branch</h4>
+<p><strong>12-bit immediate</strong> + rs1 + rs2 + funct3 + opcode. Used for:</p>
+<ul>
+<li><code>beq, bne, blt, bge, bltu, bgeu</code> - conditional branches</li>
+</ul>
+<p>12-bit immediate gives +/-4 KB branch range (always even - LSB is always 0).</p>
+</div>
+</div>
+<div>
+<div class="diag-wrap" style="padding:0">
+<svg class="clean-svg" viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg">
+<text class="cl-label" x="10" y="15">U-type: lui rd, imm</text>
+<rect class="cl-data" x="10" y="25" width="340" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#1e3a8a" x="180" y="45">imm[31:12] (20 bits)</text>
+<rect class="cl-aad" x="350" y="25" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="390" y="45">rd</text>
+<rect class="cl-tag" x="430" y="25" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="45">opcode</text>
+
+<text class="cl-label" x="10" y="100">J-type: jal rd, offset</text>
+<rect class="cl-data" x="10" y="110" width="340" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#1e3a8a" x="180" y="130">imm[20|10:1|11|19:12] (20 bits)</text>
+<rect class="cl-aad" x="350" y="110" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="390" y="130">rd</text>
+<rect class="cl-tag" x="430" y="110" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="130">opcode</text>
+
+<text class="cl-label" x="10" y="185">B-type: beq rs1, rs2, offset</text>
+<rect class="cl-data" x="10" y="195" width="100" height="40" rx="5"/>
+<text class="cl-title" style="font-size:9px;fill:#1e3a8a" x="60" y="215">imm[12|10:5]</text>
+<rect class="cl-aad" x="110" y="195" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="150" y="215">rs2</text>
+<rect class="cl-aad" x="190" y="195" width="80" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#5b21b6" x="230" y="215">rs1</text>
+<rect class="cl-key" x="270" y="195" width="60" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#92400e" x="300" y="215">f3</text>
+<rect class="cl-data" x="330" y="195" width="100" height="40" rx="5"/>
+<text class="cl-title" style="font-size:9px;fill:#1e3a8a" x="380" y="215">imm[4:1|11]</text>
+<rect class="cl-tag" x="430" y="195" width="120" height="40" rx="5"/>
+<text class="cl-title" style="font-size:10px;fill:#065f46" x="490" y="215">opcode</text>
+</svg>
+</div>
+<div class="block warn">
+<h4>Engineering note: immediate bits are shuffled</h4>
+<p>The immediate bits in B-type and J-type look scrambled (<code>imm[12|10:5]</code>, <code>imm[4:1|11]</code>, etc.). This is <strong>by design</strong>: the shuffling keeps the opcode in bits [6:0] and rs1 in bits [19:15] across all formats. The decoder extracts opcode and rs1 first, then rearranges the immediate based on format.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 28: SECTION 7 BREAK -->
+<div class="slide sec-break">
+<p class="sec-num">SECTION 7</p>
+<h2>Key Instructions</h2>
+<p>Arithmetic, memory, and control flow</p>
+</div>
+
+<!-- SLIDE 29: ARITHMETIC AND LOGIC -->
+<div class="slide">
+<h2 class="st">Arithmetic and Logic</h2>
+<div class="cols cols-2">
+<div>
+<table class="tbl">
+<thead><tr><th>Instruction</th><th>Operation</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td><code>add rd, rs1, rs2</code></td><td>rd = rs1 + rs2</td><td>R</td></tr>
+<tr><td><code>sub rd, rs1, rs2</code></td><td>rd = rs1 - rs2</td><td>R</td></tr>
+<tr><td><code>addi rd, rs1, imm</code></td><td>rd = rs1 + imm</td><td>I</td></tr>
+<tr><td><code>and rd, rs1, rs2</code></td><td>rd = rs1 &amp; rs2</td><td>R</td></tr>
+<tr><td><code>or rd, rs1, rs2</code></td><td>rd = rs1 | rs2</td><td>R</td></tr>
+<tr><td><code>xor rd, rs1, rs2</code></td><td>rd = rs1 ^ rs2</td><td>R</td></tr>
+<tr><td><code>sll rd, rs1, rs2</code></td><td>rd = rs1 &lt;&lt; rs2</td><td>R</td></tr>
+<tr><td><code>srl rd, rs1, rs2</code></td><td>rd = rs1 &gt;&gt; rs2 (logical)</td><td>R</td></tr>
+<tr><td><code>sra rd, rs1, rs2</code></td><td>rd = rs1 &gt;&gt; rs2 (arithmetic)</td><td>R</td></tr>
+<tr><td><code>mul rd, rs1, rs2</code></td><td>rd = rs1 x rs2 (M ext)</td><td>R</td></tr>
+<tr><td><code>div rd, rs1, rs2</code></td><td>rd = rs1 / rs2 (M ext)</td><td>R</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="block ok">
+<h4>Pseudo-instructions</h4>
+<p>RISC-V defines <strong>pseudo-instructions</strong> - convenient aliases that the assembler expands to real instructions:</p>
+<ul>
+<li><code>mv rd, rs</code> -> <code>addi rd, rs, 0</code> (move register)</li>
+<li><code>li rd, imm</code> -> <code>addi rd, x0, imm</code> (load immediate, small)</li>
+<li><code>li rd, imm</code> -> <code>lui</code> + <code>addi</code> (load immediate, large)</li>
+<li><code>nop</code> -> <code>addi x0, x0, 0</code> (no operation)</li>
+</ul>
+</div>
+<div class="block note">
+<h4>Why no mov instruction?</h4>
+<p>RISC-V avoids dedicated move/nop instructions. Instead, <code>x0</code> (hardwired zero) makes <code>addi rd, rs, 0</code> a move and <code>addi x0, x0, 0</code> a nop. Fewer instructions, same functionality.</p>
+</div>
+<div class="block warn">
+<h4>No flags register</h4>
+<p>Unlike x86, RISC-V has <strong>no condition flags register</strong> (no ZF, CF, etc.). Branch instructions compare registers directly (<code>beq rs1, rs2, label</code>). This simplifies the pipeline - no flag dependencies between instructions.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 30: MEMORY ACCESS -->
+<div class="slide">
+<h2 class="st">Memory Access</h2>
+<div class="cols cols-2">
+<div>
+<table class="tbl">
+<thead><tr><th>Instruction</th><th>Operation</th><th>Size</th></tr></thead>
+<tbody>
+<tr><td><code>lw rd, offset(rs1)</code></td><td>Load word</td><td>4 bytes</td></tr>
+<tr><td><code>ld rd, offset(rs1)</code></td><td>Load double</td><td>8 bytes</td></tr>
+<tr><td><code>lb rd, offset(rs1)</code></td><td>Load byte (signed)</td><td>1 byte</td></tr>
+<tr><td><code>lbu rd, offset(rs1)</code></td><td>Load byte (unsigned)</td><td>1 byte</td></tr>
+<tr><td><code>sw rs2, offset(rs1)</code></td><td>Store word</td><td>4 bytes</td></tr>
+<tr><td><code>sd rs2, offset(rs1)</code></td><td>Store double</td><td>8 bytes</td></tr>
+<tr><td><code>sb rs2, offset(rs1)</code></td><td>Store byte</td><td>1 byte</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="block ok">
+<h4>Load/store architecture</h4>
+<p>RISC-V is a <strong>load/store architecture</strong>: arithmetic instructions (<code>add</code>, <code>sub</code>, etc.) operate <strong>only on registers</strong>. To use a memory value, you must first <code>lw</code>/<code>ld</code> it into a register, compute, then <code>sw</code>/<code>sd</code> the result back.</p>
+</div>
+<div class="eq-box">address = base register (rs1) + signed offset (imm)</div>
+<div class="block note">
+<h4>Addressing mode</h4>
+<p>RISC-V has exactly <strong>one</strong> addressing mode for memory: <code>base + signed offset</code>. The offset is a 12-bit signed immediate (range -2048 to +2047). No indexed, scaled, or post-increment addressing - just base + offset.</p>
+</div>
+<div class="block warn">
+<h4>Signed vs unsigned loads</h4>
+<p><code>lb</code> sign-extends the byte to 64 bits (preserves negative values). <code>lbu</code> zero-extends (treats as unsigned). <code>lw</code> sign-extends 32 bits to 64 bits in RV64 - important when loading 32-bit values on a 64-bit CPU.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 31: CONTROL FLOW -->
+<div class="slide">
+<h2 class="st">Control Flow</h2>
+<div class="cols cols-2">
+<div>
+<table class="tbl">
+<thead><tr><th>Instruction</th><th>Operation</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td><code>jal rd, offset</code></td><td>Jump and Link: rd = PC+4; PC += offset</td><td>J</td></tr>
+<tr><td><code>jalr rd, rs1, offset</code></td><td>Jump and Link Register: rd = PC+4; PC = rs1+offset</td><td>I</td></tr>
+<tr><td><code>beq rs1, rs2, offset</code></td><td>Branch if rs1 == rs2</td><td>B</td></tr>
+<tr><td><code>bne rs1, rs2, offset</code></td><td>Branch if rs1 != rs2</td><td>B</td></tr>
+<tr><td><code>blt rs1, rs2, offset</code></td><td>Branch if rs1 &lt; rs2 (signed)</td><td>B</td></tr>
+<tr><td><code>bge rs1, rs2, offset</code></td><td>Branch if rs1 >= rs2 (signed)</td><td>B</td></tr>
+<tr><td><code>bltu rs1, rs2, offset</code></td><td>Branch if rs1 &lt; rs2 (unsigned)</td><td>B</td></tr>
+<tr><td><code>bgeu rs1, rs2, offset</code></td><td>Branch if rs1 >= rs2 (unsigned)</td><td>B</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="block ok">
+<h4>Pseudo-instructions for control flow</h4>
+<ul>
+<li><code>j offset</code> -> <code>jal x0, offset</code> (jump, discard return address)</li>
+<li><code>jr rs</code> -> <code>jalr x0, rs, 0</code> (jump to register, discard return)</li>
+<li><code>ret</code> -> <code>jalr x0, ra, 0</code> (return to caller)</li>
+<li><code>call offset</code> -> <code>auipc ra, ...; jalr ra, ra, ...</code> (call, far range)</li>
+</ul>
+</div>
+<div class="block note">
+<h4>jal vs jalr</h4>
+<p><code>jal</code> uses a 20-bit <strong>immediate</strong> offset (PC-relative, +/-1 MB). <code>jalr</code> uses a <strong>register</strong> + 12-bit offset (can jump anywhere in 64-bit address space). Function calls use <code>jal</code> for nearby functions and <code>auipc</code>+<code>jalr</code> for far calls.</p>
+</div>
+<div class="block warn">
+<h4>ret = jalr x0, ra, 0</h4>
+<p>The <code>ret</code> pseudo-instruction is just <code>jalr</code> with <code>x0</code> as the link register (discard return address) and <code>ra</code> as the target. Since <code>x0</code> discards writes, this is a pure jump to <code>ra</code> - the return address saved by the original <code>jal</code>.</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 32: SUMMARY -->
+<div class="slide">
+<h2 class="st">Summary - Key Takeaways</h2>
+<div class="cols cols-2">
+<div>
+<div class="block ok">
+<h4>The ISA is the contract</h4>
+<p>An ISA defines the instructions, registers, memory addressing, and privilege levels that software relies on. Same C code compiles to different assembly on x86, ARM, and RISC-V.</p>
+</div>
+<div class="block ok">
+<h4>RISC won (mostly)</h4>
+<p>Fixed-length instructions, load/store architecture, many registers. Even modern x86 translates CISC into RISC-like micro-ops internally.</p>
+</div>
+<div class="block ok">
+<h4>RISC-V privilege: U / S / M</h4>
+<p>User mode (U), Supervisor/OS kernel (S), Machine/firmware (M). Syscall = <code>ecall</code>, return = <code>sret</code>. xv6 runs in S-mode.</p>
+</div>
+</div>
+<div>
+<div class="block ok">
+<h4>32 registers, clear conventions</h4>
+<p>x0 = zero, ra = return address, sp = stack, a0-a7 = args, s0-s11 = saved, t0-t6 = temporaries. Caller-saved vs callee-saved.</p>
+</div>
+<div class="block ok">
+<h4>Six instruction formats</h4>
+<p>R, I, S, U, B, J - all 32 bits. Opcode always [6:0], rs1 always [19:15]. Immediates are shuffled to keep field positions consistent.</p>
+</div>
+<div class="block ok">
+<h4>Load/store + base+offset</h4>
+<p>Arithmetic uses registers only. Memory access via <code>lw</code>/<code>sw</code> with <code>base + signed offset</code>. One addressing mode, simple and fast.</p>
+</div>
+</div>
+</div>
+<div class="eq-box" style="margin-top:10px">ISA = instructions + registers + memory model + privilege levels<br/>xv6 on RISC-V = RV64GC, S-mode, ecall/sret, 32 GP registers</div>
+</div>
+
+<!-- SLIDE 33: REFERENCES -->
+<div class="slide">
+<h2 class="st">References</h2>
+<div>
+<div class="ref-item">
+<span class="ref-badge">xv6</span>
+<div>
+<h4>xv6 - A simple Unix-like teaching operating system</h4>
+<p>R. Cox, F. Kaashoek, R. Morris. MIT 6.1810 course OS, targeting RISC-V (RV64GC). <a href="https://github.com/mit-pdos/xv6-riscv" style="color:var(--blue)">github.com/mit-pdos/xv6-riscv</a></p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">MIT 6.1810</span>
+<div>
+<h4>MIT 6.1810 - Operating System Engineering</h4>
+<p>MIT course using xv6 on RISC-V. Lecture notes and lab assignments. <a href="https://pdos.csail.mit.edu/6.1810/" style="color:var(--blue)">pdos.csail.mit.edu/6.1810</a></p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">RISC-V</span>
+<div>
+<h4>RISC-V Specifications</h4>
+<p>RISC-V International. ISA Manual Volume I (Unprivileged) and Volume II (Privileged). <a href="https://riscv.org/technical/specifications/" style="color:var(--blue)">riscv.org/technical/specifications</a></p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">Patterson</span>
+<div>
+<h4>Computer Organization and Design RISC-V Edition</h4>
+<p>D. A. Patterson and J. L. Hennessy. 2nd Ed., Morgan Kaufmann, 2020.</p>
+</div>
+</div>
+<div class="ref-item">
+<span class="ref-badge">OSTEP</span>
+<div>
+<h4>Operating Systems: Three Easy Pieces</h4>
+<p>R. H. Arpaci-Dusseau and A. C. Arpaci-Dusseau, 2023. <a href="https://pages.cs.wisc.edu/~remzi/OSTEP/" style="color:var(--blue)">pages.cs.wisc.edu/~remzi/OSTEP</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- FOOTER & NAVIGATION -->
+<div class="footer">
+<div class="footer-left"><span class="slide-num">1 / 33</span><span class="step-badge"></span></div>
+<span class="footer-center">VGU . OPERATING SYSTEMS . L02 RISC-V ISA</span>
+<div class="nav-btns">
+<button class="nav-btn" id="btn-prev"><- PREV</button>
+<button class="nav-btn" id="btn-next">NEXT -></button>
+<div class="jump-box"><label for="jump-slide">Slide</label><input id="jump-slide" inputmode="numeric" min="1" placeholder="#" title="Type slide number and press Enter" type="number"/></div>
+</div>
+<div class="prog-bar" id="prog-bar"></div>
+</div>
+
+</div><!-- /#deck -->
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const numEl = document.querySelector('.slide-num');
+  const stepEl = document.querySelector('.step-badge');
+  const progEl = document.getElementById('prog-bar');
+  const jumpEl = document.getElementById('jump-slide');
+  let cur = 0, step = 0;
+
+  function maxStep(sl) {
+    const els = sl.querySelectorAll('[data-step]');
+    if (!els.length) return 0;
+    return Math.max(...Array.from(els).map(e => parseInt(e.getAttribute('data-step'))));
+  }
+  function applySteps(sl, s) {
+    sl.querySelectorAll('[data-step]').forEach(e => {
+      parseInt(e.getAttribute('data-step')) <= s ? e.classList.add('av') : e.classList.remove('av');
+    });
+  }
+  function updateUI() {
+    const ms = maxStep(slides[cur]);
+    numEl.textContent = (cur + 1) + ' / ' + total;
+    progEl.style.width = ((cur + 1) / total * 100) + '%';
+    if (jumpEl) jumpEl.placeholder = String(cur + 1);
+    if (ms > 0 && step > 0) {
+      stepEl.style.display = 'block';
+      stepEl.textContent = 'step ' + step + '/' + ms;
+    } else {
+      stepEl.style.display = 'none';
+    }
+  }
+  function goSlide(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    slides[cur].classList.remove('active');
+    cur = idx;
+    step = 0;
+    slides[cur].classList.add('active');
+    applySteps(slides[cur], 0);
+    updateUI();
+  }
+  function advance() {
+    const ms = maxStep(slides[cur]);
+    if (step < ms) { step++; applySteps(slides[cur], step); updateUI(); }
+    else if (cur < total - 1) goSlide(cur + 1);
+  }
+  function retreat() {
+    if (step > 0) { step--; applySteps(slides[cur], step); updateUI(); }
+    else if (cur > 0) goSlide(cur - 1);
+  }
+
+  document.getElementById('btn-next').addEventListener('click', advance);
+  document.getElementById('btn-prev').addEventListener('click', retreat);
+
+  if (jumpEl) {
+    jumpEl.setAttribute('max', String(total));
+    jumpEl.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const n = parseInt(jumpEl.value, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= total) {
+          goSlide(n - 1);
+          jumpEl.value = '';
+          jumpEl.blur();
+        }
+      } else if (e.key === 'Escape') {
+        jumpEl.value = '';
+        jumpEl.blur();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); advance(); }
+    else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); retreat(); }
+  });
+
+  hljs.highlightAll();
+  updateUI();
+})();
+</script>
+</body>
+</html>
